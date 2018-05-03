@@ -332,17 +332,6 @@ The following annotations are supported:
 | ``@Table``            | ``name``                                             |
 | ``@Transient``        | n/a                                                  |
 
-By default, SansOrm will *lower-case* all ``name`` and ``table`` attribute values, which is fine for DML case-_insensitive_ databases such as PostgreSQL, Derby, Oracle, etc.  However, some databases are case-sensitive with respect to identifiers, such as H2. Therefore, SansOrm supports *case-sensitive* databases through the use of quoted identifiers.
-
-Quoted identifer example:
-```java
-@Table(name = "\"Customer\"")
-class Customer {
-   @Column(name = "\"Last_Name\"")
-   String lastName;
-   ...
-}
-```
 
 ### Automatic Data Type Conversions
 
