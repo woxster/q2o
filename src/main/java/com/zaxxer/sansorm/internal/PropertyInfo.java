@@ -30,8 +30,7 @@ public class PropertyInfo extends AttributeInfo {
       }
       catch (IntrospectionException ignored) {
          // In case of fields with no getters/setters according to JavaBean conventions.
-         // Set name or NPE in setColumnName(String) will be thrown.
-         name = field.getName();
+         toBeConsidered = false;
       }
    }
 

@@ -47,12 +47,14 @@ abstract class AttributeInfo
       this.field = field;
       this.clazz = clazz;
       extractFieldName(field);
-      adjustType(extractType());
-      extractAnnotations();
-      if (toBeConsidered) {
-         processFieldAnnotations();
-         this.fullyQualifiedDelimitedName =
-            columnTableName.isEmpty() ? delimitedName : columnTableName + "." + delimitedName;
+      if (isToBeConsidered()) {
+         adjustType(extractType());
+         extractAnnotations();
+         if (toBeConsidered) {
+            processFieldAnnotations();
+            this.fullyQualifiedDelimitedName =
+               columnTableName.isEmpty() ? delimitedName : columnTableName + "." + delimitedName;
+         }
       }
    }
 

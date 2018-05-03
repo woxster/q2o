@@ -4,11 +4,13 @@ import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sansorm.testutils.*;
 
 import javax.persistence.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.*;
 
 import static org.junit.Assert.*;
 
@@ -455,6 +457,44 @@ public class AccessTypePropertyTest {
    }
 
    @Test
+   public void objectById() throws SQLException {
+      final String[] fetchedSql = new String[1];
+      DummyConnection con = new DummyConnection() {
+         @Override
+         public PreparedStatement prepareStatement(String sql) {
+            fetchedSql[0] = sql;
+            return new DummyStatement() {
+               @Override
+               public ParameterMetaData getParameterMetaData() {
+                  return new DummyParameterMetaData() {
+                     @Override
+                     public int getParameterCount() {
+                        return AccessTypePropertyTest.this.getParameterCount(fetchedSql[0]);
+                     }
+                     @Override
+                     public int getParameterType(int param) {
+                        return Types.VARCHAR;
+                     }
+                  };
+               }
+               @Override
+               public ResultSet executeQuery() {
+                  return new DummyResultSet() {
+                     @Override
+                     public boolean next() {
+                        return false;
+                     }
+                  };
+               }
+            };
+         }
+      };
+      GetterAnnotatedPitMainEntity obj = OrmReader.objectById(con, GetterAnnotatedPitMainEntity.class, "xyz");
+      // Preserve field order!!!
+      assertEquals("SELECT D_PIT_MAIN.PIT_IDENT,D_PIT_MAIN.PIT_CRDATE,D_PIT_MAIN.PIT_CHG_DATE,D_PIT_MAIN.PIT_TYPE,D_PIT_MAIN.PIT_VISIBILITY,D_PIT_MAIN.PIT_NOTE,D_PIT_MAIN.PIT_USER,D_PIT_MAIN.PIT_REJECTED_DATE,D_PIT_MAIN.PIT_PARENT_ID FROM D_PIT_MAIN D_PIT_MAIN WHERE  PIT_IDENT=?", fetchedSql[0]);
+   }
+
+   @Test
    public void propertyChangeSupport() throws IllegalAccessException {
       class Test {
          private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -489,5 +529,17 @@ public class AccessTypePropertyTest {
       AttributeInfo idInfo = introspected.getFieldColumnInfo("id");
       idInfo.setValue(obj, 1);
       assertTrue(called[0]);
+   }
+
+   // ######### Utility methods ######################################################
+
+   private int getParameterCount(String s) {
+      int count = 0;
+      for (Byte b : s.getBytes()) {
+         if ((int)b == '?') {
+            count++;
+         }
+      }
+      return count;
    }
 }
