@@ -349,7 +349,7 @@ The following annotations are supported:
 | ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) |
 | ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)    |
 | ``@Id``               | n/a                                                  |
-| ``@JoinColumn``       | ``name`` (supports **self-join** _only_)             |
+| ``@JoinColumn``       | ``name (supports self-join only and only with @OneToOne and @ManyToOne)``             |
 | ``@MappedSuperclass`` | n/a                                                  |
 | ``@Table``            | ``name``                                             |
 | ``@Transient``        | n/a                                                  |
