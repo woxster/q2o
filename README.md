@@ -24,6 +24,8 @@ Fully JPA annotated classes, you already have, should be processed as-is, withou
 
 The anyway limited support for self joins was broken.
 
+Numerous tests added to stabilize further development.
+
 The name of the fork will propably change in the near future.
 
 ## Preface
