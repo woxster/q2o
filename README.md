@@ -343,7 +343,8 @@ The following annotations are supported:
 
 | Annotation            | Supported Attributes                                 |
 |:--------------------- |:---------------------------------------------------- |
-| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``   |
+| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``        |
+| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``   |
 | ``@Convert``          | ``converter`` (``AttributeConverter`` _classes only_)|
 | ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) |
 | ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)    |
