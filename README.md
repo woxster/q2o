@@ -339,7 +339,7 @@ common scenarios, a few are:
 * ```SqlClosureElf.deleteObject(customer)```
 
 ### Supported Annotations
-Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, all other annotations must appear on *member variables*.  Annotations on *getter/setter* methods are not supported.  SansOrm will get/set member variables directly through reflection during read/write operations.
+Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear on *member variables*.
 
 The following annotations are supported:
 
