@@ -35,8 +35,6 @@ Java-to-SQL/SQL-to-Java object mapping library.  It was created to rid my compan
 10 years of using ORMs  in various projects, I came to the same conclusion as others: 
 [ORM is an Anti-Pattern](https://github.com/brettwooldridge/SansOrm/wiki/ORM-is-an-anti-pattern).
 
-TL;DR:
-
 *  Standard ORMs do not scale.
 *  Don't fear the SQL.
 *  What are you, lazy?  Read the page.
