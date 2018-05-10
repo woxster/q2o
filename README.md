@@ -86,29 +86,7 @@ SansOrm.initializeTxCustom(ds, tm, ut);
 ```
 We strongly recommend using the embedded ``TransactionManager`` via the the second initializer above.  If you have an existing external ``TransactionManager``, of course you can use that.
 
-The embedded ``TransactionManager`` conserves database Connections when nested methods are called, alleviating the need to pass ``Connection`` instances around manually.  For example:
-```Java
-List<User> getUsers(String lastNamePrefix) {
-   return SqlClosure.sqlExecute( connection -> {       // <-- Transaction started, Connection #1 acquired.
-      final List<Users> users =
-         OrmElf.listFromClause(connection, User.class, "last_name LIKE ?", lastNamePrefix + "%");
-
-      return populateRoles(users);
-   }
-   // Transaction automatically committed at the end of the execute() call.
-}
-
-List<User> populatePermissions(final List<User> users) {
-   return SqlClosure.sqlExecute( connection -> {       // <-- Transaction in-progress, Connection #1 re-used.
-      for (User user : users) {
-         user.setPermissions(OrmElf.listFromClause(connection, Permission.class, "user_id=?", user.getId());
-      }
-      return users;
-   }
-   // Transaction will be committed at the end of the execute() call in getUsers() above.
-}
-```
-The ``TransactionManager`` uses a ``ThreadLocal`` variable to "flow" the transaction across nested calls, allowing all work to be committed as a single unit of work.  Additionally, ``Connection`` resources are conserved.  Without a ``TransactionManager``, the above code would require two ``Connections`` to be borrowed from a pool.
+The embedded ``TransactionManager`` conserves database Connections when nested methods are called, alleviating the need to pass ``Connection`` instances around manually. The ``TransactionManager`` uses a ``ThreadLocal`` variable to "flow" the transaction across nested calls, allowing all work to be committed as a single unit of work.
 
 ### Object Mapping
 
