@@ -198,7 +198,7 @@ Finally, SansOrm has specific support for the PostgreSQL ``PGobject`` and ``CITE
 
 ### More Advanced
 
-Just page as provided just a taste, so go on over to the [Advanced Usage](https://github.com/brettwooldridge/SansOrm/blob/master/doc/AdvancedUsage.md) page to go deep.
+[Performing Joins](https://github.com/h-thurow/SansOrm/wiki/Performing-Joins)
 
 
 [Build Status]:https://travis-ci.org/brettwooldridge/SansOrm
