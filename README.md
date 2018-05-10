@@ -5,6 +5,29 @@
 [![][Maven Central img]][Maven Central]
 [![][Javadocs img]][Javadocs]
 
+<h3>Download</h3>
+
+<pre>
+&lt;dependency>
+    &lt;groupId>com.github.h-thurow&lt;/groupId>
+    &lt;artifactId>sansorm&lt;/artifactId>
+    &lt;version>3.8&lt;/version>
+&lt;/dependency>
+</pre>
+or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thurow%22%20AND%20a%3A%22sansorm%22>download from here</a>.
+
+## Intention of this fork
+
+Support not only field access but property access to. With property access the class's getters and setters are called to read or write values. With field access the fields are read and written to directly. So if you need more control over the process of reading or writing set access Type explicitely with `@Access` annotation or annotate getters, not fields (do not mix the style within one class). If there is no @Access annotation found the place of the annotations decide upon the access type.
+
+Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with SansOrm. Remember SansOrm is not an ORM frame work so only a small subset of JPA annotations are really supported (see below).
+
+The anyway limited support for self joins was broken.
+
+Numerous tests added to stabilize further development.
+
+The name of the fork will propably change in the near future.
+
 ## Preface
 
 Even if you do "pure JDBC", you will find SansOrm's utility classes extremely useful.  SansOrm is a "No-ORM" sane
@@ -315,18 +338,19 @@ common scenarios, a few are:
 * ```SqlClosureElf.deleteObject(customer)```
 
 ### Supported Annotations
-Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, all other annotations must appear on *member variables*.  Annotations on *getter/setter* methods are not supported.  SansOrm will get/set member variables directly through reflection during read/write operations.
+Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear on *member variables*.
 
 The following annotations are supported:
 
 | Annotation            | Supported Attributes                                 |
 |:--------------------- |:---------------------------------------------------- |
-| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``   |
+| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``        |
+| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``   |
 | ``@Convert``          | ``converter`` (``AttributeConverter`` _classes only_)|
 | ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) |
 | ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)    |
 | ``@Id``               | n/a                                                  |
-| ``@JoinColumn``       | ``name`` (supports **self-join** _only_)             |
+| ``@JoinColumn``       | ``name (supports self-join only and only with @OneToOne and @ManyToOne)``             |
 | ``@MappedSuperclass`` | n/a                                                  |
 | ``@Table``            | ``name``                                             |
 | ``@Transient``        | n/a                                                  |
