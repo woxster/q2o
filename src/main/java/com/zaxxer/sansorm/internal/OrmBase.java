@@ -59,6 +59,8 @@ class OrmBase
       }
    }
 
+   // public static <T> String getColumnsCsv(final Class<T> clazz, final String... tablePrefix)
+
    /**
     *
     * @see #getColumnsCsvExclude(Class, String...)
@@ -72,7 +74,9 @@ class OrmBase
         final Introspected introspected = Introspector.getIntrospected(clazz);
         final AttributeInfo[] selectableFields = introspected.getSelectableFcInfos();
         for (AttributeInfo selectableField : selectableFields) {
-           sb.append(selectableField.getFullyQualifiedDelimitedFieldName(tablePrefix)).append(',');
+           if (!selectableField.isJoinFieldWithSecondTable()) {
+              sb.append(selectableField.getFullyQualifiedDelimitedFieldName(tablePrefix)).append(',');
+           }
         }
 
         return sb.deleteCharAt(sb.length() - 1).toString();

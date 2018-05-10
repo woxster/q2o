@@ -1094,11 +1094,11 @@ public class CaseSensitiveDatabasesTest {
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = SqlClosureElf.insertObject(new InsertObjectH2());
+         InsertObjectH2 obj = OrmElf.insertObject(new InsertObjectH2());
          assertEquals(1, obj.Id);
-         obj = SqlClosureElf.getObjectById(InsertObjectH2.class, obj.Id);
+         obj = OrmElf.getObjectById(InsertObjectH2.class, obj.Id);
          assertNotNull(obj);
-         int count = SqlClosureElf.countObjectsFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
+         int count = OrmElf.countObjectsFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
          assertEquals(1, count);
       }
       finally {
@@ -1121,9 +1121,9 @@ public class CaseSensitiveDatabasesTest {
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          InsertObjectH2 obj = new InsertObjectH2();
-         obj = SqlClosureElf.insertObject(obj);
+         obj = OrmElf.insertObject(obj);
          obj.defaultCase = "changed";
-         obj = SqlClosureElf.updateObject(obj);
+         obj = OrmElf.updateObject(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
@@ -1157,9 +1157,9 @@ public class CaseSensitiveDatabasesTest {
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          TestClass obj = new TestClass();
-         obj = SqlClosureElf.insertObject(obj);
+         obj = OrmElf.insertObject(obj);
          obj.defaultCase = "changed";
-         obj = SqlClosureElf.updateObject(obj);
+         obj = OrmElf.updateObject(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {

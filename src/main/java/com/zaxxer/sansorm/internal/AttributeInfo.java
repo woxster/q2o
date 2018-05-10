@@ -3,6 +3,7 @@ package com.zaxxer.sansorm.internal;
 import javax.persistence.*;
 import java.lang.reflect.*;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,13 +43,14 @@ abstract class AttributeInfo
    protected boolean isManyToManyAnnotated;
    protected boolean isManyToOneAnnotated;
    protected boolean isOneToOneAnnotated;
+   private boolean joinWithSecondTable;
 
    public AttributeInfo(final Field field, final Class<?> clazz) {
       this.field = field;
       this.clazz = clazz;
       extractFieldName(field);
       if (isToBeConsidered()) {
-         adjustType(extractType());
+         adjustType(field.getType());
          extractAnnotations();
          if (toBeConsidered) {
             processFieldAnnotations();
@@ -59,10 +61,6 @@ abstract class AttributeInfo
    }
 
    protected abstract void extractFieldName(final Field field);
-
-   private Class<?> extractType() {
-      return field.getType();
-   }
 
    private void adjustType(final Class<?> type) {
       if (type == null) {
@@ -137,27 +135,55 @@ abstract class AttributeInfo
          isJoinColumnsAnnotated = true;
          toBeConsidered = false;
       }
+      // relationship annotations can exist without @JoinColumn annotation
+      extractRelationship();
+   }
+
+   private void extractRelationship() {
       final OneToMany oneToMany = extractOneToManyAnnotation();
       if (oneToMany != null) {
          isOneToManyAnnotated = true;
          toBeConsidered = false;
+         initializeJoinWithSecondTable();
       }
       else {
          final ManyToMany manyToMany = extractManyToManyAnnotation();
          if (manyToMany != null) {
             isManyToManyAnnotated = true;
             toBeConsidered = false;
+            initializeJoinWithSecondTable();
          }
          else {
             final ManyToOne manyToOne = extractManyToOneAnnotation();
             if (manyToOne != null) {
                isManyToOneAnnotated = true;
+               initializeJoinWithSecondTable();
             }
             else {
                final OneToOne oneToOne = extractOneToOneAnnotation();
                if (oneToOne != null) {
                   isOneToOneAnnotated = true;
+                  initializeJoinWithSecondTable();
                }
+            }
+         }
+      }
+   }
+
+   /**
+    * Sets {@link #joinWithSecondTable}
+    */
+   private void initializeJoinWithSecondTable() {
+      // Is also true with @OneToMany fields. Type is Collection then.
+      if (type != clazz) {
+         if (!Collection.class.isAssignableFrom(type)) {
+            joinWithSecondTable = true;
+         }
+         else {
+            ParameterizedType genericType = (ParameterizedType) field.getGenericType();
+            Type typeArg = genericType.getActualTypeArguments()[0];
+            if (typeArg != clazz) {
+               joinWithSecondTable = true;
             }
          }
       }
@@ -219,21 +245,9 @@ abstract class AttributeInfo
 
    protected void processJoinColumnAnnotation() {
       final JoinColumn joinColumnAnnotation = extractJoinColumnAnnotation();
-      // Is the JoinColumn a self-join?
-      if (type == clazz) {
-         setColumnName(joinColumnAnnotation.name());
-         insertable = joinColumnAnnotation.insertable();
-         updatable = joinColumnAnnotation.updatable();
-      }
-      else {
-         // Do not throw exception. Just ignore. Otherwise classes can not be shared between different JPA implementations.
-//         throw new RuntimeException("JoinColumn annotations can only be self-referencing: " + type.getCanonicalName() + " != "
-//            + clazz.getCanonicalName());
-         System.out.println("WARN: JoinColumn annotations can only be self-referencing and OneToOne. Ignoring " +
-            type.getCanonicalName() + " on "
-            + clazz.getCanonicalName());
-         toBeConsidered = false;
-      }
+      setColumnName(joinColumnAnnotation.name());
+      insertable = joinColumnAnnotation.insertable();
+      updatable = joinColumnAnnotation.updatable();
    }
 
    private boolean isNotDelimited(final String columnName) {
@@ -331,21 +345,34 @@ abstract class AttributeInfo
 
    /**
     *
-    * @return null: no @Column annotation. true: @Column annotation. false @Column with updatable = false
+    * @return null: no @Column annotation. true: @Column annotation. false @Column with updatable = false or join with second table.
     */
    Boolean isUpdatable() {
-      return updatable;
+      // Not as ternary expression or a NPE is thrown?!?
+      if (!joinWithSecondTable) {
+         return updatable;
+      }
+      else {
+         return false;
+      }
    }
 
    /**
     *
-    * @return null: no @Column annotation. true: @Column annotation. false @Column with insertable = false
+    * @return null: no @Column annotation. true: @Column annotation. false @Column with insertable = false or join with second table.
     */
    Boolean isInsertable() {
-      return insertable;
+      // Not as ternary expression or a NPE is thrown?!?
+      if (!joinWithSecondTable) {
+         return insertable;
+      }
+      else {
+         return false;
+      }
    }
 
    public abstract Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException;
+
 
    protected Object idValueFromParentEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
       if (obj != null) {
@@ -364,6 +391,10 @@ abstract class AttributeInfo
       return isTransient;
    }
 
+   protected Object idValueToParentEntity(final Class<?> clazz, final Object value) throws IllegalAccessException, InstantiationException {
+      return idValueToParentEntity(clazz.newInstance(), value);
+   }
+
    protected Object idValueToParentEntity(final Object target, final Object value) throws InstantiationException, IllegalAccessException {
       final Object obj = target.getClass().newInstance();
       final Introspected introspected = new Introspected(obj.getClass());
@@ -372,7 +403,14 @@ abstract class AttributeInfo
       return obj;
    }
 
+   /**
+    * Can be overridden.
+    */
    boolean isToBeConsidered() {
       return !isTransient && toBeConsidered;
+   }
+
+   public boolean isJoinFieldWithSecondTable() {
+      return joinWithSecondTable;
    }
 }

@@ -52,21 +52,21 @@ public class QueryTest
       TargetClass1 original = new TargetClass1(new Date(0), "Hi");
       assertThat(original.getId()).isEqualTo(0);
 
-      TargetClass1 inserted = SqlClosureElf.insertObject(original);
+      TargetClass1 inserted = OrmElf.insertObject(original);
       assertThat(inserted).isSameAs(original).as("insertOject() only set generated id");
       int idAfterInsert = inserted.getId();
       assertThat(idAfterInsert).isNotEqualTo(0);
 
-      List<TargetClass1> selectedAll = SqlClosureElf.listFromClause(TargetClass1.class, null);
+      List<TargetClass1> selectedAll = OrmElf.listFromClause(TargetClass1.class, null);
       assertThat(selectedAll).isNotEmpty();
 
-      TargetClass1 selected = SqlClosureElf.objectFromClause(TargetClass1.class, "string = ?", "Hi");
+      TargetClass1 selected = OrmElf.objectFromClause(TargetClass1.class, "string = ?", "Hi");
       assertThat(selected.getId()).isEqualTo(idAfterInsert);
       assertThat(selected.getString()).isEqualTo("Hi");
       assertThat(selected.getTimestamp().getTime()).isEqualTo(0L);
 
       selected.setString("Hi edited");
-      TargetClass1 updated = SqlClosureElf.updateObject(selected);
+      TargetClass1 updated = OrmElf.updateObject(selected);
       assertThat(inserted).isSameAs(original).as("updateObject() only set generated id if it was missing");
       assertThat(updated.getId()).isEqualTo(idAfterInsert);
    }
@@ -75,12 +75,12 @@ public class QueryTest
    public void testNumberFromSql()
    {
       Number initialCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM target_class1");
-      SqlClosureElf.insertObject(new TargetClass1(null, ""));
+      OrmElf.insertObject(new TargetClass1(null, ""));
 
       Number newCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM target_class1");
       assertThat(newCount.intValue()).isEqualTo(initialCount.intValue() + 1);
 
-      int countCount = SqlClosureElf.countObjectsFromClause(TargetClass1.class, null);
+      int countCount = OrmElf.countObjectsFromClause(TargetClass1.class, null);
       assertThat(countCount).isEqualTo(newCount.intValue());
    }
 
@@ -89,8 +89,8 @@ public class QueryTest
    {
       Date date = new Date();
 
-      TargetClass1 target = SqlClosureElf.insertObject(new TargetClass1(date, "Date"));
-      target = SqlClosureElf.getObjectById(TargetClass1.class, target.getId());
+      TargetClass1 target = OrmElf.insertObject(new TargetClass1(date, "Date"));
+      target = OrmElf.getObjectById(TargetClass1.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Date");
       assertThat(target.getTimestamp().getTime()).isEqualTo(date.getTime()); // Timestamp <-> Date equality is assymetrical
@@ -102,8 +102,8 @@ public class QueryTest
       Timestamp tstamp = new Timestamp(System.currentTimeMillis());
       tstamp.setNanos(200);
 
-      TargetTimestampClass1 target = SqlClosureElf.insertObject(new TargetTimestampClass1(tstamp, "Timestamp"));
-      target = SqlClosureElf.getObjectById(TargetTimestampClass1.class, target.getId());
+      TargetTimestampClass1 target = OrmElf.insertObject(new TargetTimestampClass1(tstamp, "Timestamp"));
+      target = OrmElf.getObjectById(TargetTimestampClass1.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Timestamp");
       assertThat(target.getTimestamp().getClass()).isEqualTo(Timestamp.class);
@@ -114,7 +114,7 @@ public class QueryTest
    @Test
    public void testConverterSave()
    {
-      TargetClass1 target = SqlClosureElf.insertObject(new TargetClass1(null, null, "1234"));
+      TargetClass1 target = OrmElf.insertObject(new TargetClass1(null, null, "1234"));
       Number number = SqlClosureElf.numberFromSql("SELECT string_from_number + 1 FROM target_class1 where id = ?", target.getId());
       assertThat(number.intValue()).isEqualTo(1235);
    }
@@ -122,7 +122,7 @@ public class QueryTest
    @Test
    public void testConverterLoad() throws Exception
    {
-      TargetClass1 target = SqlClosureElf.insertObject(new TargetClass1(null, null, "1234"));
+      TargetClass1 target = OrmElf.insertObject(new TargetClass1(null, null, "1234"));
       final int targetId = target.getId();
       target = SqlClosure.sqlExecute(c -> {
          PreparedStatement pstmt = c.prepareStatement(
@@ -135,8 +135,8 @@ public class QueryTest
    @Test
    public void testConversionFail()
    {
-      TargetClass1 target = SqlClosureElf.insertObject(new TargetClass1(null, null, "foobar"));
-      target = SqlClosureElf.getObjectById(TargetClass1.class, target.getId());
+      TargetClass1 target = OrmElf.insertObject(new TargetClass1(null, null, "foobar"));
+      target = OrmElf.getObjectById(TargetClass1.class, target.getId());
       assertThat(target.getStringFromNumber()).isNull();
    }
 
@@ -177,7 +177,7 @@ public class QueryTest
       });
 
       // then
-      List<TargetClass1> inserted = SqlClosureElf.listFromClause(
+      List<TargetClass1> inserted = OrmElf.listFromClause(
          TargetClass1.class,
          "string in " + SqlClosureElf.getInClausePlaceholdersForCount(count),
          IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));

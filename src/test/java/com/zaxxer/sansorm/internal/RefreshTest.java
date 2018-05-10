@@ -166,9 +166,9 @@ public class RefreshTest {
                + "field2 VARCHAR(128) "
                + ")");
 
-         TestClass obj = SqlClosureElf.insertObject(new TestClass());
+         TestClass obj = OrmElf.insertObject(new TestClass());
          assertEquals(1, obj.Id);
-         obj = SqlClosureElf.getObjectById(TestClass.class, obj.Id);
+         obj = OrmElf.getObjectById(TestClass.class, obj.Id);
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
@@ -220,7 +220,7 @@ public class RefreshTest {
 
          TestClass2 obj = OrmElf.insertObject(con, new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = SqlClosureElf.getObjectById(TestClass2.class, obj.id1, obj.id2);
+         obj = OrmElf.getObjectById(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
          assertEquals(null, obj.field);
 

@@ -77,24 +77,24 @@ public class SelfJoinManyToOneFieldAccessTest {
          // store parent
          FieldAccessedSelfJoin parent = new FieldAccessedSelfJoin();
          parent.type = "parent";
-         SqlClosureElf.insertObject(parent);
+         OrmElf.insertObject(parent);
          assertTrue(parent.id > 0);
 
          // SansOrm does not persist child when parent is persisted
          FieldAccessedSelfJoin child = new FieldAccessedSelfJoin();
          child.type = "child";
          child.parentId = parent;
-         SqlClosureElf.updateObject(parent);
+         OrmElf.updateObject(parent);
          assertEquals(0, child.id);
 
          // persist child explicitely. parentId from parent is also stored.
          OrmWriter.insertObject(con, child);
          assertTrue(child.id > 0);
-         int count = SqlClosureElf.countObjectsFromClause(FieldAccessedSelfJoin.class, null);
+         int count = OrmElf.countObjectsFromClause(FieldAccessedSelfJoin.class, null);
          assertEquals(2, count);
 
          // Load child together with parent instance. Only parent id is restored on parent instance, no further attributes.
-         FieldAccessedSelfJoin childFromDb = SqlClosureElf.objectFromClause
+         FieldAccessedSelfJoin childFromDb = OrmElf.objectFromClause
             (FieldAccessedSelfJoin.class, "id=2");
 //         PropertyAccessedOneToOneSelfJoin childFromDb = OrmElf.objectById(con, PropertyAccessedOneToOneSelfJoin.class, 2);
          assertNotNull(childFromDb.parentId);
@@ -127,14 +127,14 @@ public class SelfJoinManyToOneFieldAccessTest {
 
          FieldAccessedSelfJoin parent = new FieldAccessedSelfJoin();
          parent.type = "parent";
-         SqlClosureElf.insertObject(parent);
+         OrmElf.insertObject(parent);
 
          FieldAccessedSelfJoin child = new FieldAccessedSelfJoin();
          child.type = "child";
          child.parentId = parent;
          OrmWriter.insertObject(con, child);
 
-         List<FieldAccessedSelfJoin> objs = SqlClosureElf.listFromClause(FieldAccessedSelfJoin.class, "id=2");
+         List<FieldAccessedSelfJoin> objs = OrmElf.listFromClause(FieldAccessedSelfJoin.class, "id=2");
          objs.forEach(System.out::println);
          Assertions.assertThat(objs).filteredOn(obj -> obj.parentId != null && obj.parentId.id == 1).size().isEqualTo(1);
       }
@@ -160,11 +160,11 @@ public class SelfJoinManyToOneFieldAccessTest {
 
          FieldAccessedSelfJoin parent = new FieldAccessedSelfJoin();
          parent.type = "parent";
-         SqlClosureElf.insertObject(parent);
+         OrmElf.insertObject(parent);
 
          FieldAccessedSelfJoin parent2 = new FieldAccessedSelfJoin();
          parent2.type = "parent";
-         SqlClosureElf.insertObject(parent2);
+         OrmElf.insertObject(parent2);
 
          FieldAccessedSelfJoin child = new FieldAccessedSelfJoin();
          child.type = "child";

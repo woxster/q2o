@@ -30,6 +30,7 @@ public class PropertyInfo extends AttributeInfo {
       }
       catch (IntrospectionException ignored) {
          // In case of fields with no getters/setters according to JavaBean conventions.
+         ignored.printStackTrace();
          toBeConsidered = false;
       }
    }
@@ -95,7 +96,7 @@ public class PropertyInfo extends AttributeInfo {
    }
 
    public Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException {
-      if (!isSelfJoinField()) {
+      if (!isJoinColumn) {
          return readMethod.invoke(target);
       }
       Object obj = readMethod.invoke(target);
@@ -104,11 +105,11 @@ public class PropertyInfo extends AttributeInfo {
 
    public void setValue(final Object target, final Object value) throws IllegalAccessException {
       try {
-         if (!isSelfJoinField()) {
+         if (!isJoinColumn) {
             propertyDescriptor.getWriteMethod().invoke(target, value);
          }
          else {
-            final Object obj = idValueToParentEntity(target, value);
+            final Object obj = idValueToParentEntity(type, value);
             propertyDescriptor.getWriteMethod().invoke(target, obj);
          }
       }

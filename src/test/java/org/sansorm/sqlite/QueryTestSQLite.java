@@ -51,21 +51,21 @@ public class QueryTestSQLite {
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          TargetClassSQL original = new TargetClassSQL("Hi", new Date(0));
          assertThat(original.getId()).isNull();
-         TargetClassSQL inserted = SqlClosureElf.insertObject(original);
+         TargetClassSQL inserted = OrmElf.insertObject(original);
          assertThat(inserted).isSameAs(original).as("insertObject() sets generated id");
          Integer idAfterInsert = inserted.getId();
          assertThat(idAfterInsert).isNotNull();
 
-         List<TargetClassSQL> selectedAll = SqlClosureElf.listFromClause(TargetClassSQL.class, null);
+         List<TargetClassSQL> selectedAll = OrmElf.listFromClause(TargetClassSQL.class, null);
          assertThat(selectedAll).isNotEmpty();
 
-         TargetClassSQL selected = SqlClosureElf.objectFromClause(TargetClassSQL.class, "string = ?", "Hi");
+         TargetClassSQL selected = OrmElf.objectFromClause(TargetClassSQL.class, "string = ?", "Hi");
          assertThat(selected.getId()).isEqualTo(idAfterInsert);
          assertThat(selected.getString()).isEqualTo("Hi");
          assertThat(selected.getTimestamp().getTime()).isEqualTo(0);
 
          selected.setString("Hi edited");
-         TargetClassSQL updated = SqlClosureElf.updateObject(selected);
+         TargetClassSQL updated = OrmElf.updateObject(selected);
          assertThat(updated).isSameAs(selected).as("updateObject() only set generated id if it was missing");
          assertThat(updated.getId()).isEqualTo(idAfterInsert);
       }
@@ -84,7 +84,7 @@ public class QueryTestSQLite {
       try (Closeable ignored = prepareSQLiteDatasource(path)) {
          TargetClassSQL original = new TargetClassSQL("Hi", new Date(0));
          assertThat(original.getId()).isNull();
-         TargetClassSQL inserted = SqlClosureElf.insertObject(original);
+         TargetClassSQL inserted = OrmElf.insertObject(original);
          assertThat(inserted).isSameAs(original).as("insertObject() sets generated id");
          idAfterInsert = inserted.getId();
          assertThat(idAfterInsert).isNotNull();
@@ -93,13 +93,13 @@ public class QueryTestSQLite {
       // reopen database, it is important for this test
       // then select previously inserted object and try to edit it
       try (Closeable ignored = prepareSQLiteDatasource(path)) {
-         TargetClassSQL selected = SqlClosureElf.objectFromClause(TargetClassSQL.class, "string = ?", "Hi");
+         TargetClassSQL selected = OrmElf.objectFromClause(TargetClassSQL.class, "string = ?", "Hi");
          assertThat(selected.getId()).isEqualTo(idAfterInsert);
          assertThat(selected.getString()).isEqualTo("Hi");
          assertThat(selected.getTimestamp().getTime()).isEqualTo(0L);
 
          selected.setString("Hi edited");
-         TargetClassSQL updated = SqlClosureElf.updateObject(selected);
+         TargetClassSQL updated = OrmElf.updateObject(selected);
          assertThat(updated).isSameAs(selected).as("updateObject() only set generated id if it was missing");
          assertThat(updated.getId()).isEqualTo(idAfterInsert);
       }
@@ -142,7 +142,7 @@ public class QueryTestSQLite {
             OrmElf.insertListBatched(c, toInsert);
             return null;
          });
-         List<TargetClassSQL> inserted = SqlClosureElf.listFromClause(
+         List<TargetClassSQL> inserted = OrmElf.listFromClause(
             TargetClassSQL.class,
             "string in " + SqlClosureElf.getInClausePlaceholdersForCount(count),
             IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));

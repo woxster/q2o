@@ -64,4 +64,5 @@ public class PropertyInfoTest {
       // transform entity into id value to store id in table
       assertEquals(1, joinFieldInfo.getValue(entity));
    }
+
 }

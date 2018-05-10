@@ -71,9 +71,9 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = SqlClosureElf.insertObject(new TestClass2());
+         TestClass2 obj = OrmElf.insertObject(new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = SqlClosureElf.getObjectById(TestClass2.class, obj.id1, obj.id2);
+         obj = OrmElf.getObjectById(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
 
          SqlClosureElf.executeUpdate("update TestClass2 set field = 'changed'");
@@ -106,9 +106,9 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = SqlClosureElf.insertObject(new TestClass2());
+         TestClass2 obj = OrmElf.insertObject(new TestClass2());
 
-         obj = SqlClosureElf.getObjectById(obj.getClass(), obj.id1, obj.id2);
+         obj = OrmElf.getObjectById(obj.getClass(), obj.id1, obj.id2);
          assertNotNull(obj);
          assertEquals(null, obj.field);
 
@@ -141,7 +141,7 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = SqlClosureElf.insertObject(new TestClass2());
+         TestClass2 obj = OrmElf.insertObject(new TestClass2());
          int rowCount = OrmElf.countObjectsFromClause(con, obj.getClass(), "field is null");
          assertEquals(1, rowCount);
 

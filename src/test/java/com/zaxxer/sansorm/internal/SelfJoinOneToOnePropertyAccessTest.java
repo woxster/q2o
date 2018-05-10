@@ -104,24 +104,24 @@ public class SelfJoinOneToOnePropertyAccessTest {
          // store parent
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.type = "parent";
-         SqlClosureElf.insertObject(parent);
+         OrmElf.insertObject(parent);
          assertTrue(parent.id > 0);
 
          // SansOrm does not persist child when parent is persisted
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.type = "child";
          child.parentId = parent;
-         SqlClosureElf.updateObject(parent);
+         OrmElf.updateObject(parent);
          assertEquals(0, child.id);
 
          // persist child explicitely. parentId from parent is also stored.
          OrmWriter.insertObject(con, child);
          assertTrue(child.id > 0);
-         int count = SqlClosureElf.countObjectsFromClause(PropertyAccessedOneToOneSelfJoin.class, null);
+         int count = OrmElf.countObjectsFromClause(PropertyAccessedOneToOneSelfJoin.class, null);
          assertEquals(2, count);
 
          // Load child together with parent instance. Only parent id is restored on parent instance, no further attributes.
-         PropertyAccessedOneToOneSelfJoin childFromDb = SqlClosureElf.objectFromClause
+         PropertyAccessedOneToOneSelfJoin childFromDb = OrmElf.objectFromClause
             (PropertyAccessedOneToOneSelfJoin.class, "id=2");
 //         PropertyAccessedOneToOneSelfJoin childFromDb = OrmElf.objectById(con, PropertyAccessedOneToOneSelfJoin.class, 2);
          assertNotNull(childFromDb.parentId);
@@ -154,14 +154,14 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.type = "parent";
-         SqlClosureElf.insertObject(parent);
+         OrmElf.insertObject(parent);
 
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.type = "child";
          child.parentId = parent;
          OrmWriter.insertObject(con, child);
 
-         List<PropertyAccessedOneToOneSelfJoin> objs = SqlClosureElf.listFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
+         List<PropertyAccessedOneToOneSelfJoin> objs = OrmElf.listFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
          objs.forEach(System.out::println);
          Assertions.assertThat(objs).filteredOn(obj -> obj.parentId != null && obj.parentId.id == 1).size().isEqualTo(1);
       }
@@ -187,11 +187,11 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.type = "parent";
-         SqlClosureElf.insertObject(parent);
+         OrmElf.insertObject(parent);
 
          PropertyAccessedOneToOneSelfJoin parent2 = new PropertyAccessedOneToOneSelfJoin();
          parent2.type = "parent";
-         SqlClosureElf.insertObject(parent2);
+         OrmElf.insertObject(parent2);
 
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.type = "child";

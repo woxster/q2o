@@ -164,6 +164,10 @@ public class OrmWriter extends OrmBase
       return deleteObjectById(connection, clazz, introspected.getActualIds(target));
    }
 
+   /**
+    *
+    * @param args the primary key value or the composite primary key values.
+    */
    public static <T> int deleteObjectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
    {
       final Introspected introspected = Introspector.getIntrospected(clazz);

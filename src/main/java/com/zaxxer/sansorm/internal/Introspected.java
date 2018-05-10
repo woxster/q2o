@@ -40,7 +40,7 @@ public final class Introspected
    final List<AttributeInfo> idFcInfos;
    private String tableName;
    /** Fields in case insensitive lexicographic order */
-   private final TreeMap<String, AttributeInfo> columnToField;
+   private final TreeMap<String, List<AttributeInfo>> columnToField;
 
    private final Map<String, AttributeInfo> propertyToField;
    private final List<AttributeInfo> allFcInfos;
@@ -62,7 +62,7 @@ public final class Introspected
    private String[] delimitedColumnsSansIds;
    private AttributeInfo[] insertableFcInfosArray;
    private AttributeInfo[] updatableFcInfosArray;
-   private AttributeInfo[] selectableFcInfosArray;
+   private AttributeInfo[] selectableFcInfos;
 
    private static final HashSet<Class<?>> jpaAnnotations = new HashSet<>();
 
@@ -188,7 +188,8 @@ public final class Introspected
                      ? new FieldInfo(field, fieldClass)
                      : new PropertyInfo(field, clazz);
             if (fcInfo.isToBeConsidered()) {
-               columnToField.put(fcInfo.getCaseSensitiveColumnName(), fcInfo);
+               List<AttributeInfo> attributeInfos = columnToField.computeIfAbsent(fcInfo.getCaseSensitiveColumnName(), k -> new ArrayList<>());
+               attributeInfos.add(fcInfo);
                propertyToField.put(fcInfo.getName(), fcInfo);
                allFcInfos.add(fcInfo);
                if (fcInfo.isIdField) {
@@ -224,8 +225,6 @@ public final class Introspected
          precalculateColumnInfos(idFcInfos);
 
       } catch (Exception e) {
-         // To ease debugging
-         e.printStackTrace();
          throw new RuntimeException(e);
       }
    }
@@ -236,7 +235,13 @@ public final class Introspected
     * @param columnName case insensitive column name without delimiters.
     */
    AttributeInfo getFieldColumnInfo(final String columnName) {
-      return columnToField.get(columnName);
+      List<AttributeInfo> attributeInfos = columnToField.get(columnName);
+      for (AttributeInfo attributeInfo : attributeInfos) {
+         if (attributeInfo.isSelfJoinField() || !attributeInfo.isJoinColumn) {
+            return attributeInfo;
+         }
+      }
+      return null;
    }
 
    /**
@@ -580,6 +585,7 @@ public final class Introspected
     *
     * @return the insertable columns. In case of delimited column names the names are surrounded
     *         by delimiters.
+    * @see #getUpdatableColumns()
     */
    public String[] getInsertableColumns()
    {
@@ -587,16 +593,25 @@ public final class Introspected
    }
 
    private void precalculateInsertableColumns() {
-      insertableColumns = new String[insertableFcInfos.size()];
       insertableFcInfosArray = new AttributeInfo[insertableFcInfos.size()];
-      for (int i = 0; i < insertableColumns.length; i++) {
-         insertableColumns[i] = insertableFcInfos.get(i).getDelimitedColumnName();
+      ArrayList<String> uniqueColNames = new ArrayList<>();
+      ArrayList<AttributeInfo> uniqueInfos = new ArrayList<>();
+      for (int i = 0; i < insertableFcInfos.size(); i++) {
          insertableFcInfosArray[i] = insertableFcInfos.get(i);
+         String delimitedColumnName = insertableFcInfos.get(i).getDelimitedColumnName();
+         if (!uniqueColNames.contains(delimitedColumnName)) {
+            uniqueColNames.add(delimitedColumnName);
+            uniqueInfos.add(insertableFcInfos.get(i));
+         }
+      }
+      insertableColumns = new String[uniqueInfos.size()];
+      for (int i = 0, j = 0; i < uniqueInfos.size(); i++) {
+         insertableColumns[j++] = uniqueInfos.get(i).getDelimitedColumnName();
       }
    }
 
    /**
-    * Get the updatable columns for this object.
+    * Get the updatable columns for this object. Column names are unique. For example if there is an @Id field whose name is also used in a name element of a relationship annotation it is only retrieved once.
     *
     * @return the updatable columns
     */
@@ -606,11 +621,20 @@ public final class Introspected
    }
 
    private void precalculateUpdatableColumns() {
-      updatableColumns = new String[updatableFcInfos.size()];
-      updatableFcInfosArray = new AttributeInfo[updatableColumns.length];
-      for (int i = 0; i < updatableColumns.length; i++) {
-         updatableColumns[i] = updatableFcInfos.get(i).getDelimitedColumnName();
+      updatableFcInfosArray = new AttributeInfo[updatableFcInfos.size()];
+      ArrayList<String> uniqueColNames = new ArrayList<>();
+      ArrayList<AttributeInfo> uniqueInfos = new ArrayList<>();
+      for (int i = 0; i < updatableFcInfos.size(); i++) {
          updatableFcInfosArray[i] = updatableFcInfos.get(i);
+         String delimitedColumnName = updatableFcInfos.get(i).getDelimitedColumnName();
+         if (!uniqueColNames.contains(delimitedColumnName)) {
+            uniqueColNames.add(delimitedColumnName);
+            uniqueInfos.add(updatableFcInfos.get(i));
+         }
+      }
+      updatableColumns = new String[uniqueInfos.size()];
+      for (int i = 0, j = 0; i < uniqueInfos.size(); i++) {
+         updatableColumns[j++] = uniqueInfos.get(i).getDelimitedColumnName();
       }
    }
 
@@ -704,17 +728,17 @@ public final class Introspected
       delimitedColumnNames = new String[columnNames.length];
       final String[] columnsSansIds = new String[columnNames.length - idColumnNames.length];
       delimitedColumnsSansIds = new String[columnsSansIds.length];
-      selectableFcInfosArray = new AttributeInfo[allFcInfos.size()];
+      selectableFcInfos = new AttributeInfo[allFcInfos.size()];
 
       int fieldCount = 0, idCount = 0, sansIdCount = 0;
 
       for (final AttributeInfo fcInfo : allFcInfos) {
-         if (fcInfo.isToBeConsidered()) {
+         selectableFcInfos[fieldCount] = fcInfo;
+         if (!fcInfo.isJoinFieldWithSecondTable()) {
             columnNames[fieldCount] = fcInfo.getColumnName();
             caseSensitiveColumnNames[fieldCount] = fcInfo.getCaseSensitiveColumnName();
             delimitedColumnNames[fieldCount] = fcInfo.getDelimitedColumnName();
             columnTableNames[fieldCount] = fcInfo.columnTableName;
-            selectableFcInfosArray[fieldCount] = fcInfo;
             if (!fcInfo.isIdField) {
                columnsSansIds[sansIdCount] = fcInfo.getColumnName();
                delimitedColumnsSansIds[sansIdCount] = fcInfo.getDelimitedColumnName();
@@ -768,7 +792,7 @@ public final class Introspected
 
    /** Fields in same order as supplied by Type inspection */
    AttributeInfo[] getSelectableFcInfos() {
-      return selectableFcInfosArray;
+      return selectableFcInfos;
    }
 
    /**

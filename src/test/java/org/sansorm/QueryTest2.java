@@ -1,5 +1,6 @@
 package org.sansorm;
 
+import com.zaxxer.sansorm.OrmElf;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,11 +41,11 @@ public class QueryTest2
       long timestamp = 42L;
       String string = "Hi";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
-      SqlClosureElf.insertObject(original);
+      OrmElf.insertObject(original);
 
       // when
-      TargetClass2 target = SqlClosureElf.objectFromClause(TargetClass2.class, "someDate = ?", timestamp);
-      TargetClass2 targetAgain = SqlClosureElf.getObjectById(TargetClass2.class, target.getId());
+      TargetClass2 target = OrmElf.objectFromClause(TargetClass2.class, "someDate = ?", timestamp);
+      TargetClass2 targetAgain = OrmElf.getObjectById(TargetClass2.class, target.getId());
 
       // then
       assertThat(targetAgain.getId()).isEqualTo(target.getId());
@@ -61,10 +62,10 @@ public class QueryTest2
       long timestamp = 43L;
       String string = "Ho";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
-      SqlClosureElf.insertObject(original);
+      OrmElf.insertObject(original);
 
       // when
-      List<TargetClass2> target = SqlClosureElf.listFromClause(TargetClass2.class, "string = ?", string);
+      List<TargetClass2> target = OrmElf.listFromClause(TargetClass2.class, "string = ?", string);
 
       // then
       assertThat(target.get(0).getString()).isEqualTo(string);
@@ -75,12 +76,12 @@ public class QueryTest2
    public void testNumberFromSql()
    {
       Number initialCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
-      SqlClosureElf.insertObject(new TargetClass2(null, ""));
+      OrmElf.insertObject(new TargetClass2(null, ""));
 
       Number newCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
       assertThat(newCount.intValue()).isEqualTo(initialCount.intValue() + 1);
 
-      int countCount = SqlClosureElf.countObjectsFromClause(TargetClass2.class, null);
+      int countCount = OrmElf.countObjectsFromClause(TargetClass2.class, null);
       assertThat(countCount).isEqualTo(newCount.intValue());
    }
 
@@ -89,8 +90,8 @@ public class QueryTest2
    {
       Date date = new Date();
 
-      TargetClass2 target = SqlClosureElf.insertObject(new TargetClass2(date, "Date"));
-      target = SqlClosureElf.getObjectById(TargetClass2.class, target.getId());
+      TargetClass2 target = OrmElf.insertObject(new TargetClass2(date, "Date"));
+      target = OrmElf.getObjectById(TargetClass2.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Date");
       assertThat(target.getSomeDate().getTime()).isEqualTo(date.getTime());
