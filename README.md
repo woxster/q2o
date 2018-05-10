@@ -146,7 +146,7 @@ There are much more useful methods like:
 * ```OrmElf.refresh(customer)```
 * ```OrmElf.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
 
-There are also methods to work with lists of objects.
+Many of these methods can also work with lists of objects.
 
 ### Supported Annotations
 Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear on *member variables*.
