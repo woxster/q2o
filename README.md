@@ -174,9 +174,8 @@ Connection and invoke your overridden method, cleaning up resources in a finally
 returned by the overridden method.  Of course you don't have to execute the closure right away; you could stick it into 
 a queue for later execution, pass it to another method, etc.  But typically you'll run execute it right away.
 
-More common still is using **Java 8 Lambdas**.
 
-Let's look at an example of returning a complex type:
+**Let's look at an example of returning a complex type:**
 ```Java
 public Set<String> getAllUsernames() {
    return new SqlClosure<Set<String>>() {
