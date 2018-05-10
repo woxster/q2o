@@ -148,66 +148,22 @@ public class Customer {
    }
 }
 ```
-Here we introduce another SansOrm class, ```OrmElf```.  What is ```OrmElf```?  Well, an 'Elf' is a 'Helper'
+Here we introduce the most important SansOrm class, ```OrmElf```.  What is ```OrmElf```?  Well, an 'Elf' is a 'Helper'
 but with fewer letters to type.  Besides, who doesn't like Elves?  Let's look at how the ```OrmElf``` can help us:
 ```Java
 public List<Customer> getAllCustomers() {
    return OrmElf.listFromClause(Customer.class, null);
 }
 ```
+As a second argument to listFromClause() you can provide a where clause, to restrict the found objects:
 
-Of course, in addition to querying, the ```OrmElf``` can perform basic operations such these (where ```customer```
-is a ```Customer```):
-* ```OrmElf.insertObject(connection, customer)```
-* ```OrmElf.updateObject(connection, customer)```
-* ```OrmElf.deleteObject(connection, customer)```
+* ```OrmElf.listFromClause(Customer.class, "customer_id BETWEEN ? AND ?", minId, maxId)```
 
-Let's make another example, somewhat silly, but showing how queries can be parameterized:
-```Java
-public List<Customer> getCustomersSillyQuery(final int minId, final int maxId, final String like) {
-   return SqlClosure.sqlExecute( conn -> {
-      PreparedStatement pstmt = conn.prepareStatement(
-         "SELECT * FROM customer WHERE (customer_id BETWEEN ? AND ?) AND last_name LIKE ?"));
-      return OrmElf.statementToList(pstmt, Customer.class, minId, maxId, like+"%");
-   });
-}
-```
-Well, that's fairly handy. Note the use of varargs. Following the class parameter, zero or more parameters can be passed,
-and will be used to set query parameters (in order) on the ```PreparedStatement```.
-
-Materializing object instances from rows is so common, there are some further things the 'Elf' can help with.  Let's do 
-the same thing as above, but using another helper method.
-```Java
-public List<Customer> getCustomersSillyQuery(final int minId, final int maxId, final String like) {
-   return SqlClosure.sqlExecute( connection -> {
-      return OrmElf.listFromClause(connection, Customer.class,
-                                   "(customer_id BETWEEN ? AND ?) AND last_name LIKE ?",
-                                   minId, maxId, like+"%");
-   });
-}
-```
-Now we're cooking with gas!  The ```OrmElf``` will use the ```Connection``` that is passed, along with the annotations
-on the ```Customer``` class to determine which table and columns to SELECT, and use the passed `clause` as the
-WHERE portion of the statement (passing 'WHERE' explicitly is also supported), and finally it will use the passed 
-parameters to set the query parameters.
-
-While the ```SqlClosure``` is great, and you'll come to wonder how you did without it, for some simple cases like the
-previous example, it adds a little bit of artiface around what could be even simpler.
-
-Enter ```SqlClosureElf```.  Yes, another elf.
-```Java
-public List<Customer> getCustomersSillyQuery(int minId, int maxId, String like) {
-   return SqlClosureElf.listFromClause(Customer.class, 
-                                       "(customer_id BETWEEN ? AND ?) AND last_name LIKE ?",
-                                       minId, maxId, "%"+like+"%");
-}
-```
-Here the ```SqlClosureElf``` is creating the ```SqlClosure``` under the covers as well as using the ```OrmElf``` to retrieve
-the list of ```Customer``` instances. Like the ```OrmElf``` the ```SqlClosureElf``` exposes lots of methods for
-common scenarios, a few are:
-* ```SqlClosureElf.insertObject(customer)```
-* ```SqlClosureElf.updateObject(customer)```
-* ```SqlClosureElf.deleteObject(customer)```
+There are much more useful methods like:
+* ```OrmElf.insertObject(customer)```
+* ```OrmElf.updateObject(customer)```
+* ```OrmElf.deleteObject(customer)```
+* ```OrmElf.refresh(customer)```
 
 ### Supported Annotations
 Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear on *member variables*.
