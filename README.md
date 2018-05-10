@@ -160,10 +160,17 @@ As a second argument to listFromClause() you can provide a where clause, to rest
 * ```OrmElf.listFromClause(Customer.class, "customer_id BETWEEN ? AND ?", minId, maxId)```
 
 There are much more useful methods like:
+
 * ```OrmElf.insertObject(customer)```
+* ```OrmElf.objectById(Class<T> type, Object... ids)```
 * ```OrmElf.updateObject(customer)```
 * ```OrmElf.deleteObject(customer)```
+* ```OrmElf.resultSetToObject(ResultSet resultSet, T target)```
+* ```OrmElf.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
 * ```OrmElf.refresh(customer)```
+* ```OrmElf.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
+
+There are also methods to work with lists of objects.
 
 ### Supported Annotations
 Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear on *member variables*.
