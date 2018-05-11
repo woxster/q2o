@@ -69,8 +69,6 @@ public class OrmReader extends OrmBase
 
       final Introspected introspected = Introspector.getIntrospected(targetClass);
       final boolean hasJoinColumns = introspected.hasSelfJoinColumn();
-      final Map<T, Object> deferredSelfJoinFkMap = (hasJoinColumns ? new HashMap<>() : null);
-      final Map<Object, T> idToTargetMap = (hasJoinColumns ? new HashMap<>() : null);
 
       final ResultSetMetaData metaData = resultSet.getMetaData();
       final int columnCount = metaData.getColumnCount();
@@ -93,34 +91,13 @@ public class OrmReader extends OrmBase
                final AttributeInfo fcInfo = introspected.getFieldColumnInfo(columnName);
                if (fcInfo.isSelfJoinField()) {
                   fcInfo.setValue(target, columnValue);
-                  deferredSelfJoinFkMap.put(target, columnValue);
                }
                else {
                   introspected.set(target, fcInfo, columnValue);
                }
             }
-
-            if (hasJoinColumns) {
-               idToTargetMap.put(introspected.getActualIds(target)[0], target);
-            }
          }
          while (resultSet.next());
-      }
-      catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-
-      try {
-         if (hasJoinColumns) {
-            // set the self join object instances based on the foreign key ids...
-            final AttributeInfo idColumn = introspected.getSelfJoinColumnInfo();
-            for (Entry<T, Object> entry : deferredSelfJoinFkMap.entrySet()) {
-               final T value = idToTargetMap.get(entry.getValue());
-               if (value != null) {
-                  introspected.set(entry.getKey(), idColumn, value);
-               }
-            }
-         }
       }
       catch (Exception e) {
          throw new RuntimeException(e);

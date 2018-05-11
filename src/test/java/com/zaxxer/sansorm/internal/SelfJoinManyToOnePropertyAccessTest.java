@@ -3,6 +3,7 @@ package com.zaxxer.sansorm.internal;
 import com.zaxxer.sansorm.OrmElf;
 import com.zaxxer.sansorm.SansOrm;
 import com.zaxxer.sansorm.SqlClosureElf;
+import com.zaxxer.sansorm.SqlElf;
 import org.assertj.core.api.Assertions;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
@@ -135,7 +136,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
    }
 
    @Test
-   public void listFromClause() throws SQLException {
+   public void listFromClauseSingleObject() throws SQLException {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       SansOrm.initializeTxNone(ds);
@@ -164,6 +165,67 @@ public class SelfJoinManyToOnePropertyAccessTest {
       }
       finally {
          SqlClosureElf.executeUpdate("DROP TABLE JOINTEST");
+      }
+   }
+
+   @Test
+   public void listFromClauseSeveralObjects() throws SQLException {
+
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      SansOrm.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()){
+         SqlClosureElf.executeUpdate(
+            " CREATE TABLE JOINTEST (" +
+               " "
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", parentId INTEGER"
+               + ", type VARCHAR(128)" +
+               ", CONSTRAINT cnst1 FOREIGN KEY(parentId) REFERENCES (id)"
+               + ")");
+
+         PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
+         parent.type = "parent";
+         OrmElf.insertObject(parent);
+
+         PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
+         child.type = "child";
+         child.parentId = parent;
+         OrmWriter.insertObject(con, child);
+
+         List<PropertyAccessedSelfJoin> objs = OrmElf.objectsFromClause(PropertyAccessedSelfJoin.class, "type like '%'");
+         objs.forEach(System.out::println);
+         Assertions.assertThat(objs).filteredOn(obj -> obj.parentId != null && obj.parentId.id == 1).size().isEqualTo(1);
+      }
+      finally {
+         SqlElf.executeUpdate("DROP TABLE JOINTEST");
+      }
+   }
+
+   /**
+    * Smoke test
+    */
+   @Test
+   public void listFromClause3() throws SQLException {
+
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      SansOrm.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()){
+         SqlElf.executeUpdate(
+            " CREATE TABLE JOINTEST (" +
+               " "
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", parentId INTEGER"
+               + ", type VARCHAR(128)" +
+               ", CONSTRAINT cnst1 FOREIGN KEY(parentId) REFERENCES (id)"
+               + ")");
+         SqlElf.executeUpdate("insert into JOINTEST (type) values ('test')");
+         SqlElf.executeUpdate("insert into JOINTEST (type) values ('test2')");
+
+         List<PropertyAccessedSelfJoin> objs = OrmElf.objectsFromClause(PropertyAccessedSelfJoin.class, null);
+         objs.forEach(System.out::println);
+      }
+      finally {
+         SqlElf.executeUpdate("DROP TABLE JOINTEST");
       }
    }
 
