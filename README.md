@@ -170,39 +170,11 @@ The following annotations are supported:
 | ``@Transient``        | n/a                                                  |
 
 
-### Automatic Data Type Conversions
-
-#### Writing
-When *writing* data to JDBC, SansOrm relies on the *driver* to perform most conversions.  SansOrm only calls ``Statement.setObject()`` internally, and expects that the driver will properly perform conversions.  For example, convert an ``int`` or ``java.lang.Integer`` into an ``INTEGER`` column type.
-
-If the ``@Convert`` annotation is present on the field in question, the appropriate user-specified ``javax.persistence.AttributeConverter`` will be called. 
-
-For fields where the ``@Enumerated`` annotation is present, SansOrm will obtain the value to persist by calling ``ordinal()`` on the ``enum`` instance in the case of ``EnumType.ORDINAL``, and ``name()`` on the ``enum`` instance in the case of ``EnumType.STRING``.
-
-#### Reading
-When *reading* data from JDBC, SansOrm relies on the *driver* to perform most conversions.  SansOrm only calls ``ResultSet.getObject()`` internally, and expects that the driver will properly perform conversions to Java types.  For example , for an ``INTEGER`` column type, return a ``java.lang.Integer`` from ``ResultSet.getObject()``.
-
-However, if the Java object type returned by the driver *does not match* the type of the mapped member field, SansOrm permits the following automatic conversions:
-
-| Driver ``getObject()`` Java Type | Mapped Member Java type                 |
-|:-------------------------------- |:--------------------------------------- |
-| ``java.lang.Integer``            | ``boolean`` (0 == ``false``, everything else ``true``)|
-| ``java.math.BigDecimal``         | ``java.math.BigInteger``  |
-| ``java.math.BigDecimal``         | ``int`` or ``java.lang.Integer`` (via cast)  |
-| ``java.math.BigDecimal``         | ``long`` or ``java.lang.Long`` (via cast) |
-| ``java.util.UUID``               | ``String``                                |
-| ``java.sql.Clob``                | ``String``                                |
-
-If the ``@Convert`` annotation is present on the field in question, the appropriate user-specified ``javax.persistence.AttributeConverter`` will be called. 
-
-For fields where the ``@Enumerated`` annotation is present, SansOrm will map ``java.lang.Integer`` values from the driver to the correct ``Enum`` value in the case of ``EnumType.ORDINAL``, and will map ``java.lang.String`` values from the driver to the correct ``Enum`` value in the case of ``EnumType.STRING``.
-
-Finally, SansOrm has specific support for the PostgreSQL ``PGobject`` and ``CITEXT`` data types.  ``CITEXT`` column values are converted to ``java.lang.String``.  ``PGobject`` "unknown type" column values have their ``getValue()`` method called, and the result is attempted to be set via reflection onto the mapped member field.
-
 ### More Advanced
 
 [Performing Joins](https://github.com/h-thurow/SansOrm/wiki/Performing-Joins)<br>
-[Help with raw JDBC](https://github.com/h-thurow/SansOrm/wiki/SqlClosure)
+[Help with raw JDBC](https://github.com/h-thurow/SansOrm/wiki/SqlClosure)<br>
+[Automatic Data Type Conversions](https://github.com/h-thurow/SansOrm/wiki/Automatic-Data-Type-Conversions)
 
 
 [license]:LICENSE
