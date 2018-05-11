@@ -105,10 +105,8 @@ Customer:
 ```Java
 @Table(name = "customer")
 public class Customer {
-   @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
-   @Column(name = "customer_id")
-   private int customer_id;
+   @Id @GeneratedValue
+   private int id;
 
    @Column(name = "last_name")
    private String lastName;
@@ -131,9 +129,22 @@ public List<Customer> getAllCustomers() {
    return OrmElf.listFromClause(Customer.class, null);
 }
 ```
-As a second argument to listFromClause() you can provide a where clause, to restrict the found objects:
+As a second argument to ```OrmElf.listFromClause()``` you can provide a where clause, to restrict the found objects:
+```
+OrmElf.listFromClause(Customer.class, "customer_id BETWEEN ? AND ?", minId, maxId)
+```
 
-* ```OrmElf.listFromClause(Customer.class, "customer_id BETWEEN ? AND ?", minId, maxId)```
+Now lets store a new customer
+```
+Customer customer = new Customer();
+customer.setFirstName = "...";
+customer.setLastName = "...";
+OrmElf.insertObject(customer);
+```
+The very useful thing that happens here is that after storing the object you can immediately access the id:
+```
+assertTrue(customer.getId() != 0);
+```
 
 There are much more useful methods like:
 
