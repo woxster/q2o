@@ -5,7 +5,16 @@
 [![][Maven Central img]][Maven Central]
 [![][Javadocs img]][Javadocs]
 
-<h3>Download</h3>
+## Preface
+
+SansOrm is a "No-ORM" sane Java-to-SQL/SQL-to-Java object mapping library. It was created out of the same conviction as expressed in articles like these:
+
+[OrmHate](https://martinfowler.com/bliki/OrmHate.html) (by Martin Fowler)<br>
+[ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
+[ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
+[Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
+
+## Download
 
 <pre>
 &lt;dependency>
@@ -27,17 +36,6 @@ The anyway limited support for self joins was broken.
 Numerous tests added to stabilize further development.
 
 The name of the fork will propably change in the near future.
-
-## Preface
-
-Even if you do "pure JDBC", you will find SansOrm's utility classes extremely useful.  SansOrm is a "No-ORM" sane
-Java-to-SQL/SQL-to-Java object mapping library.  It was created to rid my company's product of Hibernate.  After about
-10 years of using ORMs  in various projects, I came to the same conclusion as others: 
-[ORM is an Anti-Pattern](https://github.com/brettwooldridge/SansOrm/wiki/ORM-is-an-anti-pattern).
-
-*  Standard ORMs do not scale.
-*  Don't fear the SQL.
-*  What are you, lazy?  Read the page.
 
 ## SansOrm
 
