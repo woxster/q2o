@@ -222,8 +222,8 @@ Finally, SansOrm has specific support for the PostgreSQL ``PGobject`` and ``CITE
 [license]:LICENSE
 [license img]:https://img.shields.io/badge/license-Apache%202-blue.svg
    
-[Maven Central]:https://maven-badges.herokuapp.com/maven-central/com.zaxxer/sansorm
-[Maven Central img]:https://maven-badges.herokuapp.com/maven-central/com.zaxxer/sansorm/badge.svg
+[Maven Central]:https://maven-badges.herokuapp.com/maven-central/com.github.h-thurow/sansorm
+[Maven Central img]:https://maven-badges.herokuapp.com/maven-central/com.github.h-thurow/sansorm/badge.svg
    
 [Javadocs]:http://javadoc.io/doc/com.github.h-thurow/sansorm/3.8
 [Javadocs img]:http://javadoc.io/badge/com.github.h-thurow/sansorm.svg
