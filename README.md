@@ -1,49 +1,17 @@
-# SansORM
-
-[![][Build Status img]][Build Status]
 [![][license img]][license]
 [![][Maven Central img]][Maven Central]
 [![][Javadocs img]][Javadocs]
 
-<h3>Download</h3>
+# SansORM
 
-<pre>
-&lt;dependency>
-    &lt;groupId>com.github.h-thurow&lt;/groupId>
-    &lt;artifactId>sansorm&lt;/artifactId>
-    &lt;version>3.8&lt;/version>
-&lt;/dependency>
-</pre>
-or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thurow%22%20AND%20a%3A%22sansorm%22>download from here</a>.
+SansOrm is a "No-ORM" sane Java-to-SQL/SQL-to-Java object mapping library. It was created out of the same conviction as expressed in articles like these:
 
-## Intention of this fork
+[OrmHate (by Martin Fowler)](https://martinfowler.com/bliki/OrmHate.html)<br>
+[ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
+[ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
+[Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
-Support not only field access but property access to. With property access the class's getters and setters are called to read or write values. With field access the fields are read and written to directly. So if you need more control over the process of reading or writing set access Type explicitely with `@Access` annotation or annotate getters, not fields (do not mix the style within one class). If there is no @Access annotation found the place of the annotations decide upon the access type.
-
-Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with SansOrm. Remember SansOrm is not an ORM frame work so only a small subset of JPA annotations are really supported (see below).
-
-The anyway limited support for self joins was broken.
-
-Numerous tests added to stabilize further development.
-
-The name of the fork will propably change in the near future.
-
-## Preface
-
-Even if you do "pure JDBC", you will find SansOrm's utility classes extremely useful.  SansOrm is a "No-ORM" sane
-Java-to-SQL/SQL-to-Java object mapping library.  It was created to rid my company's product of Hibernate.  After about
-10 years of using ORMs  in various projects, I came to the same conclusion as others: 
-[ORM is an Anti-Pattern](https://github.com/brettwooldridge/SansOrm/wiki/ORM-is-an-anti-pattern).
-
-TL;DR:
-
-*  Standard ORMs do not scale.
-*  Don't fear the SQL.
-*  What are you, lazy?  Read the page.
-
-## SansOrm
-
-SansOrm is not an ORM.  SansOrm library will...
+SansOrm will...
 
 * Massively decrease the boilerplate code you write even if you use pure SQL (and no Java objects)
 * Persist and retrieve simple annotated Java objects, and lists thereof, _without you writing SQL_
@@ -65,11 +33,17 @@ You could consider the philosophy of SansOrm to be SQL-first.  That is, think ab
 which is required by SansOrm for mapping.  In the future, SansOrm may support a purely 100% annotation-based type
 mapping but this would merely be a concession to MySQL and in no way desirable.*
 
-----------------------------------------------------------------
+## Intention of this fork
 
-<img src="https://github.com/brettwooldridge/SansOrm/wiki/quote1.png"/>
+Support not only field access but property access to. With property access the class's getters and setters are called to read or write values. With field access the fields are read and written to directly. So if you need more control over the process of reading or writing set access type explicitely with `@Access` annotation or annotate getters, not fields (do not mix the style within one class). If there is no @Access annotation found the place of the annotations decide upon the access type.
 
-----------------------------------------------------------------
+Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with SansOrm. Remember SansOrm is not an ORM frame work so only a small subset of JPA annotations are really supported (see below).
+
+The anyway limited support for self joins was broken.
+
+Numerous tests added to stabilize further development.
+
+The name of the fork will propably change in the near future.
 
 ### Initialization
 
@@ -88,152 +62,9 @@ SansOrm.initializeTxCustom(ds, tm, ut);
 ```
 We strongly recommend using the embedded ``TransactionManager`` via the the second initializer above.  If you have an existing external ``TransactionManager``, of course you can use that.
 
-The embedded ``TransactionManager`` conserves database Connections when nested methods are called, alleviating the need to pass ``Connection`` instances around manually.  For example:
-```Java
-List<User> getUsers(String lastNamePrefix) {
-   return SqlClosure.sqlExecute( connection -> {       // <-- Transaction started, Connection #1 acquired.
-      final List<Users> users =
-         OrmElf.listFromClause(connection, User.class, "last_name LIKE ?", lastNamePrefix + "%");
-
-      return populateRoles(users);
-   }
-   // Transaction automatically committed at the end of the execute() call.
-}
-
-List<User> populatePermissions(final List<User> users) {
-   return SqlClosure.sqlExecute( connection -> {       // <-- Transaction in-progress, Connection #1 re-used.
-      for (User user : users) {
-         user.setPermissions(OrmElf.listFromClause(connection, Permission.class, "user_id=?", user.getId());
-      }
-      return users;
-   }
-   // Transaction will be committed at the end of the execute() call in getUsers() above.
-}
-```
-The ``TransactionManager`` uses a ``ThreadLocal`` variable to "flow" the transaction across nested calls, allowing all work to be committed as a single unit of work.  Additionally, ``Connection`` resources are conserved.  Without a ``TransactionManager``, the above code would require two ``Connections`` to be borrowed from a pool.
-
-### SqlClosure
-
-We'll work from simple to complex.  In the first examples, the savings in code will not seem that great, but as we go
-through the examples you'll notice the code using SansOrm vs. pure Java/JDBC gets more and more compact.
-
-SansOrm provides you with two important classes.  Let's look at the first, which has nothing to do with Java objects or 
-persistence.  This class just makes your life easier when writing raw SQL (JDBC).  It is called ```SqlClosure```.
-
-Typical Java pure JDBC with [mostly] correct resource cleanup:
-```Java
-public int getUserCount(String usernameWildcard) throws SQLException {
-   Connection connection = null;
-   try {
-      connection = dataSource.getConnection();
-      PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE username LIKE ?");
-      stmt.setString(1, usernameWildcard);
-
-      int count = 0;
-      ResultSet resultSet = stmt.executeQuery();
-      if (resultSet.next() {
-         count = resultSet.getInt(1);
-      }
-      resultSet.close();
-      stmt.close();
-      return count;
-   }
-   finally {
-      if (connection != null) {
-         try {
-            connection.close();
-         }
-         catch (SQLException e) {
-            // ignore
-         }
-      }
-   }
-}
-```
-
-Now the same code using SansOrm's ```SqlClosure``` (with _completely_ correct resource cleanup):
-```Java
-public int getUserCount(final String usernameWildcard) {
-   return new SqlClosure<Integer>() {
-      public Integer execute(Connection conn) {
-          PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM users WHERE username LIKE ?");
-          stmt.setString(1, usernameWildcard);
-          ResultSet resultSet = stmt.executeQuery();
-          return (resultSet.next() ? resultSet.getInt(1) : 0;
-      }
-   }.execute();
-}
-```
-Important points:
-* The SqlClosure class is a generic (templated) class
-* The SqlClosure class will call your ```execute(Connection)``` method with a provided connection
-   * The provided connection will be closed quietly automatically (i.e. exceptions in ```connection.close()``` will be eaten)
-* SqlExceptions thrown from the body of the ```execute()``` method will be wrapped in a RuntimeException
-
-**Now with a Java 8 Lambda** <br>
-```java
-public int getUserCount(final String usernameWildcard) {
-   return SqlClosure.sqlExecute(connection -> {
-      PreparedStatement stmt = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE username LIKE ?"));
-      stmt.setString(1, usernameWildcard);
-      ResultSet resultSet = stmt.executeQuery();
-      return (resultSet.next() ? resultSet.getInt(1) : 0;
-   });
-}
-```
-Note that the lambda automatically closes Statement and ResultSet resources.
-
-As mentioned above, the ```SqlClosure``` class is generic, and the signature looks something like this:
-```Java
-public class T SqlClosure<T> {
-   public abstract T execute(Connection);
-   public T execute();
-   public static <V> V sqlExecute(final SqlVarArgsFunction<V> functional, final Object... args);
-}
-```
-```SqlClosure``` is typically constructed as an anonymous class, and you must provide the implementation of 
-the ```execute(Connection connection)``` method.  Invoking the ```execute()``` method (no parameters) will create a
-Connection and invoke your overridden method, cleaning up resources in a finally, and returning the value
-returned by the overridden method.  Of course you don't have to execute the closure right away; you could stick it into 
-a queue for later execution, pass it to another method, etc.  But typically you'll run execute it right away.
-
-
-**Let's look at an example of returning a complex type:**
-```Java
-public Set<String> getAllUsernames() {
-   return new SqlClosure<Set<String>>() {
-      public Set<String> execute(Connection connection) {
-         Set<String> usernames = new HashSet<>();
-         Statement statement = connection.createStatement();
-         ResultSet resultSet = statement.executeQuery("SELECT username FROM users");
-         while (resultSet.next()) {
-            usernames.add(resultSet.getString("username"));
-         }
-         return usernames;
-      }
-   }.execute();
-}
-```
-**And again with Java 8 Lambda** <br>
-```Java
-public Set<String> getAllUsernames() {
-   return SqlClosure.sqlExecute(connection -> {
-      Set<String> usernames = new HashSet<>();
-      Statement statement = connection.createStatement();
-      ResultSet resultSet = statement.executeQuery("SELECT username FROM users");
-      while (resultSet.next()) {
-         usernames.add(resultSet.getString("username"));
-      }
-      return usernames;
-   });
-}
-```
-Even if you use no other features of SansOrm, the ```SqlClosure``` class alone can really help to cleanup and simplify
-your code.
+The embedded ``TransactionManager`` conserves database Connections when nested methods are called, alleviating the need to pass ``Connection`` instances around manually. The ``TransactionManager`` uses a ``ThreadLocal`` variable to "flow" the transaction across nested calls, allowing all work to be committed as a single unit of work.
 
 ### Object Mapping
-While the ```SqlClosure``` is extremly useful and helps reduce the boilerplate code that you write, we know why you're 
-here: _object mapping_.  Let's jump right in with some examples.
 
 Take this database table:
 ```SQL
@@ -250,10 +81,8 @@ Customer:
 ```Java
 @Table(name = "customer")
 public class Customer {
-   @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
-   @Column(name = "customer_id")
-   private int customer_id;
+   @Id @GeneratedValue
+   private int id;
 
    @Column(name = "last_name")
    private String lastName;
@@ -269,73 +98,45 @@ public class Customer {
    }
 }
 ```
-Here we introduce another SansOrm class, ```OrmElf```.  What is ```OrmElf```?  Well, an 'Elf' is a 'Helper'
+Here we introduce the most important SansOrm class, ```OrmElf```.  What is ```OrmElf```?  Well, an 'Elf' is a 'Helper'
 but with fewer letters to type.  Besides, who doesn't like Elves?  Let's look at how the ```OrmElf``` can help us:
 ```Java
 public List<Customer> getAllCustomers() {
-   return SqlClosure.sqlExecute( connection -> {
-      PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM customer");
-      return OrmElf.statementToList(pstmt, Customer.class);
-   });
+   return OrmElf.listFromClause(Customer.class, null);
 }
 ```
-The OrmElf will execute the ```PreparedStatement``` and using the annotations in the ```Customer``` class will
-construct a ```List``` of ```Customer``` instances whose values come from the ```ResultSet```.  *Note that
-```OrmElf``` will set the properties directly on the object, it does not use getter/setters.  Note also that
-```autoClose()``` was not necessary, the OrmElf will close the statement automatically.*
-
-Of course, in addition to querying, the ```OrmElf``` can perform basic operations such these (where ```customer```
-is a ```Customer```):
-* ```OrmElf.insertObject(connection, customer)```
-* ```OrmElf.updateObject(connection, customer)```
-* ```OrmElf.deleteObject(connection, customer)```
-
-Let's make another example, somewhat silly, but showing how queries can be parameterized:
-```Java
-public List<Customer> getCustomersSillyQuery(final int minId, final int maxId, final String like) {
-   return SqlClosure.sqlExecute( conn -> {
-      PreparedStatement pstmt = conn.prepareStatement(
-         "SELECT * FROM customer WHERE (customer_id BETWEEN ? AND ?) AND last_name LIKE ?"));
-      return OrmElf.statementToList(pstmt, Customer.class, minId, maxId, like+"%");
-   });
-}
+As a second argument to ```OrmElf.listFromClause()``` you can provide a where clause, to restrict the found objects:
 ```
-Well, that's fairly handy. Note the use of varargs. Following the class parameter, zero or more parameters can be passed,
-and will be used to set query parameters (in order) on the ```PreparedStatement```.
-
-Materializing object instances from rows is so common, there are some further things the 'Elf' can help with.  Let's do 
-the same thing as above, but using another helper method.
-```Java
-public List<Customer> getCustomersSillyQuery(final int minId, final int maxId, final String like) {
-   return SqlClosure.sqlExecute( connection -> {
-      return OrmElf.listFromClause(connection, Customer.class,
-                                   "(customer_id BETWEEN ? AND ?) AND last_name LIKE ?",
-                                   minId, maxId, like+"%");
-   });
-}
+OrmElf.listFromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
 ```
-Now we're cooking with gas!  The ```OrmElf``` will use the ```Connection``` that is passed, along with the annotations
-on the ```Customer``` class to determine which table and columns to SELECT, and use the passed `clause` as the
-WHERE portion of the statement (passing 'WHERE' explicitly is also supported), and finally it will use the passed 
-parameters to set the query parameters.
 
-While the ```SqlClosure``` is great, and you'll come to wonder how you did without it, for some simple cases like the
-previous example, it adds a little bit of artiface around what could be even simpler.
-
-Enter ```SqlClosureElf```.  Yes, another elf.
-```Java
-public List<Customer> getCustomersSillyQuery(int minId, int maxId, String like) {
-   return SqlClosureElf.listFromClause(Customer.class, 
-                                       "(customer_id BETWEEN ? AND ?) AND last_name LIKE ?",
-                                       minId, maxId, "%"+like+"%");
-}
+Now lets store a new customer
 ```
-Here the ```SqlClosureElf``` is creating the ```SqlClosure``` under the covers as well as using the ```OrmElf``` to retrieve
-the list of ```Customer``` instances. Like the ```OrmElf``` the ```SqlClosureElf``` exposes lots of methods for
-common scenarios, a few are:
-* ```SqlClosureElf.insertObject(customer)```
-* ```SqlClosureElf.updateObject(customer)```
-* ```SqlClosureElf.deleteObject(customer)```
+Customer customer = new Customer();
+customer.setFirstName = "...";
+customer.setLastName = "...";
+OrmElf.insertObject(customer);
+```
+The very useful thing that happens here is that after storing the object you can immediately access its id:
+```
+assertTrue(customer.getId() != 0);
+```
+While you are working with the customer object "offline" the object might change in the database. How can you update your object so it reflects the current state?
+```
+customer = OrmElf.refresh(customer)
+```
+Note that the returned customer object is identical with the one you supplied as argument or null in case it was deleted in the meantime.
+
+There are much more useful methods like:
+
+* ```OrmElf.objectById(Class<T> type, Object... ids)```
+* ```OrmElf.updateObject(customer)```
+* ```OrmElf.deleteObject(customer)```
+* ```OrmElf.resultSetToObject(ResultSet resultSet, T target)```
+* ```OrmElf.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
+* ```OrmElf.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
+
+Many of these methods can also work with lists of objects.
 
 ### Supported Annotations
 Except for the ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear on *member variables*.
@@ -356,48 +157,29 @@ The following annotations are supported:
 | ``@Transient``        | n/a                                                  |
 
 
-### Automatic Data Type Conversions
-
-#### Writing
-When *writing* data to JDBC, SansOrm relies on the *driver* to perform most conversions.  SansOrm only calls ``Statement.setObject()`` internally, and expects that the driver will properly perform conversions.  For example, convert an ``int`` or ``java.lang.Integer`` into an ``INTEGER`` column type.
-
-If the ``@Convert`` annotation is present on the field in question, the appropriate user-specified ``javax.persistence.AttributeConverter`` will be called. 
-
-For fields where the ``@Enumerated`` annotation is present, SansOrm will obtain the value to persist by calling ``ordinal()`` on the ``enum`` instance in the case of ``EnumType.ORDINAL``, and ``name()`` on the ``enum`` instance in the case of ``EnumType.STRING``.
-
-#### Reading
-When *reading* data from JDBC, SansOrm relies on the *driver* to perform most conversions.  SansOrm only calls ``ResultSet.getObject()`` internally, and expects that the driver will properly perform conversions to Java types.  For example , for an ``INTEGER`` column type, return a ``java.lang.Integer`` from ``ResultSet.getObject()``.
-
-However, if the Java object type returned by the driver *does not match* the type of the mapped member field, SansOrm permits the following automatic conversions:
-
-| Driver ``getObject()`` Java Type | Mapped Member Java type                 |
-|:-------------------------------- |:--------------------------------------- |
-| ``java.lang.Integer``            | ``boolean`` (0 == ``false``, everything else ``true``)|
-| ``java.math.BigDecimal``         | ``java.math.BigInteger``  |
-| ``java.math.BigDecimal``         | ``int`` or ``java.lang.Integer`` (via cast)  |
-| ``java.math.BigDecimal``         | ``long`` or ``java.lang.Long`` (via cast) |
-| ``java.util.UUID``               | ``String``                                |
-| ``java.sql.Clob``                | ``String``                                |
-
-If the ``@Convert`` annotation is present on the field in question, the appropriate user-specified ``javax.persistence.AttributeConverter`` will be called. 
-
-For fields where the ``@Enumerated`` annotation is present, SansOrm will map ``java.lang.Integer`` values from the driver to the correct ``Enum`` value in the case of ``EnumType.ORDINAL``, and will map ``java.lang.String`` values from the driver to the correct ``Enum`` value in the case of ``EnumType.STRING``.
-
-Finally, SansOrm has specific support for the PostgreSQL ``PGobject`` and ``CITEXT`` data types.  ``CITEXT`` column values are converted to ``java.lang.String``.  ``PGobject`` "unknown type" column values have their ``getValue()`` method called, and the result is attempted to be set via reflection onto the mapped member field.
-
 ### More Advanced
 
-Just page as provided just a taste, so go on over to the [Advanced Usage](https://github.com/brettwooldridge/SansOrm/blob/master/doc/AdvancedUsage.md) page to go deep.
+[Performing Joins](https://github.com/h-thurow/SansOrm/wiki/Performing-Joins)<br>
+[Help with raw JDBC](https://github.com/h-thurow/SansOrm/wiki/SqlClosure)<br>
+[Automatic Data Type Conversions](https://github.com/h-thurow/SansOrm/wiki/Automatic-Data-Type-Conversions)
 
+## Download
 
-[Build Status]:https://travis-ci.org/brettwooldridge/SansOrm
-[Build Status img]:https://travis-ci.org/brettwooldridge/SansOrm.svg?branch=master
+<pre>
+&lt;dependency>
+    &lt;groupId>com.github.h-thurow&lt;/groupId>
+    &lt;artifactId>sansorm&lt;/artifactId>
+    &lt;version>3.8&lt;/version>
+&lt;/dependency>
+</pre>
+or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thurow%22%20AND%20a%3A%22sansorm%22>download from here</a>.
+
 
 [license]:LICENSE
 [license img]:https://img.shields.io/badge/license-Apache%202-blue.svg
    
-[Maven Central]:https://maven-badges.herokuapp.com/maven-central/com.zaxxer/sansorm
-[Maven Central img]:https://maven-badges.herokuapp.com/maven-central/com.zaxxer/sansorm/badge.svg
+[Maven Central]:https://maven-badges.herokuapp.com/maven-central/com.github.h-thurow/sansorm
+[Maven Central img]:https://maven-badges.herokuapp.com/maven-central/com.github.h-thurow/sansorm/badge.svg
    
-[Javadocs]:http://javadoc.io/doc/com.zaxxer/sansorm
-[Javadocs img]:http://javadoc.io/badge/com.zaxxer/sansorm.svg
+[Javadocs]:http://javadoc.io/doc/com.github.h-thurow/sansorm/3.8
+[Javadocs img]:http://javadoc.io/badge/com.github.h-thurow/sansorm.svg
