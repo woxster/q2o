@@ -4,8 +4,6 @@
 [![][Maven Central img]][Maven Central]
 [![][Javadocs img]][Javadocs]
 
-## Preface
-
 SansOrm is a "No-ORM" sane Java-to-SQL/SQL-to-Java object mapping library. It was created out of the same conviction as expressed in articles like these:
 
 [OrmHate](https://martinfowler.com/bliki/OrmHate.html) (by Martin Fowler)<br>
