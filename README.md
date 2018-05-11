@@ -212,4 +212,4 @@ Finally, SansOrm has specific support for the PostgreSQL ``PGobject`` and ``CITE
 [Maven Central img]:https://maven-badges.herokuapp.com/maven-central/com.zaxxer/sansorm/badge.svg
    
 [Javadocs]:http://javadoc.io/doc/com.github.h-thurow/sansorm/3.8
-[Javadocs img]:http://javadoc.io/doc/com.github.h-thurow/sansorm/sansorm.svg
+[Javadocs img]:http://javadoc.io/badge/com.github.h-thurow/sansorm.svg
