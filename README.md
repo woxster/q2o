@@ -1,6 +1,5 @@
 # SansORM
 
-[![][Build Status img]][Build Status]
 [![][license img]][license]
 [![][Maven Central img]][Maven Central]
 [![][Javadocs img]][Javadocs]
@@ -213,9 +212,6 @@ Finally, SansOrm has specific support for the PostgreSQL ``PGobject`` and ``CITE
 [Performing Joins](https://github.com/h-thurow/SansOrm/wiki/Performing-Joins)<br>
 [Help with raw JDBC](https://github.com/h-thurow/SansOrm/wiki/SqlClosure)
 
-
-[Build Status]:https://travis-ci.org/brettwooldridge/SansOrm
-[Build Status img]:https://travis-ci.org/brettwooldridge/SansOrm.svg?branch=master
 
 [license]:LICENSE
 [license img]:https://img.shields.io/badge/license-Apache%202-blue.svg
