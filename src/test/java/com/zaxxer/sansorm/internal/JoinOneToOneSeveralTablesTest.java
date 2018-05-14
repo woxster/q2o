@@ -21,9 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.Collection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -73,6 +71,15 @@ public class JoinOneToOneSeveralTablesTest {
       public void setType(String type) {
          this.type = type;
       }
+
+      @Override
+      public String toString() {
+         return "Left{" +
+            "id=" + id +
+            ", type='" + type + '\'' +
+            ", right=" + right +
+            '}';
+      }
    }
 
    @Entity @Table(name = "RIGHT_TABLE")
@@ -86,6 +93,13 @@ public class JoinOneToOneSeveralTablesTest {
 
       public void setId(int id) {
          this.id = id;
+      }
+
+      @Override
+      public String toString() {
+         return "Right{" +
+            "id=" + id +
+            '}';
       }
    }
 
@@ -259,6 +273,41 @@ public class JoinOneToOneSeveralTablesTest {
 //         System.out.println(left);
          assertNotNull(left.getRight());
          assertEquals(1, left.getRight().getId());
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+         throw e;
+      }
+      finally {
+         SqlElf.executeUpdate("DROP TABLE LEFT_TABLE");
+         SqlElf.executeUpdate("DROP TABLE RIGHT_TABLE");
+      }
+   }
+
+   @Test
+   public void leftJoin2Tables() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      SansOrm.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()){
+         SqlElf.executeUpdate(
+            "CREATE TABLE LEFT_TABLE ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", type VARCHAR(128)"
+               + ")");
+
+         SqlElf.executeUpdate(
+            " CREATE TABLE RIGHT_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", CONSTRAINT cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ")");
+
+         SqlElf.executeUpdate("insert into LEFT_TABLE (type) values('left')");
+
+         Left left = OrmElf.objectFromSelect(Left.class, "SELECT * FROM LEFT_TABLE" +
+            " left join RIGHT_TABLE on LEFT_TABLE.id = RIGHT_TABLE.id" +
+            " where LEFT_TABLE.id = ?", 1);
+
+         assertEquals("Left{id=1, type='left', right=null}", left.toString());
       }
       catch (Exception e) {
          e.printStackTrace();
@@ -652,6 +701,109 @@ public class JoinOneToOneSeveralTablesTest {
             return OrmElf.statementToObject(pstmt, LeftOneToMany.class, 1);
          });
 //         System.out.println(left);
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+         throw e;
+      }
+      finally {
+         SqlElf.executeUpdate("DROP TABLE LEFT_TABLE");
+         SqlElf.executeUpdate("DROP TABLE RIGHT_TABLE");
+      }
+   }
+
+   @Entity(name = "LEFT_TABLE")
+   public static class Left2 {
+      private int id;
+      private String type;
+      private Right2 right;
+
+      @Id @GeneratedValue
+      public int getId() {
+         return id;
+      }
+
+      public void setId(int id) {
+         this.id = id;
+      }
+
+      @OneToOne @JoinColumn(name = "id")
+      public Right2 getRight() {
+         return right;
+      }
+
+      public void setRight(Right2 right) {
+         this.right = right;
+      }
+
+      // TODO Support properties/fields with no or only @Basic annotation
+      @Column(name = "type")
+      public String getType() {
+         return type;
+      }
+
+      public void setType(String type) {
+         this.type = type;
+      }
+
+      @Override
+      public String toString() {
+         return "Left{" +
+            "id=" + id +
+            ", type='" + type + '\'' +
+            ", right=" + right +
+            '}';
+      }
+   }
+
+   @Entity(name = "RIGHT_TABLE")
+   public static class Right2 {
+      private int id;
+
+      @Id
+      public int getId() {
+         return id;
+      }
+
+      public void setId(int id) {
+         this.id = id;
+      }
+
+      @Override
+      public String toString() {
+         return "Right{" +
+            "id=" + id +
+            '}';
+      }
+   }
+
+   /**
+    * Support for entity name element.
+    */
+   @Test
+   public void leftJoin2TablesEntityName() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      SansOrm.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()){
+         SqlElf.executeUpdate(
+            "CREATE TABLE LEFT_TABLE ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", type VARCHAR(128)"
+               + ")");
+
+         SqlElf.executeUpdate(
+            " CREATE TABLE RIGHT_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", CONSTRAINT cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ")");
+
+         SqlElf.executeUpdate("insert into LEFT_TABLE (type) values('left')");
+
+         Left2 left = OrmElf.objectFromSelect(Left2.class, "SELECT * FROM LEFT_TABLE" +
+            " left join RIGHT_TABLE on LEFT_TABLE.id = RIGHT_TABLE.id" +
+            " where LEFT_TABLE.id = ?", 1);
+
+         assertEquals("Left{id=1, type='left', right=null}", left.toString());
       }
       catch (Exception e) {
          e.printStackTrace();

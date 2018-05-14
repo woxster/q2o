@@ -524,16 +524,6 @@ public final class OrmElf
    }
 
    /**
-    * @see #objectFromSelect(Class, String, Object...) 
-    */
-   public static <T> T objectFromSelect(Class<T> clazz, String select) {
-      return SqlClosure.sqlExecute(connection -> {
-         PreparedStatement stmnt = connection.prepareStatement(select);
-         return OrmElf.statementToObject(stmnt, clazz);
-      });
-   }
-
-   /**
     * To select only specified fields of an object or to perform OneToOne or ManyToOne joins.
     *
     * @param clazz the class of the object to query.
@@ -549,12 +539,11 @@ public final class OrmElf
       });
    }
 
-   /**
-    * @see #objectFromSelect(Class, String, Object...)
-    */
-   public static <T> T objectFromSelect(Connection connection, Class<T> clazz, String select) throws SQLException {
-      PreparedStatement stmnt = connection.prepareStatement(select);
-      return OrmElf.statementToObject(stmnt, clazz);
+   public static <T> List<T> objectsFromSelect(Class<T> clazz, String select, Object... args) {
+      return SqlClosure.sqlExecute(connection -> {
+         PreparedStatement stmnt = connection.prepareStatement(select);
+         return OrmElf.statementToObjects(stmnt, clazz, args);
+      });
    }
 
    /**
@@ -563,5 +552,10 @@ public final class OrmElf
    public static <T> T objectFromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
       PreparedStatement stmnt = connection.prepareStatement(select);
       return OrmElf.statementToObject(stmnt, clazz, args);
+   }
+
+   public static <T> List<T> objectsFromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
+      PreparedStatement stmnt = connection.prepareStatement(select);
+      return OrmElf.statementToObjects(stmnt, clazz, args);
    }
 }

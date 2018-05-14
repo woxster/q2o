@@ -275,6 +275,9 @@ public class SelfJoinManyToOnePropertyAccessTest {
       }
    }
 
+   /**
+    * Fails because the current implementation can not determine which value corresponds with which of the both instances.
+    */
    @Test
    public void fullyLoadChildAndParent() {
       JdbcDataSource ds = TestUtils.makeH2DataSource();

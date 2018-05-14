@@ -59,7 +59,7 @@ abstract class AttributeInfo
          if (toBeConsidered) {
             processFieldAnnotations();
             extractTableName();
-            extractOwnerClassTablename();
+            extractOwnerClassTableName();
             this.fullyQualifiedDelimitedName =
                delimitedTableName.isEmpty() ? delimitedName : delimitedTableName + "." + delimitedName;
             actualType = actualType == null ? type : actualType;
@@ -106,7 +106,7 @@ abstract class AttributeInfo
       }
    }
 
-   private void extractOwnerClassTablename() {
+   private void extractOwnerClassTableName() {
       Entity entity = ownerClazz.getAnnotation(Entity.class);
       if (entity != null) {
          ownerClassTableName = entity.name();

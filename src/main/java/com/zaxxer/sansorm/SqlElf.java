@@ -107,6 +107,10 @@ public class SqlElf {
       return OrmReader.statementToResultSet(connection.prepareStatement(sql), args);
    }
 
+   public static ResultSet executeQuery(String sql, Object... args) {
+      return SqlClosure.sqlExecute(connection -> OrmReader.statementToResultSet(connection.prepareStatement(sql), args));
+   }
+
    public static int executeUpdate(Connection connection, String sql, Object... args) throws SQLException
    {
       return OrmWriter.executeUpdate(connection, sql, args);

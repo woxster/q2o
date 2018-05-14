@@ -444,10 +444,16 @@ public final class Introspected {
     * Get the table name specified by the {@link Table} annotation.
     */
    private void extractClassTableName() {
-      final Table tableAnnotation = clazz.getAnnotation(Table.class);
       String tblname = "";
-      if (tableAnnotation != null) {
-         tblname = tableAnnotation.name();
+      final Entity entity = clazz.getAnnotation(Entity.class);
+      if (entity != null && !entity.name().isEmpty()) {
+         tblname = entity.name();
+      }
+      else {
+         final Table tableAnnotation = clazz.getAnnotation(Table.class);
+         if (tableAnnotation != null && !tableAnnotation.name().isEmpty()) {
+            tblname = tableAnnotation.name();
+         }
       }
       this.delimitedTableName = tblname.isEmpty()
          ? clazz.getSimpleName() // See AttributeInfo#extractTableName()
