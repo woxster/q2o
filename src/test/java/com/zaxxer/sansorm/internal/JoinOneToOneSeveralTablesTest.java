@@ -410,7 +410,7 @@ public class JoinOneToOneSeveralTablesTest {
          this.farRightId = farRightId;
       }
 
-      @OneToOne @JoinColumn(name = "rightId")
+      @OneToOne @JoinColumn(name = "farRightId")
       public FarRight1 getFarRight1() {
          return farRight1;
       }
