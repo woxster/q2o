@@ -16,7 +16,6 @@
 
 package com.zaxxer.sansorm.internal;
 
-import javax.persistence.JoinColumn;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
@@ -104,7 +103,7 @@ public class OrmWriter extends OrmBase
 //      if (hasSelfJoinColumn) {
 //         final AttributeInfo selfJoinfcInfo = introspected.getSelfJoinColumnInfo();
 //         final String idColumn = idColumnNames[0];
-//         final StringBuilder sql = new StringBuilder("UPDATE ").append(introspected.getTableName())
+//         final StringBuilder sql = new StringBuilder("UPDATE ").append(introspected.getDelimitedTableName())
 //            .append(" SET ").append(selfJoinfcInfo.getDelimitedColumnName())
 //            .append("=? WHERE ").append(idColumn).append("=?");
 //         try (final PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
@@ -173,7 +172,7 @@ public class OrmWriter extends OrmBase
       final Introspected introspected = Introspector.getIntrospected(clazz);
 
       final StringBuilder sql = new StringBuilder()
-        .append("DELETE FROM ").append(introspected.getTableName())
+        .append("DELETE FROM ").append(introspected.getDelimitedTableName())
         .append(" WHERE ");
 
       final String[] idColumnNames = introspected.getIdColumnNames();
@@ -206,7 +205,7 @@ public class OrmWriter extends OrmBase
                                                              final AttributeInfo[] fcInfos) throws SQLException
    {
       final String sql = createStatementCache.computeIfAbsent(introspected, key -> {
-         final String tableName = introspected.getTableName();
+         final String tableName = introspected.getDelimitedTableName();
          final StringBuilder sqlSB = new StringBuilder("INSERT INTO ").append(tableName).append('(');
          final StringBuilder sqlValues = new StringBuilder(") VALUES (");
 
@@ -259,7 +258,7 @@ public class OrmWriter extends OrmBase
     * @return newly created statement
     */
    private static String createSqlForUpdate(final Introspected introspected, final AttributeInfo[] fieldColumnInfos, final Set<String> excludedColumns) {
-      final StringBuilder sqlSB = new StringBuilder("UPDATE ").append(introspected.getTableName()).append(" SET ");
+      final StringBuilder sqlSB = new StringBuilder("UPDATE ").append(introspected.getDelimitedTableName()).append(" SET ");
       for (final AttributeInfo fcInfo : fieldColumnInfos) {
 //         if (excludedColumns == null || !excludedColumns.contains(column)) {
          if (excludedColumns == null || !isIgnoredColumn(excludedColumns, fcInfo.getColumnName())) {

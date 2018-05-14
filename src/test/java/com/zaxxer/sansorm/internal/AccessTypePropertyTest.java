@@ -25,7 +25,7 @@ public class AccessTypePropertyTest {
 
    @Test
    public void explicitPropertyAccess() throws IllegalAccessException {
-      @Access(value = AccessType.PROPERTY)
+      @Table(name = "TEST") @Access(value = AccessType.PROPERTY)
       class Test {
          private String field;
 
@@ -47,7 +47,7 @@ public class AccessTypePropertyTest {
 
    @Test
    public void explicitPropertyAccessFieldWithoutAccessors() {
-      @Access(value = AccessType.PROPERTY)
+      @Table(name = "TEST") @Access(value = AccessType.PROPERTY)
       class Test {
          private String field;
          private String fieldWithoutAccessors;
@@ -85,7 +85,7 @@ public class AccessTypePropertyTest {
          }
       }
 
-      @Access(value = AccessType.PROPERTY)
+      @Table(name = "TEST") @Access(value = AccessType.PROPERTY)
       class SubTest extends Test { }
 
       Introspected introspected = new Introspected(SubTest.class);
@@ -141,7 +141,7 @@ public class AccessTypePropertyTest {
          }
       }
 
-      @Access(value = AccessType.PROPERTY)
+      @Table(name = "TEST") @Access(value = AccessType.PROPERTY)
       class SubTest extends Test {
          public void setId(int id) {
             super.id = ++id;
@@ -195,6 +195,7 @@ public class AccessTypePropertyTest {
 
    @Test
    public void defaultPropertyAccess() {
+      @Table(name = "TEST")
       class Test {
          private String field;
 
@@ -215,6 +216,7 @@ public class AccessTypePropertyTest {
 
    @Test
    public void defaultFieldAccess() {
+      @Table(name = "TEST")
       class Test {
          @Basic
          private String field;
@@ -238,6 +240,7 @@ public class AccessTypePropertyTest {
     */
    @Test
    public void fallbackAccess() {
+      @Table(name = "TEST")
       class Test {
          private String field;
 
@@ -275,6 +278,7 @@ public class AccessTypePropertyTest {
          }
       }
 
+      @Table(name = "TEST")
       class SubTest extends Test {
          @Basic
          private String field;
@@ -308,6 +312,7 @@ public class AccessTypePropertyTest {
          }
       }
 
+      @Table(name = "TEST")
       class SubTest extends Test {
          @Basic
          private String field;
@@ -338,6 +343,7 @@ public class AccessTypePropertyTest {
    @Test
    public void ambiguousAccessType() {
 
+      @Table(name = "TEST")
       class Test {
 
          private int id;
@@ -365,7 +371,7 @@ public class AccessTypePropertyTest {
    @Test
    public void explicitAccessTypeWithFieldSpecificOne() throws IllegalAccessException, InvocationTargetException {
 
-      @Access(value = AccessType.PROPERTY)
+      @Table(name = "TEST") @Access(value = AccessType.PROPERTY)
       class Test {
 
          @Access(value = AccessType.FIELD)
@@ -496,6 +502,7 @@ public class AccessTypePropertyTest {
 
    @Test
    public void propertyChangeSupport() throws IllegalAccessException {
+      @Table(name = "TEST")
       class Test {
          private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
          private int id;

@@ -13,7 +13,8 @@ import java.util.Map;
  */
 abstract class AttributeInfo
 {
-   protected final Class<?> clazz;
+   private final Class<?> ownerClazz;
+   private String ownerClassTableName;
    protected String name;
 
    final Field field;
@@ -23,8 +24,7 @@ abstract class AttributeInfo
    protected Boolean updatable;
    protected Boolean insertable;
    protected String columnName;
-   /** name without delimiter: name as is; delimited name: name as is with delimiters */
-   String columnTableName = "";
+   protected String delimitedTableName;
    EnumType enumType;
    Map<Object, Object> enumConstants;
    protected AttributeConverter converter;
@@ -44,19 +44,76 @@ abstract class AttributeInfo
    protected boolean isManyToOneAnnotated;
    protected boolean isOneToOneAnnotated;
    private boolean joinWithSecondTable;
+   private JoinColumn joinColumnAnnotation;
+   private Column columnAnnotation;
+   private Class<?> actualType;
+   private String tableName;
 
-   public AttributeInfo(final Field field, final Class<?> clazz) {
+   public AttributeInfo(final Field field, final Class<?> ownerClazz) {
       this.field = field;
-      this.clazz = clazz;
+      this.ownerClazz = ownerClazz;
       extractFieldName(field);
       if (isToBeConsidered()) {
          adjustType(field.getType());
          extractAnnotations();
          if (toBeConsidered) {
             processFieldAnnotations();
+            extractTableName();
+            extractOwnerClassTablename();
             this.fullyQualifiedDelimitedName =
-               columnTableName.isEmpty() ? delimitedName : columnTableName + "." + delimitedName;
+               delimitedTableName.isEmpty() ? delimitedName : delimitedTableName + "." + delimitedName;
+            actualType = actualType == null ? type : actualType;
          }
+      }
+   }
+
+   private void extractTableName() {
+      if (!joinWithSecondTable) {
+         delimitedTableName = "";
+
+         Entity entity = ownerClazz.getAnnotation(Entity.class);
+         if (entity != null) {
+            delimitedTableName = entity.name();
+         }
+         Table tableAnnotation = ownerClazz.getAnnotation(Table.class);
+         if (tableAnnotation != null && !tableAnnotation.name().isEmpty()) {
+            delimitedTableName = tableAnnotation.name();
+         }
+         if (isColumnAnnotated && isJoinColumn) {
+            throw new RuntimeException("A field can not annotated with both @Column and @JoinColumn annotation:" + ownerClazz.getName() + " " + field.getName());
+         }
+         String table = "";
+         if (isColumnAnnotated) {
+            table = columnAnnotation.table();
+         }
+         else if (isJoinColumn) {
+            table = joinColumnAnnotation.table();
+         }
+         delimitedTableName = table.isEmpty() ? delimitedTableName : table;
+         if (delimitedTableName.isEmpty()) {
+            /* Hibernate annotation reference: "If no @Table is defined the default values are used: the unqualified class name of the entity."
+            JSR 317: JavaTM Persistence API, Version 2.0: "If no Table annotation is specified for an entity class, the default values defined in Table 42 apply". That is "Entity name". "Entity name" probably does not mean class name, but @Entity(name = "...") element.
+            */
+            MappedSuperclass mappedSuperclass = ownerClazz.getAnnotation(MappedSuperclass.class);
+            if (mappedSuperclass == null) {
+               delimitedTableName = ownerClazz.getSimpleName();
+            }
+         }
+
+         tableName = !isNotDelimited(delimitedTableName) ?
+             delimitedTableName.substring(1, delimitedTableName.length() - 1)
+            : delimitedTableName;
+      }
+   }
+
+   private void extractOwnerClassTablename() {
+      Entity entity = ownerClazz.getAnnotation(Entity.class);
+      if (entity != null) {
+         ownerClassTableName = entity.name();
+      }
+      Table tableAnnotation = ownerClazz.getAnnotation(Table.class);
+      if (tableAnnotation != null && !tableAnnotation.name().isEmpty()) {
+         ownerClassTableName = tableAnnotation.name();
       }
    }
 
@@ -117,7 +174,7 @@ abstract class AttributeInfo
          isEnumerated = true;
          this.setEnumConstants(enumAnnotation.value());
       }
-      final JoinColumn joinColumnAnnotation = extractJoinColumnAnnotation();
+      joinColumnAnnotation = extractJoinColumnAnnotation();
       if (joinColumnAnnotation != null) {
          isJoinColumn = true;
       }
@@ -175,18 +232,48 @@ abstract class AttributeInfo
     */
    private void initializeJoinWithSecondTable() {
       // Is also true with @OneToMany fields. Type is Collection then.
-      if (type != clazz) {
+      if (type != ownerClazz) {
          if (!Collection.class.isAssignableFrom(type)) {
+            // In JoinOneToOneSecondTableTest.Left:
+            // @OneToOne @JoinColumn(name = "id")
+            // public Right getRight()
             joinWithSecondTable = true;
+            extractTableNameFromJoinedTable(type);
          }
          else {
+            // In GetterAnnotatedPitMainEntity:
+            // @OneToMany(mappedBy = "pitMainByPitIdent")
+            // Collection<GetterAnnotatedPitMainEntity> getNotes()
             ParameterizedType genericType = (ParameterizedType) field.getGenericType();
             Type typeArg = genericType.getActualTypeArguments()[0];
-            if (typeArg != clazz) {
+            if (typeArg != ownerClazz) {
                joinWithSecondTable = true;
+               Class<?> c = (Class<?>) typeArg;
+               extractTableNameFromJoinedTable(c);
             }
          }
       }
+   }
+
+   private void extractTableNameFromJoinedTable(final Class<?> c) {
+      actualType = c;
+      delimitedTableName = "";
+      Table tableAnnotation = c.getAnnotation(Table.class);
+      if (tableAnnotation != null && !tableAnnotation.name().isEmpty()) {
+         delimitedTableName = tableAnnotation.name();
+      }
+      else {
+         Entity entity = c.getAnnotation(Entity.class);
+         if (entity != null && !entity.name().isEmpty()) {
+            delimitedTableName = entity.name();
+         }
+         else {
+            delimitedTableName = c.getSimpleName();
+         }
+      }
+      tableName = !isNotDelimited(delimitedTableName) ?
+         delimitedTableName.substring(1, delimitedTableName.length() - 1)
+         : delimitedTableName;
    }
 
    protected abstract OneToOne extractOneToOneAnnotation();
@@ -232,11 +319,10 @@ abstract class AttributeInfo
     * Processes &#64;Column annotated fields.
     */
    private void processColumnAnnotation() {
-      final Column columnAnnotation = extractColumnAnnotation();
+      columnAnnotation = extractColumnAnnotation();
       final String columnName = columnAnnotation.name();
       setColumnName(columnName);
 
-      this.columnTableName = columnAnnotation.table();
       insertable = columnAnnotation.insertable();
       updatable = columnAnnotation.updatable();
    }
@@ -245,7 +331,14 @@ abstract class AttributeInfo
 
    protected void processJoinColumnAnnotation() {
       final JoinColumn joinColumnAnnotation = extractJoinColumnAnnotation();
-      setColumnName(joinColumnAnnotation.name());
+      if (isSelfJoinField()) {
+         setColumnName(joinColumnAnnotation.name());
+      }
+      else {
+         // TODO "If the referencedColumnName element is missing, the foreign key is assumed to refer to the primary key of the referenced table."
+         String refColName = joinColumnAnnotation.referencedColumnName();
+         setColumnName(refColName);
+      }
       insertable = joinColumnAnnotation.insertable();
       updatable = joinColumnAnnotation.updatable();
    }
@@ -298,7 +391,7 @@ abstract class AttributeInfo
    }
 
    boolean isSelfJoinField() {
-      return isJoinColumn && type == clazz;
+      return isJoinColumn && type == ownerClazz;
    }
 
    /** name without delimiter: lower cased; delimited name: name as is without delimiters */
@@ -330,7 +423,7 @@ abstract class AttributeInfo
     * @param tablePrefix Ignored when field has a non empty table element.
     */
    public String getFullyQualifiedDelimitedFieldName(final String ... tablePrefix) {
-      return columnTableName.isEmpty() && tablePrefix.length > 0
+      return delimitedTableName.isEmpty() && tablePrefix.length > 0
          ? tablePrefix[0] + "." + fullyQualifiedDelimitedName
          : fullyQualifiedDelimitedName;
    }
@@ -412,5 +505,29 @@ abstract class AttributeInfo
 
    public boolean isJoinFieldWithSecondTable() {
       return joinWithSecondTable;
+   }
+
+   /**
+    * name without delimiter: name as is; delimited name: name as is with delimiters
+    * @return empty string if field is member of mapped superclass.
+    */
+   public String getDelimitedTableName() {
+      return delimitedTableName;
+   }
+
+   public Class<?> getActualType() {
+      return actualType;
+   }
+
+   public String getTableName() {
+      return tableName;
+   }
+
+   public String getOwnerClassTableName() {
+      return ownerClassTableName;
+   }
+
+   public Class<?> getOwnerClazz() {
+      return ownerClazz;
    }
 }

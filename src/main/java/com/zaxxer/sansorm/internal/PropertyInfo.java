@@ -24,7 +24,7 @@ public class PropertyInfo extends AttributeInfo {
 
    protected void extractFieldName(final Field field) {
       try {
-         propertyDescriptor = new PropertyDescriptor(field.getName(), clazz);
+         propertyDescriptor = new PropertyDescriptor(field.getName(), getOwnerClazz());
          readMethod = propertyDescriptor.getReadMethod();
          name = propertyDescriptor.getName();
       }
@@ -109,7 +109,13 @@ public class PropertyInfo extends AttributeInfo {
             propertyDescriptor.getWriteMethod().invoke(target, value);
          }
          else {
-            final Object obj = idValueToParentEntity(type, value);
+            final Object obj;
+            if (value.getClass() != getActualType()) {
+               obj = idValueToParentEntity(type, value);
+            }
+            else {
+               obj = value;
+            }
             propertyDescriptor.getWriteMethod().invoke(target, obj);
          }
       }
@@ -140,7 +146,7 @@ public class PropertyInfo extends AttributeInfo {
          "propertyDescriptor=" + propertyDescriptor +
          ", toBeConsidered=" + toBeConsidered +
          ", readMethod=" + readMethod +
-         ", clazz=" + clazz +
+         ", ownerClazz=" + getOwnerClazz() +
          ", name='" + name + '\'' +
          ", field=" + field +
          ", type=" + type +
@@ -148,7 +154,7 @@ public class PropertyInfo extends AttributeInfo {
          ", updatable=" + updatable +
          ", insertable=" + insertable +
          ", columnName='" + columnName + '\'' +
-         ", columnTableName='" + columnTableName + '\'' +
+         ", delimitedTableName='" + delimitedTableName + '\'' +
          ", enumType=" + enumType +
          ", enumConstants=" + enumConstants +
          ", converter=" + converter +

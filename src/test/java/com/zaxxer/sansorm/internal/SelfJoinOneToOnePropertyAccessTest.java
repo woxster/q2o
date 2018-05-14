@@ -25,6 +25,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
    @org.junit.Test
    public void selfJoinFieldAccess() {
+      @Table(name = "TEST")
       class Test {
          @JoinColumn(name = "id", referencedColumnName = "parentId")
          private Test parent;

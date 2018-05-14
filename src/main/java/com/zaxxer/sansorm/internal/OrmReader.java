@@ -16,12 +16,8 @@
 
 package com.zaxxer.sansorm.internal;
 
-import com.zaxxer.sansorm.SansOrm;
-
-import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * OrmReader
@@ -147,19 +143,71 @@ public class OrmReader extends OrmBase
       final ResultSetMetaData metaData = resultSet.getMetaData();
 
       final Introspected introspected = Introspector.getIntrospected(target.getClass());
-      for (int column = metaData.getColumnCount(); column > 0; column--) {
-         final String columnName = metaData.getColumnName(column);
+
+      HashMap<String, Object> tableNameToTarget = new HashMap<>();
+      tableNameToTarget.putIfAbsent(introspected.getTableName(), target);
+
+      for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+         final String columnName = metaData.getColumnName(colIdx);
          // To make names in ignoredColumns independend from database case sensitivity. Otherwise you have to write database dependent code.
          if (isIgnoredColumn(ignoredColumns, columnName)) {
             continue;
          }
 
-         final Object columnValue = resultSet.getObject(column);
+         final Object columnValue = resultSet.getObject(colIdx);
          if (columnValue == null) {
             continue;
          }
-         final AttributeInfo fcInfo = introspected.getFieldColumnInfo(columnName);
-         introspected.set(target, fcInfo, columnValue);
+         String tableName = metaData.getTableName(colIdx);
+         // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
+         if (!tableName.isEmpty() && !tableName.equalsIgnoreCase(introspected.getTableName())) {
+
+            Object currentTarget = tableNameToTarget.computeIfAbsent(tableName, tblName -> {
+               try {
+                  return introspected.getTableTarget(tblName);
+               }
+               catch (IllegalAccessException | InstantiationException e) {
+                  throw new RuntimeException(e);
+               }
+            });
+
+            Class<?> currentTargetClass = currentTarget.getClass();
+            AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
+            try {
+               currentTargetInfo.setValue(currentTarget, columnValue);
+
+               AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
+               Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
+                  try {
+                     return parentInfo.getOwnerClazz().newInstance();
+                  }
+                  catch (InstantiationException | IllegalAccessException e) {
+                     throw new RuntimeException(e);
+                  }
+               });
+               parentInfo.setValue(parent, currentTarget);
+
+            }
+            catch (IllegalAccessException e) {
+               throw new RuntimeException(e);
+            }
+
+         }
+         else {
+            final AttributeInfo fcInfo = !tableName.isEmpty()
+               ? introspected.getFieldColumnInfo(tableName, columnName)
+               : introspected.getFieldColumnInfo(columnName);
+            Object parent = tableNameToTarget.computeIfAbsent(introspected.getTableName(), tbl -> {
+               try {
+                  return introspected.getTableTarget(introspected.getTableName());
+               }
+               catch (IllegalAccessException | InstantiationException e) {
+                  throw new RuntimeException(e);
+               }
+            });
+            introspected.set(parent, fcInfo, columnValue);
+         }
+
       }
       return target;
    }
@@ -211,7 +259,7 @@ public class OrmReader extends OrmBase
    {
       final Introspected introspected = Introspector.getIntrospected(clazz);
 
-      final String tableName = introspected.getTableName();
+      final String tableName = introspected.getDelimitedTableName();
       final String[] idColumnNames = introspected.getIdColumnNames();
 
       final StringBuilder sql = new StringBuilder()
@@ -244,13 +292,16 @@ public class OrmReader extends OrmBase
       }
    }
 
-   private static <T> String generateSelectFromClause(final Class<T> clazz, final String clause)
+   /**
+    * package private for testing.
+    */
+   static <T> String generateSelectFromClause(final Class<T> clazz, final String clause)
    {
       final String cacheKey = clazz.getName() + clause;
 
       return fromClauseStmtCache.computeIfAbsent(cacheKey, key -> {
         final Introspected introspected = Introspector.getIntrospected(clazz);
-        final String tableName = introspected.getTableName();
+        final String tableName = introspected.getDelimitedTableName();
 
         final StringBuilder sqlSB = new StringBuilder()
           .append("SELECT ").append(getColumnsCsv(clazz, tableName))

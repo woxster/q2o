@@ -34,6 +34,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void columnsNameElementNotInQuotes() {
+      @Table(name = "TEST")
       class TestClass {
          @Column(name = "Column_Name")
          String columnName;
@@ -45,6 +46,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void columnsNameElementInQuotes() {
+      @Table(name = "TEST")
       class TestClass {
          @Column(name = "\"Column Name\"")
          String columnName;
@@ -56,6 +58,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void joinColumnsNameElementNotInQuotes() {
+      @Table(name = "TEST")
       class TestClass {
          @JoinColumn(name = "Join_Column_Name")
          TestClass joinColumnName;
@@ -67,6 +70,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void joinColumnsNameElementInQuotes() {
+      @Table(name = "TEST")
       class TestClass {
          @JoinColumn(name = "\"Join Column Name\"")
          TestClass joinColumnName;
@@ -81,7 +85,7 @@ public class CaseSensitiveDatabasesTest {
       @Table(name = "TableName")
       class TestClass { }
       Introspected introspected = new Introspected(TestClass.class);
-      String tableName = introspected.getTableName();
+      String tableName = introspected.getDelimitedTableName();
       assertEquals("TableName", tableName);
    }
 
@@ -117,7 +121,7 @@ public class CaseSensitiveDatabasesTest {
       }
       String cols = OrmReader.getColumnsCsv(TestClass.class);
       // Preserve field order!!!
-      assertEquals("\"Delimited Field Name\",Default_Case", cols);
+      assertEquals("TestClass.\"Delimited Field Name\",TestClass.Default_Case", cols);
    }
 
    @Test
@@ -137,14 +141,15 @@ public class CaseSensitiveDatabasesTest {
    public void getColumnsCsvExclude() {
       String cols = OrmBase.getColumnsCsvExclude(CaseSensitiveDatabasesClass.class, "Delimited Field Name");
       // Preserve field order!!!
-      assertEquals("Id,Default_Case", cols);
+      assertEquals("Test_Class.Id,Test_Class.Default_Case", cols);
       cols = OrmBase.getColumnsCsvExclude(CaseSensitiveDatabasesClass.class, "Default_Case");
       // Preserve field order!!!
-      assertEquals("Id,\"Delimited Field Name\"", cols);
+      assertEquals("Test_Class.Id,Test_Class.\"Delimited Field Name\"", cols);
    }
 
    @Test
    public void getColumnsCsvExcludeWithTableName() {
+      @Table(name = "TEST")
       class TestClass {
          @Column(name = "\"Delimited Field Name\"", table = "Default_Table_Name")
          String delimitedFieldName;
@@ -160,6 +165,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void getColumnNameForProperty() {
+      @Table(name = "TEST")
       class TestClass {
          @Column(name = "\"Delimited Field Name\"")
          String delimitedFieldName;
@@ -410,6 +416,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void getIdColumnNames() {
+      @Table(name = "TEST")
       class TestClass {
          @Id @Column(name = "\"ID\"")
          String Id;
@@ -434,6 +441,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void constistentIdSupport() {
+      @Table(name = "TEST")
       class TestClass {
          @Id
          String Id;
@@ -445,6 +453,7 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void getColumnsSansIds() {
+      @Table(name = "TEST")
       class TestClass {
          @Id
          String id;
@@ -628,6 +637,11 @@ public class CaseSensitiveDatabasesTest {
                                        column == 2 ? "default_case" :
                                        column == 3 ? "id"
                                                    : null;
+                           }
+
+                           @Override
+                           public String getTableName(final int column) throws SQLException {
+                              return "Test_Class";
                            }
                         };
                      }
@@ -958,6 +972,11 @@ public class CaseSensitiveDatabasesTest {
                                        column == 3 ? "id"
                                                    : null;
                            }
+
+                           @Override
+                           public String getTableName(final int column) throws SQLException {
+                              return "Test_Class";
+                           }
                         };
                      }
 
@@ -1029,7 +1048,6 @@ public class CaseSensitiveDatabasesTest {
 
    @Test
    public void countObjectsFromClause() throws SQLException {
-      @Table
       class TestClass {
          @Id @Column(name = "Id")
          String id;
@@ -1178,7 +1196,7 @@ public class CaseSensitiveDatabasesTest {
    @Test
    public void resultSetToObjectIgnoredColumns() throws SQLException {
 
-      @Table
+      @Table(name = "TEST")
       class ResultSetToObjectClass {
          @Id @Column(name = "Id")
          String id;
@@ -1217,6 +1235,11 @@ public class CaseSensitiveDatabasesTest {
                            column == 4 ? "ID"
                                        : null;
                }
+
+               @Override
+               public String getTableName(final int column) throws SQLException {
+                  return "TEST";
+               }
             };
          }
 
@@ -1245,7 +1268,7 @@ public class CaseSensitiveDatabasesTest {
    @Test
    public void resultSetToObjectDelimitedId() throws SQLException {
 
-      @Table
+      @Table(name = "TEST")
       class ResultSetToObjectClass {
          @Id @Column(name = "\"Id\"")
          String id;
@@ -1283,6 +1306,11 @@ public class CaseSensitiveDatabasesTest {
                            column == 3 ? "ignoredcol" :
                            column == 4 ? "Id"
                                        : null;
+               }
+
+               @Override
+               public String getTableName(final int column) throws SQLException {
+                  return "TEST";
                }
             };
          }

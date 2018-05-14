@@ -108,6 +108,7 @@ public final class OrmElf
     * @param <T> the type of the object to load
     * @return a list of populated objects
     * @throws SQLException if a {@link SQLException} occurs
+    * @see OrmElf#objectFromClause(Connection, Class, String, Object...)
     */
    public static <T> List<T> objectsFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
@@ -258,6 +259,14 @@ public final class OrmElf
       OrmWriter.insertListNotBatched(connection, iterable);
    }
 
+   public static <T> void insertObjectsNotBatched(Iterable<T> iterable) throws SQLException
+   {
+      SqlClosure.sqlExecute(connection -> {
+         OrmWriter.insertListNotBatched(connection, iterable);
+         return null;
+      });
+   }
+
    /**
     * @see #insertObjectsBatched(Connection, Iterable)
     * @deprecated
@@ -278,6 +287,13 @@ public final class OrmElf
    public static <T> void insertObjectsBatched(Connection connection, Iterable<T> iterable) throws SQLException
    {
       OrmWriter.insertListBatched(connection, iterable);
+   }
+
+   public static <T> void insertObjectsBatched(Iterable<T> iterable) {
+      SqlClosure.sqlExecute((SqlFunction<T>) connection -> {
+         OrmWriter.insertListBatched(connection, iterable);
+         return null;
+      });
    }
 
    /**
@@ -314,6 +330,13 @@ public final class OrmElf
       HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
       excludedCols.addAll(Arrays.asList(excludedColumns));
       return OrmWriter.updateObject(connection, target, excludedCols);
+   }
+
+   public static <T> T updateObject(T target, String... excludedColumns) throws SQLException
+   {
+      HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
+      excludedCols.addAll(Arrays.asList(excludedColumns));
+      return SqlClosure.sqlExecute(c -> OrmWriter.updateObject(c, target, excludedCols));
    }
 
    /**
@@ -385,8 +408,7 @@ public final class OrmElf
    }
 
    /**
-    * @see #objectById(Class, Object...)
-    * @deprecated
+    * @deprecated Use {@link #objectById(Class, Object...)}
     */
    public static <T> T getObjectById(Class<T> type, Object... ids)
    {
@@ -406,12 +428,13 @@ public final class OrmElf
    }
 
    /**
-    * Gets an object using a from clause.
+    * Gets an object using a where clause.
     * @param type The type of the desired object.
     * @param clause The WHERE clause.
     * @param args The arguments for the WHERE clause.
     * @param <T> The type of the object.
     * @return The object or {@code null}
+    * @see #objectFromClause(Connection, Class, String, Object...)
     */
    public static <T> T objectFromClause(Class<T> type, String clause, Object... args)
    {
@@ -479,6 +502,7 @@ public final class OrmElf
     * @param args The arguments needed for the clause.
     * @param <T> The type of the objects.
     * @return The list of objects.
+    * @see OrmElf#objectFromClause(Connection, Class, String, Object...)
     */
    public static <T> List<T> objectsFromClause(Class<T> clazz, String clause, Object... args)
    {
@@ -497,5 +521,47 @@ public final class OrmElf
    public static <T> int countObjectsFromClause(Class<T> clazz, String clause, Object... args)
    {
       return SqlClosure.sqlExecute(c -> OrmElf.countObjectsFromClause(c, clazz, clause, args));
+   }
+
+   /**
+    * @see #objectFromSelect(Class, String, Object...) 
+    */
+   public static <T> T objectFromSelect(Class<T> clazz, String select) {
+      return SqlClosure.sqlExecute(connection -> {
+         PreparedStatement stmnt = connection.prepareStatement(select);
+         return OrmElf.statementToObject(stmnt, clazz);
+      });
+   }
+
+   /**
+    * To select only specified fields of an object or to perform OneToOne or ManyToOne joins.
+    *
+    * @param clazz the class of the object to query.
+    * @param select full select ... from ... where ... statement. OneToOne and ManyToOne joins achievable.
+    * @param args SQL placeholder arguments
+    * @param <T> The type of object to query
+    * @return The object or object graph
+    */
+   public static <T> T objectFromSelect(Class<T> clazz, String select, Object... args) {
+      return SqlClosure.sqlExecute(connection -> {
+         PreparedStatement stmnt = connection.prepareStatement(select);
+         return OrmElf.statementToObject(stmnt, clazz, args);
+      });
+   }
+
+   /**
+    * @see #objectFromSelect(Class, String, Object...)
+    */
+   public static <T> T objectFromSelect(Connection connection, Class<T> clazz, String select) throws SQLException {
+      PreparedStatement stmnt = connection.prepareStatement(select);
+      return OrmElf.statementToObject(stmnt, clazz);
+   }
+
+   /**
+    * @see #objectFromSelect(Class, String, Object...)
+    */
+   public static <T> T objectFromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
+      PreparedStatement stmnt = connection.prepareStatement(select);
+      return OrmElf.statementToObject(stmnt, clazz, args);
    }
 }

@@ -5,9 +5,6 @@ import org.sansorm.TargetClass1;
 
 import javax.persistence.*;
 
-import java.util.ArrayList;
-import java.util.stream.Stream;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,7 +43,7 @@ public class IntrospectedTest
 
       Introspected inspected = new Introspected(SomeEntity.class);
       assertThat(inspected).isNotNull();
-      assertThat(inspected.getTableName()).isEqualTo("SomeEntity").as("According to Table::name javadoc, empty name should default to entity name");
+      assertThat(inspected.getDelimitedTableName()).isEqualTo("SomeEntity").as("According to Table::name javadoc, empty name should default to entity name");
       assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("According to Column::name javadoc, empty name should default to field name");
       assertThat(inspected.getColumnNameForProperty("someString")).isEqualTo("someString");
       assertThat(inspected.getColumnNameForProperty("someOtherString")).isEqualTo("SOME_OTHER_STRING").as("Explicit Column names are converted to lower case");
@@ -75,7 +72,7 @@ public class IntrospectedTest
 
       Introspected inspected = new Introspected(SomeEntity.class);
       assertThat(inspected).isNotNull();
-      assertThat(inspected.getTableName()).isEqualTo("SomeEntity");
+      assertThat(inspected.getDelimitedTableName()).isEqualTo("SomeEntity");
       assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
       assertThat(inspected.getColumnNameForProperty("string")).isEqualTo("string");
       assertThat(inspected.hasGeneratedId()).isTrue();
@@ -111,7 +108,7 @@ public class IntrospectedTest
 
       Introspected inspected = new Introspected(SomeEntitySub.class);
       assertThat(inspected).isNotNull();
-      assertThat(inspected.getTableName()).isEqualTo("SomeEntitySub");
+      assertThat(inspected.getDelimitedTableName()).isEqualTo("SomeEntitySub");
       assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
       assertThat(inspected.getColumnNameForProperty("string")).isNull();
       assertThat(inspected.getColumnNameForProperty("string2")).isEqualTo("string2");
@@ -119,6 +116,8 @@ public class IntrospectedTest
       assertThat(inspected.getIdColumnNames()).isEqualTo(new String[]{"id"});
       // 15.04.18: Was case insensitive lexicographic order ("id", "string"). Now order as fields were supplied by inspection.
       assertThat(inspected.getColumnNames()).isEqualTo(new String[]{"string2", "id"});
+      AttributeInfo idField = inspected.getFieldColumnInfo("id");
+      assertEquals("SomeEntitySub", idField.getDelimitedTableName());
    }
 
    @Test
@@ -147,16 +146,16 @@ public class IntrospectedTest
          private String string2;
       }
 
-      Introspected inspected = new Introspected(SomeEntitySub.class);
-      assertThat(inspected).isNotNull();
-      assertThat(inspected.getTableName()).isEqualTo("SomeEntitySub");
-      assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
-      assertThat(inspected.getColumnNameForProperty("string")).isEqualTo("string");
-      assertThat(inspected.getColumnNameForProperty("string2")).isEqualTo("string2");
-      assertThat(inspected.hasGeneratedId()).isTrue();
-      assertThat(inspected.getIdColumnNames()).isEqualTo(new String[]{"id"});
+      Introspected introspected = new Introspected(SomeEntitySub.class);
+      assertThat(introspected).isNotNull();
+      assertThat(introspected.getDelimitedTableName()).isEqualTo("SomeEntitySub");
+      assertThat(introspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
+      assertThat(introspected.getColumnNameForProperty("string")).isEqualTo("string");
+      assertThat(introspected.getColumnNameForProperty("string2")).isEqualTo("string2");
+      assertThat(introspected.hasGeneratedId()).isTrue();
+      assertThat(introspected.getIdColumnNames()).isEqualTo(new String[]{"id"});
       // 15.04.18: Was case insensitive lexicographic order ("id", "string"). Now order as fields were supplied by inspection.
-      assertThat(inspected.getColumnNames()).isEqualTo(new String[]{"string2", "string", "id"});
+      assertThat(introspected.getColumnNames()).isEqualTo(new String[]{"string2", "string", "id"});
    }
 
    @Test

@@ -136,7 +136,7 @@ public class QueryTest
    public void testConversionFail()
    {
       TargetClass1 target = OrmElf.insertObject(new TargetClass1(null, null, "foobar"));
-      target = OrmElf.getObjectById(TargetClass1.class, target.getId());
+      target = OrmElf.objectById(TargetClass1.class, target.getId());
       assertThat(target.getStringFromNumber()).isNull();
    }
 

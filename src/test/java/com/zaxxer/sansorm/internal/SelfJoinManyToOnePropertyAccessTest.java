@@ -229,6 +229,9 @@ public class SelfJoinManyToOnePropertyAccessTest {
       }
    }
 
+   /**
+    * Smoke test
+    */
    @Test
    public void insertListNotBatched() throws SQLException {
 
@@ -272,4 +275,45 @@ public class SelfJoinManyToOnePropertyAccessTest {
       }
    }
 
+   @Test
+   public void fullyLoadChildAndParent() {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      SansOrm.initializeTxNone(ds);
+      try {
+         SqlClosureElf.executeUpdate(
+            " CREATE TABLE JOINTEST (" +
+               " "
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", parentId INTEGER"
+               + ", type VARCHAR(128)" +
+               ", CONSTRAINT cnst1 FOREIGN KEY(parentId) REFERENCES (id)"
+               + ")");
+
+         // store parent
+         PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
+         parent.type = "parent";
+         OrmElf.insertObject(parent);
+         assertTrue(parent.id > 0);
+
+         // persist child
+         PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
+         child.type = "child";
+         child.parentId = parent;
+         OrmElf.insertObject(child);
+         assertTrue(child.id > 0);
+
+         PropertyAccessedSelfJoin obj = OrmElf.objectFromSelect(PropertyAccessedSelfJoin.class, "select * from JOINTEST child, JOINTEST parent where child.parentId = parent.id and child.id = 2");
+         System.out.println(obj);
+         assertEquals("Test{id=2, parentId=Test{id=1, parentId=null, type='parent'}, type='child'}", obj.toString());
+
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+         throw e;
+      }
+      finally {
+         SqlElf.executeUpdate("DROP TABLE JOINTEST");
+      }
+
+   }
 }

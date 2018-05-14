@@ -71,6 +71,11 @@ public class RefreshTest {
                                        column == 3 ? "id"
                                                    : null;
                            }
+
+                           @Override
+                           public String getTableName(final int column) throws SQLException {
+                              return "Test_Class";
+                           }
                         };
                      }
 

@@ -4,6 +4,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
@@ -20,6 +24,7 @@ public class PropertyInfoTest {
 
    @Test
    public void privateFieldWithGetterSetter() throws InvocationTargetException, IllegalAccessException {
+      @Table(name = "TEST")
       class Test {
          private String field;
 
@@ -65,4 +70,99 @@ public class PropertyInfoTest {
       assertEquals(1, joinFieldInfo.getValue(entity));
    }
 
+   @Test
+   public void extractTableNameNotSet() throws NoSuchFieldException {
+      class Test {
+         private String test;
+
+         public String getTest() {
+            return test;
+         }
+
+         public void setTest(String test) {
+            this.test = test;
+         }
+      }
+      Field field = Test.class.getDeclaredField("test");
+      PropertyInfo propertyInfo = new PropertyInfo(field, Test.class);
+      assertEquals("Test", propertyInfo.getDelimitedTableName());
+   }
+
+   @Test
+   public void extractTableNameFromEntity() throws NoSuchFieldException {
+      @Entity(name = "TEST")
+      class Test {
+         private String test;
+
+         public String getTest() {
+            return test;
+         }
+
+         public void setTest(String test) {
+            this.test = test;
+         }
+      }
+      Field field = Test.class.getDeclaredField("test");
+      PropertyInfo propertyInfo = new PropertyInfo(field, Test.class);
+      assertEquals("TEST", propertyInfo.getDelimitedTableName());
+   }
+
+   @Test
+   public void extractTableNameFromTable() throws NoSuchFieldException {
+      @Entity @Table(name = "TEST")
+      class Test {
+         private String test;
+
+         public String getTest() {
+            return test;
+         }
+
+         public void setTest(String test) {
+            this.test = test;
+         }
+      }
+      Field field = Test.class.getDeclaredField("test");
+      PropertyInfo propertyInfo = new PropertyInfo(field, Test.class);
+      assertEquals("TEST", propertyInfo.getDelimitedTableName());
+   }
+
+   @Test
+   public void extractTableNameFromColumn() throws NoSuchFieldException {
+      @Entity @Table(name = "TEST")
+      class Test {
+         private String test;
+
+         @Column(table = "COLUMN")
+         public String getTest() {
+            return test;
+         }
+
+         public void setTest(String test) {
+            this.test = test;
+         }
+      }
+      Field field = Test.class.getDeclaredField("test");
+      PropertyInfo propertyInfo = new PropertyInfo(field, Test.class);
+      assertEquals("COLUMN", propertyInfo.getDelimitedTableName());
+   }
+
+   @Test
+   public void extractTableNameFromJoinColumn() throws NoSuchFieldException {
+      @Entity @Table(name = "TEST")
+      class Test {
+         private String test;
+
+         @JoinColumn(table = "COLUMN")
+         public String getTest() {
+            return test;
+         }
+
+         public void setTest(String test) {
+            this.test = test;
+         }
+      }
+      Field field = Test.class.getDeclaredField("test");
+      PropertyInfo propertyInfo = new PropertyInfo(field, Test.class);
+      assertEquals("COLUMN", propertyInfo.getDelimitedTableName());
+   }
 }

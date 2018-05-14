@@ -34,12 +34,13 @@ import java.util.*;
 /**
  * An introspected class.
  */
-public final class Introspected
-{
+public final class Introspected {
    private final Class<?> clazz;
    final List<AttributeInfo> idFcInfos;
-   private String tableName;
-   /** Fields in case insensitive lexicographic order */
+   private String delimitedTableName;
+   /**
+    * Fields in case insensitive lexicographic order
+    */
    private final TreeMap<String, List<AttributeInfo>> columnToField;
 
    private final Map<String, AttributeInfo> propertyToField;
@@ -48,8 +49,13 @@ public final class Introspected
    private List<AttributeInfo> updatableFcInfos;
    private AttributeInfo selfJoinFCInfo;
    private HashMap<Field, AccessType> fieldsAccessType;
+   private final HashMap<String, ArrayList<AttributeInfo>> allFcInfosByTableName = new HashMap<>();
+   private final HashMap<String, Class<?>> tableNameToClass;
+   private final TreeMap<String,Introspected> tableNameToIntrospected = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final HashMap<Class<?>, AttributeInfo> actualTypeToFieldColumnInfo = new HashMap<Class<?>, AttributeInfo>();
 
    private boolean isGeneratedId;
+   private String tableName;
 
    // We use arrays because iteration is much faster
    private AttributeInfo[] idFieldColumnInfos;
@@ -172,8 +178,10 @@ public final class Introspected
       this.updatableFcInfos = new ArrayList<>();
       this.allFcInfos = new ArrayList<>();
       this.idFcInfos = new ArrayList<>();
+      tableNameToClass = new HashMap<>();
 
       extractClassTableName();
+      tableNameToIntrospected.put(tableName, this);
 
       try {
          for (final Field field : getDeclaredFields()) {
@@ -184,14 +192,23 @@ public final class Introspected
 
             final Class<?> fieldClass = field.getDeclaringClass();
             final AttributeInfo fcInfo =
-                  fieldsAccessType.get(field) == AccessType.FIELD
-                     ? new FieldInfo(field, fieldClass)
-                     : new PropertyInfo(field, clazz);
+               fieldsAccessType.get(field) == AccessType.FIELD
+                  ? new FieldInfo(field, clazz)
+                  : new PropertyInfo(field, clazz);
             if (fcInfo.isToBeConsidered()) {
+
                List<AttributeInfo> attributeInfos = columnToField.computeIfAbsent(fcInfo.getCaseSensitiveColumnName(), k -> new ArrayList<>());
                attributeInfos.add(fcInfo);
+
                propertyToField.put(fcInfo.getName(), fcInfo);
                allFcInfos.add(fcInfo);
+               addToAllFcInfosByTableName(fcInfo);
+
+               if (fcInfo.isJoinFieldWithSecondTable()) {
+                  tableNameToClass.putIfAbsent(fcInfo.getTableName(), fcInfo.getActualType());
+                  actualTypeToFieldColumnInfo.put(fcInfo.getActualType(), fcInfo);
+               }
+
                if (fcInfo.isIdField) {
                   // Is it a problem that Class.getDeclaredFields() claims the fields are returned unordered?  We count on order.
                   idFcInfos.add(fcInfo);
@@ -224,9 +241,63 @@ public final class Introspected
 
          precalculateColumnInfos(idFcInfos);
 
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          throw new RuntimeException(e);
       }
+   }
+
+   private void addToAllFcInfosByTableName(final AttributeInfo fcInfo) {
+      String tableName = fcInfo.getTableName();
+      ArrayList<AttributeInfo> attributeInfos = allFcInfosByTableName.computeIfAbsent(tableName, tblName -> new ArrayList<>());
+      attributeInfos.add(fcInfo);
+      if (fcInfo.isJoinFieldWithSecondTable()) {
+         // Without "if" a dead lock will happen.
+         Introspected introspected = Introspector.getIntrospected(fcInfo.getActualType());
+         tableNameToIntrospected.putIfAbsent(tableName, introspected);
+      }
+   }
+
+   Object getTableTarget(String tableName) throws IllegalAccessException, InstantiationException {
+      Introspected i = tableNameToIntrospected.get(tableName);
+      if (i != null) {
+         return i.clazz.newInstance();
+      }
+      else {
+         for (Introspected introspected : tableNameToIntrospected.values()) {
+            if (introspected != this) {
+               Object target = introspected.getTableTarget(tableName);
+               if (target != null) {
+                  return target;
+               }
+            }
+         }
+      }
+      return null;
+   }
+
+   AttributeInfo getFieldColumnInfo(String tableName, String columnName) {
+      Introspected introspected = tableNameToIntrospected.get(tableName);
+      return introspected.getFieldColumnInfo(columnName);
+   }
+
+   AttributeInfo getFieldColumnInfo(Class<?> actualType) {
+      AttributeInfo info = actualTypeToFieldColumnInfo.get(actualType);
+      if (info != null) {
+         return info;
+      }
+      else {
+         for (Map.Entry<String, Introspected> tblNameToIntrospected : tableNameToIntrospected.entrySet()) {
+            Introspected introspected = tblNameToIntrospected.getValue();
+            if (introspected != this) {
+               AttributeInfo fieldColumnInfo = introspected.getFieldColumnInfo(actualType);
+               if (fieldColumnInfo != null) {
+                  return fieldColumnInfo;
+               }
+            }
+         }
+      }
+      return null;
    }
 
    /**
@@ -374,12 +445,16 @@ public final class Introspected
     */
    private void extractClassTableName() {
       final Table tableAnnotation = clazz.getAnnotation(Table.class);
+      String tblname = "";
       if (tableAnnotation != null) {
-         final String tableName = tableAnnotation.name();
-         this.tableName = tableName.isEmpty()
-            ? clazz.getSimpleName() // as per documentation, empty name in Table "defaults to the entity name"
-            : tableName;
+         tblname = tableAnnotation.name();
       }
+      this.delimitedTableName = tblname.isEmpty()
+         ? clazz.getSimpleName() // See AttributeInfo#extractTableName()
+         : tblname;
+      tableName = delimitedTableName.startsWith("\"") || delimitedTableName.endsWith("\"")
+         ? delimitedTableName.substring(1, delimitedTableName.length() - 1)
+         : delimitedTableName;
    }
 
    boolean isExplicitFieldAccess(final Class<?> fieldClass) {
@@ -411,8 +486,7 @@ public final class Introspected
     * @param fcInfo the {@link AttributeInfo} used to access the field value
     * @return the value of the field from the target object, possibly after applying a {@link AttributeConverter}
     */
-   Object get(final Object target, final AttributeInfo fcInfo)
-   {
+   Object get(final Object target, final AttributeInfo fcInfo) {
       if (fcInfo == null) {
          throw new RuntimeException("FieldColumnInfo must not be null. Type is " + target.getClass().getCanonicalName());
       }
@@ -422,7 +496,8 @@ public final class Introspected
          // Fix-up column value for enums, integer as boolean, etc.
          if (fcInfo.getConverter() != null) {
             value = fcInfo.getConverter().convertToDatabaseColumn(value);
-         } else if (fcInfo.enumConstants != null && value != null) {
+         }
+         else if (fcInfo.enumConstants != null && value != null) {
             value = (fcInfo.enumType == EnumType.ORDINAL ? ((Enum<?>) value).ordinal() : ((Enum<?>) value).name());
          }
 
@@ -438,11 +513,10 @@ public final class Introspected
     *
     * @param target the target instance
     * @param fcInfo the {@link AttributeInfo} used to access the field value
-    * @param value the value to set into the field of the target instance, possibly after applying a
-    *              {@link AttributeConverter}
+    * @param value  the value to set into the field of the target instance, possibly after applying a
+    *               {@link AttributeConverter}
     */
-   void set(final Object target, final AttributeInfo fcInfo, final Object value)
-   {
+   void set(final Object target, final AttributeInfo fcInfo, final Object value) {
       if (fcInfo == null) {
          throw new RuntimeException("FieldColumnInfo must not be null. Type is " + target.getClass().getCanonicalName());
       }
@@ -454,7 +528,8 @@ public final class Introspected
 
          if (fcInfo.getConverter() != null) {
             columnValue = fcInfo.getConverter().convertToEntityAttribute(columnValue);
-         } else if (fieldType != columnType) {
+         }
+         else if (fieldType != columnType) {
             // Fix-up column value for enums, integer as boolean, etc.
             if (fieldType == boolean.class && columnType == Integer.class) {
                columnValue = (((Integer) columnValue) != 0);
@@ -496,8 +571,7 @@ public final class Introspected
     *
     * @return true if this class has {@link JoinColumn} annotations
     */
-   public boolean hasSelfJoinColumn()
-   {
+   public boolean hasSelfJoinColumn() {
       return selfJoinFCInfo != null;
    }
 
@@ -507,8 +581,7 @@ public final class Introspected
     * @param columnName The column name to check. Requires case sensitive match of name element or property name without delimiters.
     * @return true if the specified column is a self-join column
     */
-   public boolean isSelfJoinColumn(final String columnName)
-   {
+   public boolean isSelfJoinColumn(final String columnName) {
       return selfJoinFCInfo.getCaseSensitiveColumnName().equals(columnName);
    }
 
@@ -517,8 +590,7 @@ public final class Introspected
     *
     * @return the self-join column name, or null
     */
-   public String getSelfJoinColumn()
-   {
+   public String getSelfJoinColumn() {
       return selfJoinFCInfo != null ? selfJoinFCInfo.getColumnName() : null;
    }
 
@@ -526,8 +598,7 @@ public final class Introspected
     * @see #getSelfJoinColumn()
     * return the {@link AttributeInfo} of the self-join column, if one is defined for this class.
     */
-   AttributeInfo getSelfJoinColumnInfo()
-   {
+   AttributeInfo getSelfJoinColumnInfo() {
       return selfJoinFCInfo;
    }
 
@@ -537,8 +608,7 @@ public final class Introspected
     *
     * @return and array of column names
     */
-   public String[] getColumnNames()
-   {
+   public String[] getColumnNames() {
       return delimitedColumnNames;
    }
 
@@ -548,8 +618,7 @@ public final class Introspected
     *
     * @return an array of column table names
     */
-   public String[] getColumnTableNames()
-   {
+   public String[] getColumnTableNames() {
       return columnTableNames;
    }
 
@@ -559,8 +628,7 @@ public final class Introspected
     *
     * @return and array of column names
     */
-   public String[] getIdColumnNames()
-   {
+   public String[] getIdColumnNames() {
       return idColumnNames;
    }
 
@@ -570,13 +638,11 @@ public final class Introspected
     *
     * @return and array of column names
     */
-   public String[] getColumnsSansIds()
-   {
+   public String[] getColumnsSansIds() {
       return delimitedColumnsSansIds;
    }
 
-   public boolean hasGeneratedId()
-   {
+   public boolean hasGeneratedId() {
       return isGeneratedId;
    }
 
@@ -584,11 +650,10 @@ public final class Introspected
     * Get the insertable column names for this object.
     *
     * @return the insertable columns. In case of delimited column names the names are surrounded
-    *         by delimiters.
+    * by delimiters.
     * @see #getUpdatableColumns()
     */
-   public String[] getInsertableColumns()
-   {
+   public String[] getInsertableColumns() {
       return insertableColumns;
    }
 
@@ -615,8 +680,7 @@ public final class Introspected
     *
     * @return the updatable columns
     */
-   public String[] getUpdatableColumns()
-   {
+   public String[] getUpdatableColumns() {
       return updatableColumns;
    }
 
@@ -644,14 +708,13 @@ public final class Introspected
     * @param columnName Same case as in name element or property name without delimeters.
     * @return true if insertable, false otherwise
     */
-   public boolean isInsertableColumn(final String columnName)
-   {
+   public boolean isInsertableColumn(final String columnName) {
       // Use index iteration to avoid generating an Iterator as side-effect
       final AttributeInfo[] fcInfos = getInsertableFcInfos();
       for (int i = 0; i < fcInfos.length; i++) {
-        if (fcInfos[i].getCaseSensitiveColumnName().equals(columnName)) {
-           return true;
-        }
+         if (fcInfos[i].getCaseSensitiveColumnName().equals(columnName)) {
+            return true;
+         }
       }
       return false;
    }
@@ -662,8 +725,7 @@ public final class Introspected
     * @param columnName Same case as in name element or property name without delimeters.
     * @return true if updatable, false otherwise
     */
-   public boolean isUpdatableColumn(final String columnName)
-   {
+   public boolean isUpdatableColumn(final String columnName) {
       // Use index iteration to avoid generating an Iterator as side-effect
       final AttributeInfo[] fcInfos = getUpdatableFcInfos();
       for (int i = 0; i < fcInfos.length; i++) {
@@ -674,8 +736,7 @@ public final class Introspected
       return false;
    }
 
-   Object[] getActualIds(final Object target)
-   {
+   Object[] getActualIds(final Object target) {
       if (idColumnNames.length == 0) {
          return null;
       }
@@ -698,28 +759,29 @@ public final class Introspected
     *
     * @return a table name
     */
-   public String getTableName()
-   {
+   String getDelimitedTableName() {
+      return delimitedTableName;
+   }
+
+   String getTableName() {
       return tableName;
    }
 
    /**
     * Get the delimited column name for the specified property name, or {@code null} if
     * no such property exists.
-    *
+    * <p>
     * CLARIFY Must be public?
     *
     * @return the delimited column name or {@code null}
     */
-   public String getColumnNameForProperty(final String propertyName)
-   {
-     return Optional.ofNullable(propertyToField.get(propertyName))
-                    .map(fcInfo -> fcInfo.getDelimitedColumnName())
-                    .orElse(null);
+   public String getColumnNameForProperty(final String propertyName) {
+      return Optional.ofNullable(propertyToField.get(propertyName))
+         .map(fcInfo -> fcInfo.getDelimitedColumnName())
+         .orElse(null);
    }
 
-   private void precalculateColumnInfos(final List<AttributeInfo> idFcInfos)
-   {
+   private void precalculateColumnInfos(final List<AttributeInfo> idFcInfos) {
       idFieldColumnInfos = new AttributeInfo[idFcInfos.size()];
       idColumnNames = new String[idFcInfos.size()];
       final String[] columnNames = new String[columnToField.size()];
@@ -738,7 +800,7 @@ public final class Introspected
             columnNames[fieldCount] = fcInfo.getColumnName();
             caseSensitiveColumnNames[fieldCount] = fcInfo.getCaseSensitiveColumnName();
             delimitedColumnNames[fieldCount] = fcInfo.getDelimitedColumnName();
-            columnTableNames[fieldCount] = fcInfo.columnTableName;
+            columnTableNames[fieldCount] = fcInfo.delimitedTableName;
             if (!fcInfo.isIdField) {
                columnsSansIds[sansIdCount] = fcInfo.getColumnName();
                delimitedColumnsSansIds[sansIdCount] = fcInfo.getDelimitedColumnName();
@@ -757,8 +819,7 @@ public final class Introspected
       precalculateUpdatableColumns();
    }
 
-   private static String readClob(final Clob clob) throws IOException, SQLException
-   {
+   private static String readClob(final Clob clob) throws IOException, SQLException {
       try (final Reader reader = clob.getCharacterStream()) {
          final StringBuilder sb = new StringBuilder();
          final char[] cbuf = new char[1024];
@@ -790,7 +851,9 @@ public final class Introspected
       return updatableFcInfosArray;
    }
 
-   /** Fields in same order as supplied by Type inspection */
+   /**
+    * Fields in same order as supplied by Type inspection
+    */
    AttributeInfo[] getSelectableFcInfos() {
       return selectableFcInfos;
    }
