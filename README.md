@@ -127,6 +127,7 @@ Note that the returned customer object is identical with the one you supplied as
 There are much more useful methods like:
 
 * ```Q2Obj.objectById(Class<T> type, Object... ids)```
+* ```Q2Obj.objectFromSelect(Class<T> clazz, String select, Object... args)```
 * ```Q2Obj.updateObject(customer)```
 * ```Q2Obj.deleteObject(customer)```
 * ```Q2Obj.resultSetToObject(ResultSet resultSet, T target)```
