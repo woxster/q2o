@@ -96,16 +96,15 @@ public class Customer {
    }
 }
 ```
-Here we introduce the most important q2o class, ```OrmElf```.  What is ```OrmElf```?  Well, an 'Elf' is a 'Helper'
-but with fewer letters to type.  Besides, who doesn't like Elves?  Let's look at how the ```OrmElf``` can help us:
+Here we introduce the most important q2o class, ```Q2Obj```. Let's look at how the ```Q2Obj``` class can help us:
 ```Java
 public List<Customer> getAllCustomers() {
-   return OrmElf.listFromClause(Customer.class, null);
+   return Q2Obj.listFromClause(Customer.class, null);
 }
 ```
-As a second argument to ```OrmElf.listFromClause()``` you can provide a where clause, to restrict the found objects:
+As a second argument to ```Q2Obj.listFromClause()``` you can provide a where clause, to restrict the found objects:
 ```
-OrmElf.listFromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
+Q2Obj.listFromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
 ```
 
 Now lets store a new customer
@@ -113,7 +112,7 @@ Now lets store a new customer
 Customer customer = new Customer();
 customer.setFirstName = "...";
 customer.setLastName = "...";
-OrmElf.insertObject(customer);
+Q2Obj.insertObject(customer);
 ```
 The very useful thing that happens here is that after storing the object you can immediately access its id:
 ```
@@ -121,18 +120,18 @@ assertTrue(customer.getId() != 0);
 ```
 While you are working with the customer object "offline" the object might change in the database. How can you update your object so it reflects the current state?
 ```
-customer = OrmElf.refresh(customer)
+customer = Q2Obj.refresh(customer)
 ```
 Note that the returned customer object is identical with the one you supplied as argument or null in case it was deleted in the meantime.
 
 There are much more useful methods like:
 
-* ```OrmElf.objectById(Class<T> type, Object... ids)```
-* ```OrmElf.updateObject(customer)```
-* ```OrmElf.deleteObject(customer)```
-* ```OrmElf.resultSetToObject(ResultSet resultSet, T target)```
-* ```OrmElf.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
-* ```OrmElf.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
+* ```Q2Obj.objectById(Class<T> type, Object... ids)```
+* ```Q2Obj.updateObject(customer)```
+* ```Q2Obj.deleteObject(customer)```
+* ```Q2Obj.resultSetToObject(ResultSet resultSet, T target)```
+* ```Q2Obj.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
+* ```Q2Obj.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
 
 Many of these methods can also work with lists of objects.
 
