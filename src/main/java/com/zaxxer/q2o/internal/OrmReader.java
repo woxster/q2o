@@ -170,22 +170,24 @@ public class OrmReader extends OrmBase
                   throw new RuntimeException(e);
                }
             });
-
+            currentTarget = currentTarget == null ? target : currentTarget;
             Class<?> currentTargetClass = currentTarget.getClass();
             AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
             try {
                currentTargetInfo.setValue(currentTarget, columnValue);
 
                AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
-               Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
-                  try {
-                     return parentInfo.getOwnerClazz().newInstance();
-                  }
-                  catch (InstantiationException | IllegalAccessException e) {
-                     throw new RuntimeException(e);
-                  }
-               });
-               parentInfo.setValue(parent, currentTarget);
+               if (parentInfo != null) {
+                  Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
+                     try {
+                        return parentInfo.getOwnerClazz().newInstance();
+                     }
+                     catch (InstantiationException | IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                     }
+                  });
+                  parentInfo.setValue(parent, currentTarget);
+               }
 
             }
             catch (IllegalAccessException e) {
