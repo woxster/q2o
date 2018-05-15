@@ -2,18 +2,18 @@
    <modelVersion>4.0.0</modelVersion>
 
    <groupId>com.github.h-thurow</groupId>
-   <artifactId>sansorm</artifactId>
+   <artifactId>q2o</artifactId>
    <version>3.9-SNAPSHOT</version>
    <!--<packaging>bundle</packaging>-->
 
-   <name>SansOrm</name>
-   <description>A "No-ORM" sane SQL &lt;-&gt; Java object mapping library</description>
-   <url>https://github.com/h-thurow/SansOrm</url>
+   <name>q2o</name>
+   <description>An object mapping library that translates SQL results into JPA annotated JavaBeans with limited support for resolving object relations on demand.</description>
+   <url>https://github.com/h-thurow/q2o</url>
 
    <scm>
-      <connection>scm:git:git//github.com/h-thurow/SansOrm.git</connection>
-      <developerConnection>scm:git:ssh//github.com/h-thurow/SansOrm.git</developerConnection>
-      <url>https://github.com/h-thurow/SansOrm.git</url>
+      <connection>scm:git:git//github.com/h-thurow/q2o.git</connection>
+      <developerConnection>scm:git:ssh//github.com/h-thurow/q2o.git</developerConnection>
+      <url>https://github.com/h-thurow/q2o.git</url>
    </scm>
 
    <licenses>

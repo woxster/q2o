@@ -1,6 +1,6 @@
 package org.sansorm;
 
-import com.zaxxer.sansorm.OrmElf;
+import com.zaxxer.q2o.Q2Obj;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,8 +10,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.zaxxer.sansorm.SansOrm;
-import com.zaxxer.sansorm.SqlClosureElf;
+import com.zaxxer.q2o.q2o;
+import com.zaxxer.q2o.SqlClosureElf;
 
 
 public class QueryTest2
@@ -19,7 +19,7 @@ public class QueryTest2
    @BeforeClass
    public static void setup() throws Throwable
    {
-      SansOrm.initializeTxNone(TestUtils.makeH2DataSource());
+      q2o.initializeTxNone(TestUtils.makeH2DataSource());
       SqlClosureElf.executeUpdate(
          "CREATE TABLE TargetClass2 ("
             + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"
@@ -31,7 +31,7 @@ public class QueryTest2
    @AfterClass
    public static void tearDown()
    {
-      SansOrm.deinitialize();
+      q2o.deinitialize();
    }
 
    @Test
@@ -41,11 +41,11 @@ public class QueryTest2
       long timestamp = 42L;
       String string = "Hi";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
-      OrmElf.insertObject(original);
+      Q2Obj.insertObject(original);
 
       // when
-      TargetClass2 target = OrmElf.objectFromClause(TargetClass2.class, "someDate = ?", timestamp);
-      TargetClass2 targetAgain = OrmElf.getObjectById(TargetClass2.class, target.getId());
+      TargetClass2 target = Q2Obj.objectFromClause(TargetClass2.class, "someDate = ?", timestamp);
+      TargetClass2 targetAgain = Q2Obj.getObjectById(TargetClass2.class, target.getId());
 
       // then
       assertThat(targetAgain.getId()).isEqualTo(target.getId());
@@ -62,10 +62,10 @@ public class QueryTest2
       long timestamp = 43L;
       String string = "Ho";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
-      OrmElf.insertObject(original);
+      Q2Obj.insertObject(original);
 
       // when
-      List<TargetClass2> target = OrmElf.listFromClause(TargetClass2.class, "string = ?", string);
+      List<TargetClass2> target = Q2Obj.listFromClause(TargetClass2.class, "string = ?", string);
 
       // then
       assertThat(target.get(0).getString()).isEqualTo(string);
@@ -76,12 +76,12 @@ public class QueryTest2
    public void testNumberFromSql()
    {
       Number initialCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
-      OrmElf.insertObject(new TargetClass2(null, ""));
+      Q2Obj.insertObject(new TargetClass2(null, ""));
 
       Number newCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
       assertThat(newCount.intValue()).isEqualTo(initialCount.intValue() + 1);
 
-      int countCount = OrmElf.countObjectsFromClause(TargetClass2.class, null);
+      int countCount = Q2Obj.countObjectsFromClause(TargetClass2.class, null);
       assertThat(countCount).isEqualTo(newCount.intValue());
    }
 
@@ -90,8 +90,8 @@ public class QueryTest2
    {
       Date date = new Date();
 
-      TargetClass2 target = OrmElf.insertObject(new TargetClass2(date, "Date"));
-      target = OrmElf.getObjectById(TargetClass2.class, target.getId());
+      TargetClass2 target = Q2Obj.insertObject(new TargetClass2(date, "Date"));
+      target = Q2Obj.getObjectById(TargetClass2.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Date");
       assertThat(target.getSomeDate().getTime()).isEqualTo(date.getTime());
