@@ -39,7 +39,7 @@ Support not only field access but property access to. With property access the c
 
 Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with q2o. Remember q2o is not an ORM frame work so only a small subset of JPA annotations are really supported (see below).
 
-Support for `@OneToOne` and `@ManyToOne` joins on demand.
+Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
 API reordering and renaming.
 
