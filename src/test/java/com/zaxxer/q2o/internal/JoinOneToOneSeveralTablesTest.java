@@ -670,7 +670,7 @@ public class JoinOneToOneSeveralTablesTest {
    }
 
    /**
-    * RuntimeException is thrown.
+    * OneToMany annotation is ignored.
     */
    @Test
    public void oneToMany() throws SQLException {
@@ -691,13 +691,12 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left')");
          Q2Sql.executeUpdate("insert into RIGHT_TABLE (id) values(1)");
 
-         thrown.expect(RuntimeException.class);
          LeftOneToMany left = SqlClosure.sqlExecute(c -> {
             PreparedStatement pstmt = c.prepareStatement(
                "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?");
             return Q2Obj.statementToObject(pstmt, LeftOneToMany.class, 1);
          });
-         System.out.println(left);
+         assertEquals("LeftOneToMany{id=1, type='left', rights=null}", left.toString());
       }
       catch (Exception e) {
          e.printStackTrace();
@@ -833,7 +832,7 @@ public class JoinOneToOneSeveralTablesTest {
    }
 
    @Test
-   public void flattenedJoin() {
+   public void flattenedTableJoin() {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try {

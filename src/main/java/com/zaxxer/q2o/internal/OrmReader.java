@@ -170,12 +170,15 @@ public class OrmReader extends OrmBase
                   throw new RuntimeException(e);
                }
             });
+            // currentTarget is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
             currentTarget = currentTarget == null ? target : currentTarget;
+
             Class<?> currentTargetClass = currentTarget.getClass();
             AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
             try {
                currentTargetInfo.setValue(currentTarget, columnValue);
 
+               // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
                AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
                if (parentInfo != null) {
                   Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
