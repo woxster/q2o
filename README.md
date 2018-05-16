@@ -41,6 +41,8 @@ Fully JPA annotated classes, you already have, should be processed as-is, withou
 
 Support for `@OneToOne` and `@ManyToOne` joins on demand.
 
+API reordering and renaming.
+
 Numerous tests added to stabilize further development.
 
 ### Initialization
@@ -127,7 +129,7 @@ Note that the returned customer object is identical with the one you supplied as
 There are much more useful methods like:
 
 * ```Q2Obj.objectById(Class<T> type, Object... ids)```
-* ```Q2Obj.objectFromSelect(Class<T> clazz, String select, Object... args)```
+* ```Q2Obj.objectFromSelect(Class<T> clazz, String select, Object... args)``` (New in 3.9)
 * ```Q2Obj.updateObject(customer)```
 * ```Q2Obj.deleteObject(customer)```
 * ```Q2Obj.resultSetToObject(ResultSet resultSet, T target)```
@@ -168,7 +170,7 @@ The following annotations are supported:
 &lt;dependency>
     &lt;groupId>com.github.h-thurow&lt;/groupId>
     &lt;artifactId>q2o&lt;/artifactId>
-    &lt;version>3.8&lt;/version>
+    &lt;version>3.9&lt;/version>
 &lt;/dependency>
 </pre>
 or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thurow%22%20AND%20a%3A%22q2o%22>download from here</a>.
