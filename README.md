@@ -182,5 +182,5 @@ or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thuro
 [Maven Central]:https://maven-badges.herokuapp.com/maven-central/com.github.h-thurow/q2o
 [Maven Central img]:https://maven-badges.herokuapp.com/maven-central/com.github.h-thurow/q2o/badge.svg
    
-[Javadocs]:http://javadoc.io/doc/com.github.h-thurow/q2o/3.8
+[Javadocs]:http://javadoc.io/doc/com.github.h-thurow/q2o
 [Javadocs img]:http://javadoc.io/badge/com.github.h-thurow/q2o.svg
