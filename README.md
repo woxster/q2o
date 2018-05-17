@@ -138,23 +138,20 @@ There are much more useful methods like:
 Many of these methods can also work with lists of objects.
 
 ### Supported Annotations
-Except for the ``@Entity``, ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear only on getters or fields.
 
-The following annotations are supported:
-
-| Annotation            | Supported Attributes                                 |
-|:--------------------- |:---------------------------------------------------- |
-| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``        |
-| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``   |
-| ``@Convert``          | ``converter`` (``AttributeConverter`` _classes only_)|
-| ``@Entity``          | ``name`` (New in 3.9)      |
-| ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) |
-| ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)    |
-| ``@Id``               | n/a                                                  |
-| ``@JoinColumn``       | ``name (supports only @OneToOne and @ManyToOne)``             |
-| ``@MappedSuperclass`` | n/a                                                  |
-| ``@Table``            | ``name``                                             |
-| ``@Transient``        | n/a                                                  |
+| Annotation            | Supported Attributes                                   | Position               |
+|:--------------------- |:-------------------------------------------------------|:-----------------------|
+| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``          | Class, Getters, Fields |
+| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``     | Getters, Fields |
+| ``@Convert``          | ``converter`` (``AttributeConverter`` _classes only_)  | Getters, Fields |
+| ``@Entity``          | ``name`` (New in 3.9)                                   | Class           |
+| ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) | Getters, Fields |
+| ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)      | Getters, Fields |
+| ``@Id``               | n/a                                                    | Getters, Fields |
+| ``@JoinColumn``       | ``name (supports only @OneToOne and @ManyToOne)``      | Getters, Fields |
+| ``@MappedSuperclass`` | n/a                                                    | Class           |
+| ``@Table``            | ``name``                                               | Class           |
+| ``@Transient``        | n/a                                                    | Getters, Fields |
 
 
 ### More Advanced
