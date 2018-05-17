@@ -143,8 +143,8 @@ Many of these methods can also work with lists of objects.
 |:--------------------- |:-------------------------------------------------------|:-----------------------|
 | ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``          | Class, Getters, Fields |
 | ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``     | Getters, Fields |
-| ``@Convert``          | ``converter`` (``AttributeConverter`` _classes only_)  | Getters, Fields |
-| ``@Entity``          | ``name`` (New in 3.9)                                   | Class           |
+| ``@Convert``          | ``converter``                                          | Getters, Fields |
+| ``@Entity``          | ``name``                                                | Class           |
 | ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) | Getters, Fields |
 | ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)      | Getters, Fields |
 | ``@Id``               | n/a                                                    | Getters, Fields |
