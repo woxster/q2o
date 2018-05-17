@@ -141,7 +141,7 @@ Many of these methods can also work with lists of objects.
 
 | Annotation            | Supported elements                                     | Position               |
 |:--------------------- |:-------------------------------------------------------|:-----------------------|
-| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``          | Classes, Getters, Fields |
+| ``@Access``           | ``value`` (=``AccessType.PROPERTY``,``AccessType.FIELD``)           | Classes, Getters, Fields |
 | ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``     | Getters, Fields |
 | ``@Convert``          | ``converter``                                          | Getters, Fields |
 | ``@Entity``          | ``name``                                                | Classes           |
