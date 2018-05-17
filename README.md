@@ -141,16 +141,16 @@ Many of these methods can also work with lists of objects.
 
 | Annotation            | Supported Attributes                                   | Position               |
 |:--------------------- |:-------------------------------------------------------|:-----------------------|
-| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``          | Class, Getters, Fields |
+| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``          | Classes, Getters, Fields |
 | ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``     | Getters, Fields |
 | ``@Convert``          | ``converter``                                          | Getters, Fields |
-| ``@Entity``          | ``name``                                                | Class           |
+| ``@Entity``          | ``name``                                                | Classes           |
 | ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) | Getters, Fields |
 | ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)      | Getters, Fields |
 | ``@Id``               | n/a                                                    | Getters, Fields |
 | ``@JoinColumn``       | ``name (supports only @OneToOne and @ManyToOne)``      | Getters, Fields |
-| ``@MappedSuperclass`` | n/a                                                    | Class           |
-| ``@Table``            | ``name``                                               | Class           |
+| ``@MappedSuperclass`` | n/a                                                    | Classes           |
+| ``@Table``            | ``name``                                               | Classes           |
 | ``@Transient``        | n/a                                                    | Getters, Fields |
 
 
