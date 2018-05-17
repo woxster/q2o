@@ -139,7 +139,7 @@ Many of these methods can also work with lists of objects.
 
 ### Supported Annotations
 
-| Annotation            | Supported Attributes                                   | Position               |
+| Annotation            | Supported elements                                     | Position               |
 |:--------------------- |:-------------------------------------------------------|:-----------------------|
 | ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``          | Classes, Getters, Fields |
 | ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``     | Getters, Fields |
