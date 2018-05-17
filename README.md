@@ -11,12 +11,6 @@ q2o is an object mapping library that translates SQL results into JPA annotated 
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
-q2o will...
-
-* Massively decrease the boilerplate code you write even if you use pure SQL (and no Java objects)
-* Persist and retrieve simple annotated Java objects, and lists thereof, _without you writing SQL_
-* Persist and retrieve complex annotated Java objects, and lists thereof, _where you provide the SQL_
-
 q2o will _never_...
 
 * Perform a JOIN for you
