@@ -11,12 +11,6 @@ q2o is an object mapping library that translates SQL results into JPA annotated 
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
-q2o will...
-
-* Massively decrease the boilerplate code you write even if you use pure SQL (and no Java objects)
-* Persist and retrieve simple annotated Java objects, and lists thereof, _without you writing SQL_
-* Persist and retrieve complex annotated Java objects, and lists thereof, _where you provide the SQL_
-
 q2o will _never_...
 
 * Perform a JOIN for you
@@ -41,7 +35,7 @@ Fully JPA annotated classes, you already have, should be processed as-is, withou
 
 Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
-API reordering and renaming.
+API reordering and renaming and more convenient methods.
 
 Numerous tests added to stabilize further development.
 
@@ -104,7 +98,7 @@ public List<Customer> getAllCustomers() {
    return Q2Obj.objectsFromClause(Customer.class, null);
 }
 ```
-As a second argument to ```Q2Obj.listFromClause()``` you can provide a where clause, to restrict the found objects:
+As a second argument to ```Q2Obj.objectFromClause()``` you can provide a where clause, to restrict the found objects:
 ```
 Q2Obj.objectsFromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
 ```
@@ -141,26 +135,23 @@ There are much more useful methods like:
 * ```Q2Obj.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
 * ```Q2Obj.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
 
-Many of these methods can also work with lists of objects.
+Many of these methods can also work with lists of objects. [See Javadoc.](http://javadoc.io/page/com.github.h-thurow/q2o/latest/com/zaxxer/q2o/Q2Obj.html)
 
 ### Supported Annotations
-Except for the ``@Entity``, ``@Table`` and ``@MappedSuperclass`` annotations, which must annotate a *class*, and ``@Access`` annotation, which can annotate classes as well as fields/getters, all other annotations must appear only on getters or fields.
 
-The following annotations are supported:
-
-| Annotation            | Supported Attributes                                 |
-|:--------------------- |:---------------------------------------------------- |
-| ``@Access``           | ``AccessType.PROPERTY``, ``AccessType.FIELD``        |
-| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``   |
-| ``@Convert``          | ``converter`` (``AttributeConverter`` _classes only_)|
-| ``@Entity``          | ``name`` (New in 3.9)      |
-| ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) |
-| ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)    |
-| ``@Id``               | n/a                                                  |
-| ``@JoinColumn``       | ``name (supports only @OneToOne and @ManyToOne)``             |
-| ``@MappedSuperclass`` | n/a                                                  |
-| ``@Table``            | ``name``                                             |
-| ``@Transient``        | n/a                                                  |
+| Annotation            | Supported elements                                     | Position               |
+|:--------------------- |:-------------------------------------------------------|:-----------------------|
+| ``@Access``           | ``value`` (=``AccessType.PROPERTY``,``AccessType.FIELD``)           | Classes, Getters, Fields |
+| ``@Column``           | ``name``, ``insertable``, ``updatable``, ``table``     | Getters, Fields |
+| ``@Convert``          | ``converter``                                          | Getters, Fields |
+| ``@Entity``          | ``name``                                                | Classes           |
+| ``@Enumerated``       | ``value`` (=``EnumType.ORDINAL``, ``EnumType.STRING``) | Getters, Fields |
+| ``@GeneratedValue``   | ``strategy`` (``GenerationType.IDENTITY`` _only_)      | Getters, Fields |
+| ``@Id``               | n/a                                                    | Getters, Fields |
+| ``@JoinColumn``       | ``name (supports only @OneToOne and @ManyToOne)``      | Getters, Fields |
+| ``@MappedSuperclass`` | n/a                                                    | Classes           |
+| ``@Table``            | ``name``                                               | Classes           |
+| ``@Transient``        | n/a                                                    | Getters, Fields |
 
 
 ### More Advanced
