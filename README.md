@@ -135,7 +135,7 @@ There are much more useful methods like:
 * ```Q2Obj.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
 * ```Q2Obj.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
 
-Many of these methods can also work with lists of objects.
+Many of these methods can also work with lists of objects. [See Javadoc.](http://javadoc.io/page/com.github.h-thurow/q2o/latest/com/zaxxer/q2o/Q2Obj.html)
 
 ### Supported Annotations
 
