@@ -127,9 +127,9 @@ customer = Q2Obj.refresh(customer)
 Note that the returned customer object is identical with the one you supplied as argument or null in case it was deleted in the meantime.
 
 What if your object has many fields and you only want to retrieve some of them?
-
-```Q2Obj.objectFromSelect(Customer.class, "select id, last_name from customer where id = ?", id)```
-
+```
+Q2Obj.objectFromSelect(Customer.class, "select id, last_name from customer where id = ?", id)
+```
 As long as your object has the id set, you can refresh its values with refresh(customer) or change its values and update it with updateObject(customer).
 
 There are much more useful methods like:
