@@ -307,9 +307,12 @@ public final class Introspected {
     */
    AttributeInfo getFieldColumnInfo(final String columnName) {
       List<AttributeInfo> attributeInfos = columnToField.get(columnName);
-      for (AttributeInfo attributeInfo : attributeInfos) {
-         if (attributeInfo.isSelfJoinField() || !attributeInfo.isJoinColumn) {
-            return attributeInfo;
+      // If objectFromSelect() did more fields retrieve as are defined on the entity.
+      if (attributeInfos != null) {
+         for (AttributeInfo attributeInfo : attributeInfos) {
+            if (attributeInfo.isSelfJoinField() || !attributeInfo.isJoinColumn) {
+               return attributeInfo;
+            }
          }
       }
       return null;

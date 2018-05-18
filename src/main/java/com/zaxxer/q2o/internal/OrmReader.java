@@ -175,26 +175,22 @@ public class OrmReader extends OrmBase
 
             Class<?> currentTargetClass = currentTarget.getClass();
             AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
-            try {
-               currentTargetInfo.setValue(currentTarget, columnValue);
+            // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+            introspected.set(currentTarget, currentTargetInfo, columnValue);
 
-               // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
-               AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
-               if (parentInfo != null) {
-                  Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
-                     try {
-                        return parentInfo.getOwnerClazz().newInstance();
-                     }
-                     catch (InstantiationException | IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                     }
-                  });
-                  parentInfo.setValue(parent, currentTarget);
-               }
-
-            }
-            catch (IllegalAccessException e) {
-               throw new RuntimeException(e);
+            // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
+            AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
+            if (parentInfo != null) {
+               Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
+                  try {
+                     return parentInfo.getOwnerClazz().newInstance();
+                  }
+                  catch (InstantiationException | IllegalAccessException e) {
+                     throw new RuntimeException(e);
+                  }
+               });
+               // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+               introspected.set(parent, parentInfo, currentTarget);
             }
 
          }
@@ -210,7 +206,11 @@ public class OrmReader extends OrmBase
                   throw new RuntimeException(e);
                }
             });
-            introspected.set(parent, fcInfo, columnValue);
+            // If objectFromSelect() does more fields retrieve as are defined on the entity fcInfo is null.
+            if (fcInfo != null) {
+               // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+               introspected.set(parent, fcInfo, columnValue);
+            }
          }
 
       }
