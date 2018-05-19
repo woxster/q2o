@@ -51,21 +51,21 @@ public class QueryTestSQLite {
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          TargetClassSQL original = new TargetClassSQL("Hi", new Date(0));
          assertThat(original.getId()).isNull();
-         TargetClassSQL inserted = Q2Obj.insertObject(original);
+         TargetClassSQL inserted = Q2Obj.insert(original);
          assertThat(inserted).isSameAs(original).as("insertObject() sets generated id");
          Integer idAfterInsert = inserted.getId();
          assertThat(idAfterInsert).isNotNull();
 
-         List<TargetClassSQL> selectedAll = Q2Obj.listFromClause(TargetClassSQL.class, null);
+         List<TargetClassSQL> selectedAll = Q2Obj.objectsFromClause(TargetClassSQL.class, null);
          assertThat(selectedAll).isNotEmpty();
 
-         TargetClassSQL selected = Q2Obj.objectFromClause(TargetClassSQL.class, "string = ?", "Hi");
+         TargetClassSQL selected = Q2Obj.fromClause(TargetClassSQL.class, "string = ?", "Hi");
          assertThat(selected.getId()).isEqualTo(idAfterInsert);
          assertThat(selected.getString()).isEqualTo("Hi");
          assertThat(selected.getTimestamp().getTime()).isEqualTo(0);
 
          selected.setString("Hi edited");
-         TargetClassSQL updated = Q2Obj.updateObject(selected);
+         TargetClassSQL updated = Q2Obj.update(selected);
          assertThat(updated).isSameAs(selected).as("updateObject() only set generated id if it was missing");
          assertThat(updated.getId()).isEqualTo(idAfterInsert);
       }
@@ -84,7 +84,7 @@ public class QueryTestSQLite {
       try (Closeable ignored = prepareSQLiteDatasource(path)) {
          TargetClassSQL original = new TargetClassSQL("Hi", new Date(0));
          assertThat(original.getId()).isNull();
-         TargetClassSQL inserted = Q2Obj.insertObject(original);
+         TargetClassSQL inserted = Q2Obj.insert(original);
          assertThat(inserted).isSameAs(original).as("insertObject() sets generated id");
          idAfterInsert = inserted.getId();
          assertThat(idAfterInsert).isNotNull();
@@ -93,13 +93,13 @@ public class QueryTestSQLite {
       // reopen database, it is important for this test
       // then select previously inserted object and try to edit it
       try (Closeable ignored = prepareSQLiteDatasource(path)) {
-         TargetClassSQL selected = Q2Obj.objectFromClause(TargetClassSQL.class, "string = ?", "Hi");
+         TargetClassSQL selected = Q2Obj.fromClause(TargetClassSQL.class, "string = ?", "Hi");
          assertThat(selected.getId()).isEqualTo(idAfterInsert);
          assertThat(selected.getString()).isEqualTo("Hi");
          assertThat(selected.getTimestamp().getTime()).isEqualTo(0L);
 
          selected.setString("Hi edited");
-         TargetClassSQL updated = Q2Obj.updateObject(selected);
+         TargetClassSQL updated = Q2Obj.update(selected);
          assertThat(updated).isSameAs(selected).as("updateObject() only set generated id if it was missing");
          assertThat(updated.getId()).isEqualTo(idAfterInsert);
       }
@@ -116,7 +116,7 @@ public class QueryTestSQLite {
       // when
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          SqlClosure.sqlExecute(c -> {
-            Q2Obj.insertListNotBatched(c, toInsert);
+            Q2Obj.insertNotBatched(c, toInsert);
             return null;
          });
       }
@@ -139,10 +139,10 @@ public class QueryTestSQLite {
       // when
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          SqlClosure.sqlExecute(c -> {
-            Q2Obj.insertListBatched(c, toInsert);
+            Q2Obj.insertBatched(c, toInsert);
             return null;
          });
-         List<TargetClassSQL> inserted = Q2Obj.listFromClause(
+         List<TargetClassSQL> inserted = Q2Obj.objectsFromClause(
             TargetClassSQL.class,
             "string in " + SqlClosureElf.getInClausePlaceholdersForCount(count),
             IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));

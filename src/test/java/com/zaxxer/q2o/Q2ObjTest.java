@@ -67,7 +67,7 @@ public class Q2ObjTest {
             };
          }
       };
-      TestClass obj = Q2Obj.updateObject(con, new TestClass(), "field_1", "Field_3");
+      TestClass obj = Q2Obj.updateExcludeColumns(con, new TestClass(), "field_1", "Field_3");
       assertEquals("UPDATE Test_Class SET FIELD_2=?,field4=? WHERE id=?", fetchedSql[0]);
       assertEquals("field2", idxToValue.get(1));
       assertEquals("field4", idxToValue.get(2));

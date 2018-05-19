@@ -41,11 +41,11 @@ public class QueryTest2
       long timestamp = 42L;
       String string = "Hi";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
-      Q2Obj.insertObject(original);
+      Q2Obj.insert(original);
 
       // when
-      TargetClass2 target = Q2Obj.objectFromClause(TargetClass2.class, "someDate = ?", timestamp);
-      TargetClass2 targetAgain = Q2Obj.getObjectById(TargetClass2.class, target.getId());
+      TargetClass2 target = Q2Obj.fromClause(TargetClass2.class, "someDate = ?", timestamp);
+      TargetClass2 targetAgain = Q2Obj.byId(TargetClass2.class, target.getId());
 
       // then
       assertThat(targetAgain.getId()).isEqualTo(target.getId());
@@ -62,10 +62,10 @@ public class QueryTest2
       long timestamp = 43L;
       String string = "Ho";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
-      Q2Obj.insertObject(original);
+      Q2Obj.insert(original);
 
       // when
-      List<TargetClass2> target = Q2Obj.listFromClause(TargetClass2.class, "string = ?", string);
+      List<TargetClass2> target = Q2Obj.objectsFromClause(TargetClass2.class, "string = ?", string);
 
       // then
       assertThat(target.get(0).getString()).isEqualTo(string);
@@ -76,12 +76,12 @@ public class QueryTest2
    public void testNumberFromSql()
    {
       Number initialCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
-      Q2Obj.insertObject(new TargetClass2(null, ""));
+      Q2Obj.insert(new TargetClass2(null, ""));
 
       Number newCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
       assertThat(newCount.intValue()).isEqualTo(initialCount.intValue() + 1);
 
-      int countCount = Q2Obj.countObjectsFromClause(TargetClass2.class, null);
+      int countCount = Q2Obj.countFromClause(TargetClass2.class, null);
       assertThat(countCount).isEqualTo(newCount.intValue());
    }
 
@@ -90,8 +90,8 @@ public class QueryTest2
    {
       Date date = new Date();
 
-      TargetClass2 target = Q2Obj.insertObject(new TargetClass2(date, "Date"));
-      target = Q2Obj.getObjectById(TargetClass2.class, target.getId());
+      TargetClass2 target = Q2Obj.insert(new TargetClass2(date, "Date"));
+      target = Q2Obj.byId(TargetClass2.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Date");
       assertThat(target.getSomeDate().getTime()).isEqualTo(date.getTime());

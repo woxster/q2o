@@ -265,7 +265,7 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left')");
          Q2Sql.executeUpdate("insert into RIGHT_TABLE (id) values(1)");
 
-         Left left = Q2Obj.objectFromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?", 1);
+         Left left = Q2Obj.fromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?", 1);
 
 //         System.out.println(left);
          assertNotNull(left.getRight());
@@ -300,7 +300,7 @@ public class JoinOneToOneSeveralTablesTest {
 
          Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left')");
 
-         Left left = Q2Obj.objectFromSelect(Left.class, "SELECT * FROM LEFT_TABLE" +
+         Left left = Q2Obj.fromSelect(Left.class, "SELECT * FROM LEFT_TABLE" +
             " left join RIGHT_TABLE on LEFT_TABLE.id = RIGHT_TABLE.id" +
             " where LEFT_TABLE.id = ?", 1);
 
@@ -528,7 +528,7 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
          Q2Sql.executeUpdate("insert into RIGHT_TABLE (id, type) values(1, 'type: right')");
 
-         Left1 left = Q2Obj.objectFromSelect(Left1.class, "SELECT * FROM LEFT_TABLE, MIDDLE_TABLE, RIGHT_TABLE where LEFT_TABLE.id = MIDDLE_TABLE.id and MIDDLE_TABLE.RIGHTID = RIGHT_TABLE.ID and LEFT_TABLE.id = ?", 1);
+         Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM LEFT_TABLE, MIDDLE_TABLE, RIGHT_TABLE where LEFT_TABLE.id = MIDDLE_TABLE.id and MIDDLE_TABLE.RIGHTID = RIGHT_TABLE.ID and LEFT_TABLE.id = ?", 1);
 
          System.out.println(left);
          assertNotNull(left.getMiddle());
@@ -588,7 +588,7 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("insert into FAR_RIGHT_TABLE (id, type) values(1, 'type: far right')");
 
          // Retrieve the whole graph with all values
-         Left1 left = Q2Obj.objectFromSelect(Left1.class,
+         Left1 left = Q2Obj.fromSelect(Left1.class,
             "SELECT *" +
                " FROM LEFT_TABLE, MIDDLE_TABLE, RIGHT_TABLE, FAR_RIGHT_TABLE" +
                " where" +
@@ -602,7 +602,7 @@ public class JoinOneToOneSeveralTablesTest {
 
 
          // The id fields must be selected at least
-         Left1 left1 = Q2Obj.objectFromSelect(Left1.class,
+         Left1 left1 = Q2Obj.fromSelect(Left1.class,
             "select" +
             " LEFT_TABLE.ID, MIDDLE_TABLE.ID" +
             " FROM LEFT_TABLE, MIDDLE_TABLE" +
@@ -694,7 +694,7 @@ public class JoinOneToOneSeveralTablesTest {
          LeftOneToMany left = SqlClosure.sqlExecute(c -> {
             PreparedStatement pstmt = c.prepareStatement(
                "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?");
-            return Q2Obj.statementToObject(pstmt, LeftOneToMany.class, 1);
+            return Q2Obj.fromStatement(pstmt, LeftOneToMany.class, 1);
          });
          assertEquals("LeftOneToMany{id=1, type='left', rights=null}", left.toString());
       }
@@ -795,7 +795,7 @@ public class JoinOneToOneSeveralTablesTest {
 
          Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left')");
 
-         Left2 left = Q2Obj.objectFromSelect(Left2.class, "SELECT * FROM LEFT_TABLE" +
+         Left2 left = Q2Obj.fromSelect(Left2.class, "SELECT * FROM LEFT_TABLE" +
             " left join RIGHT_TABLE on LEFT_TABLE.id = RIGHT_TABLE.id" +
             " where LEFT_TABLE.id = ?", 1);
 
@@ -860,7 +860,7 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("insert into orders (customer_id) values(1)");
          Q2Sql.executeUpdate("insert into order_items (order_id, product_number, item_count) values(1, 'product number', 123)");
 
-         OrderSummary orderSummary = Q2Obj.objectFromSelect(OrderSummary.class, "SELECT o.order_id, first_name || ' ' || last_name AS full_name, cast (SUM(oi.item_count) as int) AS total_items " +
+         OrderSummary orderSummary = Q2Obj.fromSelect(OrderSummary.class, "SELECT o.order_id, first_name || ' ' || last_name AS full_name, cast (SUM(oi.item_count) as int) AS total_items " +
             "FROM orders o, customers c, order_items oi " +
             "WHERE c.customer_id = o.customer_id AND oi.order_id = o.order_id AND o.order_id = ?", 1);
 

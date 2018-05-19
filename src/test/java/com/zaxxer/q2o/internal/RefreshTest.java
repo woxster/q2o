@@ -171,9 +171,9 @@ public class RefreshTest {
                + "field2 VARCHAR(128) "
                + ")");
 
-         TestClass obj = Q2Obj.insertObject(new TestClass());
+         TestClass obj = Q2Obj.insert(new TestClass());
          assertEquals(1, obj.Id);
-         obj = Q2Obj.getObjectById(TestClass.class, obj.Id);
+         obj = Q2Obj.byId(TestClass.class, obj.Id);
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
@@ -223,9 +223,9 @@ public class RefreshTest {
 //         connection.close();
 //         assertEquals(1, rowCount);
 
-         TestClass2 obj = Q2Obj.insertObject(con, new TestClass2());
+         TestClass2 obj = Q2Obj.insert(con, new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = Q2Obj.getObjectById(TestClass2.class, obj.id1, obj.id2);
+         obj = Q2Obj.byId(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
          assertEquals(null, obj.field);
 

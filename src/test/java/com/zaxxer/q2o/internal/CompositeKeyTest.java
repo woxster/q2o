@@ -71,9 +71,9 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = Q2Obj.insertObject(new TestClass2());
+         TestClass2 obj = Q2Obj.insert(new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = Q2Obj.getObjectById(TestClass2.class, obj.id1, obj.id2);
+         obj = Q2Obj.byId(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
 
          SqlClosureElf.executeUpdate("update TestClass2 set field = 'changed'");
@@ -106,15 +106,15 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = Q2Obj.insertObject(new TestClass2());
+         TestClass2 obj = Q2Obj.insert(new TestClass2());
 
-         obj = Q2Obj.getObjectById(obj.getClass(), obj.id1, obj.id2);
+         obj = Q2Obj.byId(obj.getClass(), obj.id1, obj.id2);
          assertNotNull(obj);
          assertEquals(null, obj.field);
 
          obj.field = "changed";
-         Q2Obj.updateObject(con, obj);
-         obj = Q2Obj.objectById(con, obj.getClass(), obj.id1, obj.id2);
+         Q2Obj.update(con, obj);
+         obj = Q2Obj.byId(con, obj.getClass(), obj.id1, obj.id2);
          assertEquals("changed", obj.field);
 
       }
@@ -141,12 +141,12 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = Q2Obj.insertObject(new TestClass2());
-         int rowCount = Q2Obj.countObjectsFromClause(con, obj.getClass(), "field is null");
+         TestClass2 obj = Q2Obj.insert(new TestClass2());
+         int rowCount = Q2Obj.countFromClause(con, obj.getClass(), "field is null");
          assertEquals(1, rowCount);
 
-         Q2Obj.deleteObject(con, obj);
-         rowCount = Q2Obj.countObjectsFromClause(con, obj.getClass(), "field is null");
+         Q2Obj.delete(con, obj);
+         rowCount = Q2Obj.countFromClause(con, obj.getClass(), "field is null");
          assertEquals(0, 0);
       }
       finally {

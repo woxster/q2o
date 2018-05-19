@@ -40,7 +40,7 @@ public final class SqlClosureElf
     */
    public static <T> T getObjectById(Class<T> type, Object... ids)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.objectById(c, type, ids));
+      return SqlClosure.sqlExecute(c -> Q2Obj.byId(c, type, ids));
    }
 
    /**
@@ -54,7 +54,7 @@ public final class SqlClosureElf
     */
    public static <T> T objectFromClause(Class<T> type, String clause, Object... args)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.objectFromClause(c, type, clause, args));
+      return SqlClosure.sqlExecute(c -> Q2Obj.fromClause(c, type, clause, args));
    }
 
    /**
@@ -66,7 +66,7 @@ public final class SqlClosureElf
     */
    public static <T> T insertObject(T object)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.insertObject(c, object));
+      return SqlClosure.sqlExecute(c -> Q2Obj.insert(c, object));
    }
 
    /**
@@ -78,7 +78,7 @@ public final class SqlClosureElf
     */
    public static <T> T updateObject(T object)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.updateObject(c, object));
+      return SqlClosure.sqlExecute(c -> Q2Obj.update(c, object));
    }
 
    /**
@@ -90,7 +90,7 @@ public final class SqlClosureElf
     */
    public static <T> int deleteObject(T object)
    {
-      return SqlClosure.sqlExecute(c ->  Q2Obj.deleteObject(c, object));
+      return SqlClosure.sqlExecute(c ->  Q2Obj.delete(c, object));
    }
 
    /**
@@ -103,7 +103,7 @@ public final class SqlClosureElf
     */
    public static <T> int deleteObjectById(Class<T> clazz, Object... args)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.deleteObjectById(c, clazz, args));
+      return SqlClosure.sqlExecute(c -> Q2Obj.deleteById(c, clazz, args));
    }
 
    /**
@@ -117,7 +117,7 @@ public final class SqlClosureElf
     */
    public static <T> List<T> listFromClause(Class<T> clazz, String clause, Object... args)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.listFromClause(c, clazz, clause, args));
+      return SqlClosure.sqlExecute(c -> Q2Obj.objectsFromClause(c, clazz, clause, args));
    }
 
    /**
@@ -132,7 +132,7 @@ public final class SqlClosureElf
     */
    public static <T> int countObjectsFromClause(Class<T> clazz, String clause, Object... args)
    {
-      return SqlClosure.sqlExecute(c -> Q2Obj.countObjectsFromClause(c, clazz, clause, args));
+      return SqlClosure.sqlExecute(c -> Q2Obj.countFromClause(c, clazz, clause, args));
    }
 
    /**

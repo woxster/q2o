@@ -993,7 +993,7 @@ public class CaseSensitiveDatabasesTest {
          }
       };
       PreparedStatement pstmnt = con.prepareStatement("select * from Test_Class where Id = ?");
-      CaseSensitiveDatabasesClass obj = Q2Obj.statementToObject(pstmnt, CaseSensitiveDatabasesClass.class, "xyz");
+      CaseSensitiveDatabasesClass obj = Q2Obj.fromStatement(pstmnt, CaseSensitiveDatabasesClass.class, "xyz");
       assertEquals(delimitedFieldValue, obj.getDelimitedFieldName());
       assertEquals(defaultCaseValue, obj.getDefaultCase());
       assertEquals(idValue, obj.getId());
@@ -1093,7 +1093,7 @@ public class CaseSensitiveDatabasesTest {
             };
          }
       };
-      int count = Q2Obj.countObjectsFromClause(con, TestClass.class, "where \"Delimited Field Name\" = null");
+      int count = Q2Obj.countFromClause(con, TestClass.class, "where \"Delimited Field Name\" = null");
       assertEquals("SELECT COUNT(TestClass.Id) FROM TestClass TestClass where \"Delimited Field Name\" = null", fetchedSql[0]);
       assertEquals(123, count);
    }
@@ -1112,11 +1112,11 @@ public class CaseSensitiveDatabasesTest {
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = Q2Obj.insertObject(new InsertObjectH2());
+         InsertObjectH2 obj = Q2Obj.insert(new InsertObjectH2());
          assertEquals(1, obj.Id);
-         obj = Q2Obj.getObjectById(InsertObjectH2.class, obj.Id);
+         obj = Q2Obj.byId(InsertObjectH2.class, obj.Id);
          assertNotNull(obj);
-         int count = Q2Obj.countObjectsFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
+         int count = Q2Obj.countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
          assertEquals(1, count);
       }
       finally {
@@ -1139,9 +1139,9 @@ public class CaseSensitiveDatabasesTest {
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          InsertObjectH2 obj = new InsertObjectH2();
-         obj = Q2Obj.insertObject(obj);
+         obj = Q2Obj.insert(obj);
          obj.defaultCase = "changed";
-         obj = Q2Obj.updateObject(obj);
+         obj = Q2Obj.update(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
@@ -1175,9 +1175,9 @@ public class CaseSensitiveDatabasesTest {
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          TestClass obj = new TestClass();
-         obj = Q2Obj.insertObject(obj);
+         obj = Q2Obj.insert(obj);
          obj.defaultCase = "changed";
-         obj = Q2Obj.updateObject(obj);
+         obj = Q2Obj.update(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
@@ -1258,7 +1258,7 @@ public class CaseSensitiveDatabasesTest {
 
       HashSet<String> ignoredCols = new HashSet<>();
       ignoredCols.add("ignoredCol");
-      ResultSetToObjectClass obj = Q2Obj.resultSetToObject(rs, new ResultSetToObjectClass(), ignoredCols);
+      ResultSetToObjectClass obj = Q2Obj.fromResultSet(rs, new ResultSetToObjectClass(), ignoredCols);
       assertEquals(delimitedFieldValue, obj.delimitedFieldName);
       assertEquals(defaultCaseValue, obj.defaultCase);
       assertEquals(idValue, obj.id);
@@ -1330,7 +1330,7 @@ public class CaseSensitiveDatabasesTest {
 
       HashSet<String> ignoredCols = new HashSet<>();
 //      ignoredCols.add("ignoredCol");
-      ResultSetToObjectClass obj = Q2Obj.resultSetToObject(rs, new ResultSetToObjectClass(), ignoredCols);
+      ResultSetToObjectClass obj = Q2Obj.fromResultSet(rs, new ResultSetToObjectClass(), ignoredCols);
       assertEquals(delimitedFieldValue, obj.delimitedFieldName);
       assertEquals(defaultCaseValue, obj.defaultCase);
       assertEquals(idValue, obj.id);

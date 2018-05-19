@@ -102,24 +102,24 @@ public class SelfJoinOneToOnePropertyAccessTest {
          // store parent
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.type = "parent";
-         Q2Obj.insertObject(parent);
+         Q2Obj.insert(parent);
          assertTrue(parent.id > 0);
 
          // SansOrm does not persist child when parent is persisted
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.type = "child";
          child.parentId = parent;
-         Q2Obj.updateObject(parent);
+         Q2Obj.update(parent);
          assertEquals(0, child.id);
 
          // persist child explicitely. parentId from parent is also stored.
          OrmWriter.insertObject(con, child);
          assertTrue(child.id > 0);
-         int count = Q2Obj.countObjectsFromClause(PropertyAccessedOneToOneSelfJoin.class, null);
+         int count = Q2Obj.countFromClause(PropertyAccessedOneToOneSelfJoin.class, null);
          assertEquals(2, count);
 
          // Load child together with parent instance. Only parent id is restored on parent instance, no further attributes.
-         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.objectFromClause
+         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.fromClause
             (PropertyAccessedOneToOneSelfJoin.class, "id=2");
 //         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.objectById(con, PropertyAccessedOneToOneSelfJoin.class, 2);
          assertNotNull(childFromDb.parentId);
@@ -152,14 +152,14 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.type = "parent";
-         Q2Obj.insertObject(parent);
+         Q2Obj.insert(parent);
 
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.type = "child";
          child.parentId = parent;
          OrmWriter.insertObject(con, child);
 
-         List<PropertyAccessedOneToOneSelfJoin> objs = Q2Obj.listFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
+         List<PropertyAccessedOneToOneSelfJoin> objs = Q2Obj.objectsFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
          objs.forEach(System.out::println);
          Assertions.assertThat(objs).filteredOn(obj -> obj.parentId != null && obj.parentId.id == 1).size().isEqualTo(1);
       }
@@ -185,11 +185,11 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.type = "parent";
-         Q2Obj.insertObject(parent);
+         Q2Obj.insert(parent);
 
          PropertyAccessedOneToOneSelfJoin parent2 = new PropertyAccessedOneToOneSelfJoin();
          parent2.type = "parent";
-         Q2Obj.insertObject(parent2);
+         Q2Obj.insert(parent2);
 
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.type = "child";
