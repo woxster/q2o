@@ -35,7 +35,7 @@ Fully JPA annotated classes, you already have, should be processed as-is, withou
 
 Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
-API reordering and renaming and more convenient methods.
+API reordering and renaming **(still subject of change!)** and more convenient methods.
 
 Numerous tests added to stabilize further development.
 
