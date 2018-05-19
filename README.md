@@ -69,7 +69,7 @@ CREATE TABLE customer (
    email VARCHAR(255)
 );
 ```
-Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA (javax.persistence) annotations:
+Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations:
 
 Customer:
 ```Java
