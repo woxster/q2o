@@ -1,8 +1,7 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.Q2Obj;
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosureElf;
+import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
+import com.zaxxer.q2o.internal.OrmReader;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.TestUtils;

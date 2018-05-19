@@ -1,4 +1,4 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o.entities;
 
 import javax.persistence.*;
 import java.sql.Timestamp;

@@ -1,8 +1,6 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.Q2Obj;
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosureElf;
+import com.zaxxer.q2o.internal.OrmWriter;
 import org.assertj.core.api.Assertions;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
@@ -17,17 +15,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class SelfJoinManyToOneFieldAccessTest {
-
-   @Test
-   public void selfJoinFieldAccess() {
-      class Test {
-         @JoinColumn(name = "id", referencedColumnName = "parentId")
-         private Test parent;
-      }
-      Introspected introspected = new Introspected(Test.class);
-      AttributeInfo info = introspected.getSelfJoinColumnInfo();
-      assertTrue(info.isToBeConsidered());
-   }
 
    @Table(name = "JOINTEST")
    public static class FieldAccessedSelfJoin {
@@ -46,15 +33,6 @@ public class SelfJoinManyToOneFieldAccessTest {
             ", type='" + type + '\'' +
             '}';
       }
-   }
-
-   @Test
-   public void introspectJoinColumn() {
-
-      Introspected introspected = new Introspected(FieldAccessedSelfJoin.class);
-      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
-//      Arrays.stream(insertableFcInfos).forEach(System.out::println);
-      assertEquals(2, insertableFcInfos.length);
    }
 
    @Test

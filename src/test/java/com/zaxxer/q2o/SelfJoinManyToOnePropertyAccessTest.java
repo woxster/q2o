@@ -1,15 +1,12 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.Q2Obj;
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosureElf;
-import com.zaxxer.q2o.Q2Sql;
+import com.zaxxer.q2o.internal.OrmWriter;
+import com.zaxxer.q2o.entities.PropertyAccessedSelfJoin;
 import org.assertj.core.api.Assertions;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.TestUtils;
 
-import javax.persistence.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,69 +15,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class SelfJoinManyToOnePropertyAccessTest {
-
-   @Test
-   public void selfJoinFieldAccess() {
-      class Test {
-         @JoinColumn(name = "id", referencedColumnName = "parentId")
-         private Test parent;
-      }
-      Introspected introspected = new Introspected(Test.class);
-      AttributeInfo info = introspected.getSelfJoinColumnInfo();
-      assertTrue(info.isToBeConsidered());
-   }
-
-   @Table(name = "JOINTEST")
-   public static class PropertyAccessedSelfJoin {
-      private int id;
-      private PropertyAccessedSelfJoin parentId;
-      private String type;
-
-      @Override
-      public String toString() {
-         return "Test{" +
-            "id=" + id +
-            ", parentId=" + parentId +
-            ", type='" + type + '\'' +
-            '}';
-      }
-
-      @Id @GeneratedValue
-      public int getId() {
-         return id;
-      }
-
-      public void setId(int id) {
-         this.id = id;
-      }
-
-      @ManyToOne
-      @JoinColumn(name = "parentId", referencedColumnName = "id")
-      public PropertyAccessedSelfJoin getParentId() {
-         return parentId;
-      }
-
-      public void setParentId(PropertyAccessedSelfJoin parentId) {
-         this.parentId = parentId;
-      }
-
-      public String getType() {
-         return type;
-      }
-
-      public void setType(String type) {
-         this.type = type;
-      }
-   }
-
-   @Test
-   public void introspectJoinColumn() {
-
-      Introspected introspected = new Introspected(PropertyAccessedSelfJoin.class);
-      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
-//      Arrays.stream(insertableFcInfos).forEach(System.out::println);
-      assertEquals(2, insertableFcInfos.length);
-   }
 
    @Test
    public void selfJoinColumnPropertyAccessH2() throws SQLException {
@@ -99,20 +33,20 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
          // store parent
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
-         parent.type = "parent";
+         parent.setType("parent");
          Q2Obj.insert(parent);
-         assertTrue(parent.id > 0);
+         assertTrue(parent.getId() > 0);
 
          // SansOrm does not persist child when parent is persisted
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
-         child.type = "child";
-         child.parentId = parent;
+         child.setType("child");
+         child.setParentId(parent);
          Q2Obj.update(parent);
-         assertEquals(0, child.id);
+         assertEquals(0, child.getId());
 
          // persist child explicitely. parentId from parent is also stored.
          OrmWriter.insertObject(con, child);
-         assertTrue(child.id > 0);
+         assertTrue(child.getId() > 0);
          int count = Q2Obj.countFromClause(PropertyAccessedSelfJoin.class, null);
          assertEquals(2, count);
 
@@ -120,13 +54,13 @@ public class SelfJoinManyToOnePropertyAccessTest {
          PropertyAccessedSelfJoin childFromDb = Q2Obj.fromClause
             (PropertyAccessedSelfJoin.class, "id=2");
 //         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.objectById(con, PropertyAccessedOneToOneSelfJoin.class, 2);
-         assertNotNull(childFromDb.parentId);
-         assertEquals(1, childFromDb.parentId.id);
+         assertNotNull(childFromDb.getParentId());
+         assertEquals(1, childFromDb.getParentId().getId());
 
          // To add remaining attributes to parent reload
-         assertEquals(null, childFromDb.parentId.type);
-         Q2Obj.refresh(con, childFromDb.parentId);
-         assertEquals("parent", childFromDb.parentId.type);
+         assertEquals(null, childFromDb.getParentId().getType());
+         Q2Obj.refresh(con, childFromDb.getParentId());
+         assertEquals("parent", childFromDb.getParentId().getType());
       }
       finally {
          SqlClosureElf.executeUpdate("DROP TABLE JOINTEST");
@@ -149,17 +83,17 @@ public class SelfJoinManyToOnePropertyAccessTest {
                + ")");
 
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
-         parent.type = "parent";
+         parent.setType("parent");
          Q2Obj.insert(parent);
 
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
-         child.type = "child";
-         child.parentId = parent;
+         child.setType("child");
+         child.setParentId(parent);
          OrmWriter.insertObject(con, child);
 
          List<PropertyAccessedSelfJoin> objs = Q2Obj.objectsFromClause(PropertyAccessedSelfJoin.class, "id=2");
          objs.forEach(System.out::println);
-         Assertions.assertThat(objs).filteredOn(obj -> obj.parentId != null && obj.parentId.id == 1).size().isEqualTo(1);
+         Assertions.assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
       finally {
          SqlClosureElf.executeUpdate("DROP TABLE JOINTEST");
@@ -182,17 +116,17 @@ public class SelfJoinManyToOnePropertyAccessTest {
                + ")");
 
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
-         parent.type = "parent";
+         parent.setType("parent");
          Q2Obj.insert(parent);
 
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
-         child.type = "child";
-         child.parentId = parent;
+         child.setType("child");
+         child.setParentId(parent);
          OrmWriter.insertObject(con, child);
 
          List<PropertyAccessedSelfJoin> objs = Q2Obj.objectsFromClause(PropertyAccessedSelfJoin.class, "type like '%'");
          objs.forEach(System.out::println);
-         Assertions.assertThat(objs).filteredOn(obj -> obj.parentId != null && obj.parentId.id == 1).size().isEqualTo(1);
+         Assertions.assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
       finally {
          Q2Sql.executeUpdate("DROP TABLE JOINTEST");
@@ -246,20 +180,20 @@ public class SelfJoinManyToOnePropertyAccessTest {
                + ")");
 
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
-         parent.type = "parent";
+         parent.setType("parent");
          Q2Obj.insert(parent);
 
          PropertyAccessedSelfJoin parent2 = new PropertyAccessedSelfJoin();
-         parent2.type = "parent";
+         parent2.setType("parent");
          Q2Obj.insert(parent2);
 
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
-         child.type = "child";
-         child.parentId = parent;
+         child.setType("child");
+         child.setParentId(parent);
 
          PropertyAccessedSelfJoin child2 = new PropertyAccessedSelfJoin();
-         child2.type = "child";
-         child2.parentId = parent2;
+         child2.setType("child");
+         child2.setParentId(parent2);
 
          ArrayList<PropertyAccessedSelfJoin> children = new ArrayList<>();
          children.add(child);
@@ -292,16 +226,16 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
          // store parent
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
-         parent.type = "parent";
+         parent.setType("parent");
          Q2Obj.insert(parent);
-         assertTrue(parent.id > 0);
+         assertTrue(parent.getId() > 0);
 
          // persist child
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
-         child.type = "child";
-         child.parentId = parent;
+         child.setType("child");
+         child.setParentId(parent);
          Q2Obj.insert(child);
-         assertTrue(child.id > 0);
+         assertTrue(child.getId() > 0);
 
          PropertyAccessedSelfJoin obj = Q2Obj.fromSelect(PropertyAccessedSelfJoin.class, "select * from JOINTEST child, JOINTEST parent where child.parentId = parent.id and child.id = 2");
          System.out.println(obj);

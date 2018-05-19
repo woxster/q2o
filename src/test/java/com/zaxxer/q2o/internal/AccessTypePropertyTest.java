@@ -1,5 +1,6 @@
 package com.zaxxer.q2o.internal;
 
+import com.zaxxer.q2o.entities.GetterAnnotatedPitMainEntity;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;

@@ -1,5 +1,6 @@
 package com.zaxxer.q2o.internal;
 
+import com.zaxxer.q2o.entities.PropertyDescriptorTestClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -28,7 +29,7 @@ public class PropertyDescriptorTest {
    public void stringProperty() throws IntrospectionException, InvocationTargetException, IllegalAccessException {
       PropertyDescriptor descriptor = new PropertyDescriptor("field", PropertyDescriptorTestClass.class);
       Method getter = descriptor.getReadMethod();
-      assertEquals("public java.lang.String com.zaxxer.q2o.internal.PropertyDescriptorTestClass.getField()", getter.toString());
+      assertEquals("public java.lang.String com.zaxxer.q2o.entities.PropertyDescriptorTestClass.getField()", getter.toString());
       PropertyDescriptorTestClass obj = new PropertyDescriptorTestClass();
       obj.setField("value");
       assertEquals("value", getter.invoke(obj));

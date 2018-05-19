@@ -1,24 +1,27 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.*;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.groups.Tuple;
+import com.zaxxer.q2o.entities.Left;
+import com.zaxxer.q2o.internal.OrmWriter;
+import com.zaxxer.q2o.internal.PropertyInfo;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sansorm.TestUtils;
-import org.sansorm.testutils.*;
+import org.sansorm.testutils.DummyConnection;
+import org.sansorm.testutils.DummyParameterMetaData;
+import org.sansorm.testutils.DummyResultSet;
+import org.sansorm.testutils.DummyStatement;
 
 import javax.persistence.*;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.Collection;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -34,50 +37,6 @@ public class JoinOneToOneSeveralTablesTest {
 
    @Rule
    public ExpectedException thrown = ExpectedException.none();
-
-   @Entity @Table(name = "LEFT_TABLE")
-   public static class Left {
-      private int id;
-      private String type;
-      private Right right;
-
-      @Id @GeneratedValue
-      public int getId() {
-         return id;
-      }
-
-      public void setId(int id) {
-         this.id = id;
-      }
-
-      @OneToOne @JoinColumn(name = "id")
-      public Right getRight() {
-         return right;
-      }
-
-      public void setRight(Right right) {
-         this.right = right;
-      }
-
-      // TODO Support properties/fields with no or only @Basic annotation
-      @Column(name = "type")
-      public String getType() {
-         return type;
-      }
-
-      public void setType(String type) {
-         this.type = type;
-      }
-
-      @Override
-      public String toString() {
-         return "Left{" +
-            "id=" + id +
-            ", type='" + type + '\'' +
-            ", right=" + right +
-            '}';
-      }
-   }
 
    @Entity @Table(name = "RIGHT_TABLE")
    public static class Right {
@@ -101,17 +60,6 @@ public class JoinOneToOneSeveralTablesTest {
    }
 
    @Test
-   public void setValue() throws NoSuchFieldException, IllegalAccessException {
-      Left left = new Left();
-      Field rightField = Left.class.getDeclaredField("right");
-      PropertyInfo rightInfo = new PropertyInfo(rightField, Left.class);
-      assertTrue(rightInfo.isJoinColumn);
-      rightInfo.setValue(left, 1);
-      assertNotNull(left.getRight());
-      assertEquals(1, left.getRight().getId());
-   }
-
-   @Test
    public void getValue() throws NoSuchFieldException, InvocationTargetException, IllegalAccessException {
       Left left = new Left();
       Right right = new Right();
@@ -121,23 +69,6 @@ public class JoinOneToOneSeveralTablesTest {
       PropertyInfo rightInfo = new PropertyInfo(rightField, Left.class);
       int rightId = (int) rightInfo.getValue(left);
       assertEquals(1, rightId);
-   }
-
-   @Test
-   public void introspect() {
-      Introspected introspected = new Introspected(Left.class);
-
-      AttributeInfo[] selectableFcInfos = introspected.getSelectableFcInfos();
-      Assertions.assertThat(selectableFcInfos).extracting("name").containsExactly("id", "type", "right");
-
-      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
-      Assertions.assertThat(insertableFcInfos).extracting("name", "insertable").containsExactly(Tuple.tuple("type", true));
-
-      Assertions.assertThat(introspected.getInsertableColumns()).hasSize(1).contains("type");
-      Assertions.assertThat(introspected.getUpdatableColumns()).hasSize(1).contains("type");
-
-      String columnsCsv = OrmReader.getColumnsCsv(Left.class);
-      assertEquals("LEFT_TABLE.id,LEFT_TABLE.type", columnsCsv);
    }
 
    /**
@@ -202,48 +133,6 @@ public class JoinOneToOneSeveralTablesTest {
       assertEquals("left", params[0]);
    }
 
-   @Test
-   public void extractTableNameOneToManyInverseSide() throws NoSuchFieldException {
-      class Test {
-         private Collection<GetterAnnotatedPitMainEntity> notes;
-
-         @OneToMany(mappedBy = "pitMainByPitIdent")
-         public Collection<GetterAnnotatedPitMainEntity> getNotes() {
-            return notes;
-         }
-
-         public void setNotes(Collection<GetterAnnotatedPitMainEntity> notes) {
-            this.notes = notes;
-         }
-      }
-      Field field = Test.class.getDeclaredField("notes");
-      PropertyInfo info = new PropertyInfo(field, Test.class);
-      assertEquals("D_PIT_MAIN", info.getDelimitedTableName());
-      assertEquals(Collection.class, info.type);
-   }
-
-   @Test
-   public void extractTableNameManyToOneOwningSide() throws NoSuchFieldException {
-      class Test {
-         private GetterAnnotatedPitReferenceEntity pitReferenceByPitIdent;
-         @ManyToOne
-         @JoinColumn(name = "PIT_IDENT", referencedColumnName = "PIR_PIT_IDENT", nullable = false)
-         public GetterAnnotatedPitReferenceEntity getPitReferenceByPitIdent() {
-            return pitReferenceByPitIdent;
-         }
-
-         public void setPitReferenceByPitIdent(GetterAnnotatedPitReferenceEntity pitReferenceByPitIdent) {
-            this.pitReferenceByPitIdent = pitReferenceByPitIdent;
-         }
-      }
-      Field field = Test.class.getDeclaredField("pitReferenceByPitIdent");
-      PropertyInfo info = new PropertyInfo(field, Test.class);
-      assertEquals("D_PIT_REFERENCE", info.getDelimitedTableName());
-
-      Introspected introspected = new Introspected(Test.class);
-      AttributeInfo fcInfo = introspected.getFieldColumnInfo("D_PIT_REFERENCE", "PIR_PIT_IDENT");
-      assertNotNull(fcInfo);
-   }
 
    @Test
    public void join2Tables() throws SQLException {
@@ -777,7 +666,7 @@ public class JoinOneToOneSeveralTablesTest {
     * Support for @Entity name element.
     */
    @Test
-   public void entityName() throws SQLException {
+   public void entityName() {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try {

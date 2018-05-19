@@ -1,15 +1,15 @@
 package com.zaxxer.q2o.internal;
 
+import com.zaxxer.q2o.entities.GetterAnnotatedPitMainEntity;
+import com.zaxxer.q2o.entities.Left;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 
@@ -164,5 +164,36 @@ public class PropertyInfoTest {
       Field field = Test.class.getDeclaredField("test");
       PropertyInfo propertyInfo = new PropertyInfo(field, Test.class);
       assertEquals("COLUMN", propertyInfo.getDelimitedTableName());
+   }
+
+   @Test
+   public void setValue() throws NoSuchFieldException, IllegalAccessException {
+      Left left = new Left();
+      Field rightField = Left.class.getDeclaredField("right");
+      PropertyInfo rightInfo = new PropertyInfo(rightField, Left.class);
+      assertTrue(rightInfo.isJoinColumn);
+      rightInfo.setValue(left, 1);
+      assertNotNull(left.getRight());
+      assertEquals(1, left.getRight().getId());
+   }
+
+   @Test
+   public void extractTableNameOneToManyInverseSide() throws NoSuchFieldException {
+      class Test {
+         private Collection<GetterAnnotatedPitMainEntity> notes;
+
+         @OneToMany(mappedBy = "pitMainByPitIdent")
+         public Collection<GetterAnnotatedPitMainEntity> getNotes() {
+            return notes;
+         }
+
+         public void setNotes(Collection<GetterAnnotatedPitMainEntity> notes) {
+            this.notes = notes;
+         }
+      }
+      Field field = Test.class.getDeclaredField("notes");
+      PropertyInfo info = new PropertyInfo(field, Test.class);
+      assertEquals("D_PIT_MAIN", info.getDelimitedTableName());
+      assertEquals(Collection.class, info.type);
    }
 }

@@ -1,14 +1,18 @@
 package com.zaxxer.q2o.internal;
 
+import com.zaxxer.q2o.SelfJoinManyToOneFieldAccessTest;
+import com.zaxxer.q2o.entities.*;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.groups.Tuple;
 import org.junit.Test;
 import org.sansorm.TargetClass1;
 
 import javax.persistence.*;
 
+import java.lang.reflect.Field;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class IntrospectedTest
 {
@@ -187,4 +191,497 @@ public class IntrospectedTest
       assertEquals(1, introspected.getColumnNames().length);
    }
 
+   @Test
+   public void selfJoinFieldAccessClassNameAsTableName() {
+      class Test {
+         @JoinColumn(name = "id", referencedColumnName = "parentId")
+         private Test parent;
+      }
+      Introspected introspected = new Introspected(Test.class);
+      AttributeInfo info = introspected.getSelfJoinColumnInfo();
+      assertTrue(info.isToBeConsidered());
+   }
+
+   @Test
+   public void introspectJoinColumn() {
+
+      Introspected introspected = new Introspected(SelfJoinManyToOneFieldAccessTest.FieldAccessedSelfJoin.class);
+      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
+//      Arrays.stream(insertableFcInfos).forEach(System.out::println);
+      assertEquals(2, insertableFcInfos.length);
+   }
+
+   @Test
+   public void introspectJoinColumnPropertyAccessSelfJoin() {
+
+      Introspected introspected = new Introspected(PropertyAccessedSelfJoin.class);
+      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
+//      Arrays.stream(insertableFcInfos).forEach(System.out::println);
+      assertEquals(2, insertableFcInfos.length);
+   }
+
+   @Test
+   public void introspectJoinColumnPropertyAccessOneToOne() {
+
+      Introspected introspected = new Introspected(PropertyAccessedOneToOneSelfJoin.class);
+      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
+//      Arrays.stream(insertableFcInfos).forEach(System.out::println);
+      assertEquals(2, insertableFcInfos.length);
+   }
+
+   @org.junit.Test
+   public void selfJoinFieldAccess() {
+      @Table(name = "TEST")
+      class Test {
+         @JoinColumn(name = "id", referencedColumnName = "parentId")
+         private Test parent;
+      }
+      Introspected introspected = new Introspected(Test.class);
+      AttributeInfo info = introspected.getSelfJoinColumnInfo();
+      assertTrue(info.isToBeConsidered());
+   }
+
+   @Test
+   public void introspect() {
+      Introspected introspected = new Introspected(Left.class);
+
+      AttributeInfo[] selectableFcInfos = introspected.getSelectableFcInfos();
+      Assertions.assertThat(selectableFcInfos).extracting("name").containsExactly("id", "type", "right");
+
+      AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
+      Assertions.assertThat(insertableFcInfos).extracting("name", "insertable").containsExactly(Tuple.tuple("type", true));
+
+      Assertions.assertThat(introspected.getInsertableColumns()).hasSize(1).contains("type");
+      Assertions.assertThat(introspected.getUpdatableColumns()).hasSize(1).contains("type");
+
+      String columnsCsv = OrmReader.getColumnsCsv(Left.class);
+      assertEquals("LEFT_TABLE.id,LEFT_TABLE.type", columnsCsv);
+   }
+
+   @Test
+   public void extractTableNameManyToOneOwningSide() throws NoSuchFieldException {
+      class Test {
+         private GetterAnnotatedPitReferenceEntity pitReferenceByPitIdent;
+         @ManyToOne
+         @JoinColumn(name = "PIT_IDENT", referencedColumnName = "PIR_PIT_IDENT", nullable = false)
+         public GetterAnnotatedPitReferenceEntity getPitReferenceByPitIdent() {
+            return pitReferenceByPitIdent;
+         }
+
+         public void setPitReferenceByPitIdent(GetterAnnotatedPitReferenceEntity pitReferenceByPitIdent) {
+            this.pitReferenceByPitIdent = pitReferenceByPitIdent;
+         }
+      }
+      Field field = Test.class.getDeclaredField("pitReferenceByPitIdent");
+      PropertyInfo info = new PropertyInfo(field, Test.class);
+      assertEquals("D_PIT_REFERENCE", info.getDelimitedTableName());
+
+      Introspected introspected = new Introspected(Test.class);
+      AttributeInfo fcInfo = introspected.getFieldColumnInfo("D_PIT_REFERENCE", "PIR_PIT_IDENT");
+      assertNotNull(fcInfo);
+   }
+
+   @Test
+   public void getColumnNames() {
+      Introspected introspected = new Introspected(InsertObjectH2.class);
+      String[] columnNames = introspected.getColumnNames();
+      // Preserve field order!!!
+      assertArrayEquals(new String[]{"Id", "\"Delimited field name\"", "Default_Case"}, columnNames);
+   }
+
+   @Test
+   public void columnsNameElementNotInQuotes() {
+      @Table(name = "TEST")
+      class TestClass {
+         @Column(name = "Column_Name")
+         String columnName;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String colName = introspected.getColumnNameForProperty("columnName");
+      assertEquals("Column_Name", colName);
+   }
+
+   @Test
+   public void columnsNameElementInQuotes() {
+      @Table(name = "TEST")
+      class TestClass {
+         @Column(name = "\"Column Name\"")
+         String columnName;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String colName = introspected.getColumnNameForProperty("columnName");
+      assertEquals("\"Column Name\"", colName);
+   }
+
+   @Test
+   public void joinColumnsNameElementNotInQuotes() {
+      @Table(name = "TEST")
+      class TestClass {
+         @JoinColumn(name = "Join_Column_Name")
+         TestClass joinColumnName;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String colName = introspected.getColumnNameForProperty("joinColumnName");
+      assertEquals("Join_Column_Name", colName);
+   }
+
+   @Test
+   public void joinColumnsNameElementInQuotes() {
+      @Table(name = "TEST")
+      class TestClass {
+         @JoinColumn(name = "\"Join Column Name\"")
+         TestClass joinColumnName;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String colName = introspected.getColumnNameForProperty("joinColumnName");
+      assertEquals("\"Join Column Name\"", colName);
+   }
+
+   @Test
+   public void tablesNameElementNotInQuotes() {
+      @Table(name = "TableName")
+      class TestClass { }
+      Introspected introspected = new Introspected(TestClass.class);
+      String tableName = introspected.getDelimitedTableName();
+      assertEquals("TableName", tableName);
+   }
+
+   @Test
+   public void columnsTableNameElementNotInQuotes() {
+      class TestClass {
+         @Column(table = "Table_Name")
+         String columnName;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String[] columnTableNames = introspected.getColumnTableNames();
+      assertEquals("Table_Name", columnTableNames[0]);
+   }
+
+   @Test
+   public void columnsTableNameElementInQuotes() {
+      class TestClass {
+         @Column(table = "\"Table Name\"")
+         String columnName;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String[] columnTableNames = introspected.getColumnTableNames();
+      assertEquals("\"Table Name\"", columnTableNames[0]);
+   }
+
+
+
+   @Test
+   public void getColumnNameForProperty() {
+      @Table(name = "TEST")
+      class TestClass {
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      assertEquals("\"Delimited Field Name\"", introspected.getColumnNameForProperty("delimitedFieldName"));
+      assertEquals("Default_Case", introspected.getColumnNameForProperty("defaultCase"));
+   }
+
+   @Test
+   public void isInsertableColumn() {
+      String delimitedFieldValue = "delimited field value";
+      String defaultCaseValue = "default case value";
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName = delimitedFieldValue;
+         @Column(name = "Default_Case")
+         String defaultCase = defaultCaseValue;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      assertTrue(introspected.isInsertableColumn("Default_Case"));
+      assertTrue(introspected.isInsertableColumn("Delimited Field Name"));
+   }
+
+   @Test
+   public void getInsertableColumns() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue
+         String Id;
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   @Test
+   public void getInsertableColumns2() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @Column
+         String Id;
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{"Id", "\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   @Test
+   public void getInsertableColumnsInsertableFalse() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Column(name = "\"Delimited Field Name\"", insertable = false)
+         String delimitedFieldName;
+         @Column(name = "Default_Case", insertable = false)
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{}, cols);
+   }
+
+   /**
+    * Bug caused by PR #22: In Introspected#getInsertableColumns() insertableColumns is set to columns.addAll(Arrays.asList(columnsSansIds)) and insertable = false is ignored.
+    */
+   @Test
+   public void getInsertableColumnsInsertableFalseGeneratedValue() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue
+         String id;
+         @Column(name = "\"Delimited Field Name\"", insertable = false)
+         String delimitedFieldName;
+         @Column(name = "Default_Case", insertable = false)
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{}, cols);
+   }
+
+   /**
+    * Work around for {@link #getInsertableColumnsInsertableFalseGeneratedValue()}
+    */
+   @Test
+   public void getInsertableColumnsInsertableFalseWithId() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @Column(insertable = false)
+         String id;
+         @Column(name = "\"Delimited Field Name\"", insertable = false)
+         String delimitedFieldName;
+         @Column(name = "Default_Case", insertable = false)
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{}, cols);
+   }
+
+   /**
+    * Work around for {@link #getInsertableColumnsInsertableFalseGeneratedValue()}
+    */
+   @Test
+   public void getUpdatetableColumnsUpdatableFalseWithId() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @Column(updatable = false)
+         String id;
+         @Column(name = "\"Delimited Field Name\"", updatable = false)
+         String delimitedFieldName;
+         @Column(name = "Default_Case", updatable = false)
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getUpdatableColumns();
+      assertArrayEquals(new String[]{}, cols);
+   }
+
+   /**
+    * See {@link #getInsertableColumnsInsertableFalseGeneratedValue()}.
+    */
+   @Test
+   public void getUpdatableColumnsUpdatableFalseGeneratedValue() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue
+         String id;
+         @Column(name = "\"Delimited Field Name\"", updatable = false)
+         String delimitedFieldName;
+         @Column(name = "Default_Case", updatable = false)
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getUpdatableColumns();
+      assertArrayEquals(new String[]{}, cols);
+   }
+
+   @Test
+   public void getInsertableColumnsGeneratedValue() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue @Column
+         String Id;
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   /**
+    * CLARIFY Behaves different from {@link OrmBase#getColumnsCsvExclude(Class, String...)} in that it does not qualify field names with table names. See {@link #getColumnsCsvExcludeWithTableName()}.
+    */
+   @Test
+   public void getInsertableColumnsWithTableName() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue
+         String Id;
+         @Column(name = "\"Delimited Field Name\"", table = "Default_Table_Name")
+         String delimitedFieldName;
+         @Column(name = "Default_Case", table="\"Delimited Table Name\"")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getInsertableColumns();
+      assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   @Test
+   public void getUpdatableColumns() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @Column
+         String Id;
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getUpdatableColumns();
+      assertArrayEquals(new String[]{"Id", "\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   @Test
+   public void getUpdatableColumns2() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue
+         String id;
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getUpdatableColumns();
+      assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   @Test
+   public void getUpdatableColumnsGeneratedValue() {
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Id @GeneratedValue
+         String id;
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName;
+         @Column(name = "Default_Case")
+         String defaultCase;
+      }
+      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      String[] cols = introspected.getUpdatableColumns();
+      assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
+   }
+
+   @Test
+   public void isUpdatableColumn() {
+      String delimitedFieldValue = "delimited field value";
+      String defaultCaseValue = "default case value";
+      @Table(name = "Test_Class")
+      class TestClass {
+         @Column(name = "\"Delimited Field Name\"")
+         String delimitedFieldName = delimitedFieldValue;
+         @Column(name = "Default_Case")
+         String defaultCase = defaultCaseValue;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      assertTrue(introspected.isUpdatableColumn("Default_Case"));
+      assertTrue(introspected.isUpdatableColumn("Delimited Field Name"));
+   }
+
+   @Test
+   public void getIdColumnNames() {
+      @Table(name = "TEST")
+      class TestClass {
+         @Id @Column(name = "\"ID\"")
+         String Id;
+         @Id
+         String Id2;
+         @Id @Column
+         String Id3;
+         @Id @Column(name = "Id4")
+         String Id4;
+         @Id @Column(name = "")
+         String Id5;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String[] idColumnNames = introspected.getIdColumnNames();
+      assertTrue(idColumnNames.length == 5);
+      assertEquals("\"ID\"", idColumnNames[0]);
+      assertEquals("Id2", idColumnNames[1]);
+      assertEquals("Id3", idColumnNames[2]);
+      assertEquals("Id4", idColumnNames[3]);
+      assertEquals("Id5", idColumnNames[4]);
+   }
+
+   @Test
+   public void constistentIdSupport() {
+      @Table(name = "TEST")
+      class TestClass {
+         @Id
+         String Id;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+      String[] idColumnNames = introspected.getIdColumnNames();
+      assertEquals("Id", idColumnNames[0]);
+   }
+
+   @Test
+   public void getColumnsSansIds() {
+      @Table(name = "TEST")
+      class TestClass {
+         @Id
+         String id;
+         @Id @Column(name = "Id2")
+         String id2;
+         @Column(name = "\"COL\"")
+         String col;
+         @Column
+         String Col2;
+         @Column(name = "Col3")
+         String Col3;
+         @Column(name = "")
+         String Col4;
+      }
+      Introspected introspected = new Introspected(TestClass.class);
+
+      String[] columnsSansIds = introspected.getColumnsSansIds();
+      assertTrue(columnsSansIds.length == 4);
+      assertEquals("\"COL\"", columnsSansIds[0]);
+      assertEquals("Col2", columnsSansIds[1]); // differs from getIdColumnNames()
+      assertEquals("Col3", columnsSansIds[2]);
+      assertEquals("Col4", columnsSansIds[3]);
+   }
 }
