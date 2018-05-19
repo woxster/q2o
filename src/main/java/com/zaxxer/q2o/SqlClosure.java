@@ -211,6 +211,7 @@ public class SqlClosure<T>
          }
          throw new RuntimeException(e);
       } catch (Throwable e) {
+         e.printStackTrace();
          if (txOwner) {
             txOwner = false;
             rollback(connection);

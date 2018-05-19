@@ -16,6 +16,7 @@
 
 package com.zaxxer.q2o.internal;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
 
@@ -223,6 +224,23 @@ public class OrmReader extends OrmBase
       return objectFromClause(connection, clazz, where, args);
    }
 
+   public static <T> T objectById(final Connection connection, final T target) throws SQLException {
+      Introspected introspected = Introspector.getIntrospected(target.getClass());
+      String where = getWhereIdClause(introspected);
+      List<AttributeInfo> idFcInfos = introspected.getIdFcInfos();
+      Object[] args = new Object[idFcInfos.size()];
+      for (int i = 0; i < idFcInfos.size(); i++) {
+         AttributeInfo info = idFcInfos.get(i);
+         try {
+            args[i] = info.getValue(target);
+         }
+         catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+         }
+      }
+      return objectFromClause(connection, target, where, args);
+   }
+
    public static <T> T refresh(final Connection connection, final T target) throws SQLException {
       final Introspected introspected = Introspector.getIntrospected(target.getClass());
       final String where = getWhereIdClause(introspected);
@@ -258,6 +276,13 @@ public class OrmReader extends OrmBase
       final String sql = generateSelectFromClause(clazz, clause);
       final PreparedStatement stmt = connection.prepareStatement(sql);
       return statementToObject(stmt, clazz, args);
+   }
+
+   public static <T> T objectFromClause(final Connection connection, final T target, final String clause, final Object... args) throws SQLException
+   {
+      final String sql = generateSelectFromClause(target.getClass(), clause);
+      final PreparedStatement stmt = connection.prepareStatement(sql);
+      return statementToObject(stmt, target, args);
    }
 
    public static <T> int countObjectsFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException

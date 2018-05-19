@@ -16,9 +16,7 @@
 
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.internal.Introspector;
-import com.zaxxer.q2o.internal.OrmReader;
-import com.zaxxer.q2o.internal.OrmWriter;
+import com.zaxxer.q2o.internal.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,14 +51,25 @@ public final class Q2Obj
     *
     * @param connection a SQL Connection object
     * @param clazz the class of the object to load
-    * @param args the query parameter used to find the object by it's ID
+    * @param args the query parameter used to find the object by it's ID. In case of compound keys the ids must be in the same order as they appear in the entity.
     * @param <T> the type of the object to load
-    * @return the populated object
+    * @return the populated object (a new instance of clazz)
     * @throws SQLException if a {@link SQLException} occurs
     */
    public static <T> T byId(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
       return OrmReader.objectById(connection, clazz, args);
+   }
+
+   /**
+    * To set fields on an already existing entity.
+    *
+    * @param target The id field(s) must be set. The returned object is the same as was provided, but with all fields loaded from database.
+    *
+    */
+   public static <T> T byId(Connection connection, T target) throws SQLException
+   {
+      return OrmReader.objectById(connection, target);
    }
 
    /**
@@ -287,11 +296,38 @@ public final class Q2Obj
       return OrmWriter.updateObject(connection, target, excludedCols);
    }
 
-   public static <T> T updateExcludeColumns(T target, String... excludedColumns) throws SQLException
-   {
+   public static <T> T updateExcludeColumns(T target, String... excludedColumns) {
       HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
       excludedCols.addAll(Arrays.asList(excludedColumns));
       return SqlClosure.sqlExecute(c -> OrmWriter.updateObject(c, target, excludedCols));
+   }
+
+   /**
+    * Will only update the named column(s), ignoring all other fields.
+    *
+    * @param includedColumns case insensitive
+    * @see #update(Connection, Object)
+    */
+   public static <T> T updateIncludeColumns(Connection connection, T target, String... includedColumns) throws SQLException
+   {
+      Introspected introspected = Introspector.getIntrospected(target.getClass());
+      String[] updatableColumns = introspected.getUpdatableColumns();
+      HashSet<String> excludedCols = new HashSet<>();
+      for (int i = 0; i < updatableColumns.length; i++) {
+         for (int j = 0; j < includedColumns.length; j++) {
+            if (!updatableColumns[i].equalsIgnoreCase(includedColumns[j])) {
+               excludedCols.add(updatableColumns[i]);
+            }
+         }
+      }
+      return OrmWriter.updateObject(connection, target, excludedCols);
+   }
+
+   /**
+    * @see #updateIncludeColumns(Connection, Object, String...)
+    */
+   public static <T> T updateIncludeColumns(T target, String... includedColumns) {
+      return SqlClosure.sqlExecute(c -> Q2Obj.updateIncludeColumns(c, target, includedColumns));
    }
 
    /**
@@ -340,15 +376,19 @@ public final class Q2Obj
    }
 
    /**
-    * Gets an object by ID from the database.
-    * @param type The type of the desired object.
-    * @param ids The ID or IDs of the object.
-    * @param <T> The type of the object.
-    * @return The object or {@code null}
+    * @see #byId(Connection, Class, Object...)
     */
    public static <T> T byId(Class<T> type, Object... ids)
    {
       return SqlClosure.sqlExecute(c -> Q2Obj.byId(c, type, ids));
+   }
+
+   /**
+    * @see #byId(Connection, Object)
+    */
+   public static <T> T byId(T target)
+   {
+      return SqlClosure.sqlExecute(c -> OrmReader.objectById(c, target));
    }
 
    /**
@@ -388,10 +428,7 @@ public final class Q2Obj
    }
 
    /**
-    * Delete the given object in the database.
-    * @param object the object to delete.
-    * @param <T> The type of the object.
-    * @return the number of rows affected.
+    * @see #delete(Connection, Object)
     */
    public static <T> int delete(T object)
    {

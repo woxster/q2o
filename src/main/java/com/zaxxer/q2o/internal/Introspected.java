@@ -554,6 +554,11 @@ public final class Introspected {
                   columnValue = ((BigDecimal) columnValue).longValue();
                }
             }
+            else if (columnType == Long.class) {
+               if (fieldType == Integer.class) {
+                  columnValue = ((Long) columnValue).intValue();
+               }
+            }
             else if (columnType == java.util.UUID.class && fieldType == String.class) {
                columnValue = columnValue.toString();
             }
@@ -687,7 +692,7 @@ public final class Introspected {
    /**
     * Get the updatable columns for this object. Column names are unique. For example if there is an @Id field whose name is also used in a name element of a relationship annotation it is only retrieved once.
     *
-    * @return the updatable columns
+    * @return The names of the updatable columns. Case sensitive. In case of delimited fields surrounded by delimiters.
     */
    public String[] getUpdatableColumns() {
       return updatableColumns;
