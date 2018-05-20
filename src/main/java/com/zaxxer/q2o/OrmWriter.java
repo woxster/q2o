@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * OrmWriter
  */
-public class OrmWriter extends OrmBase
+class OrmWriter extends OrmBase
 {
    private static final int CACHE_SIZE = Integer.getInteger("com.zaxxer.sansorm.statementCacheSize", 500);
    private static final Map<Introspected, String> createStatementCache;
@@ -51,7 +51,7 @@ public class OrmWriter extends OrmBase
       });
    }
 
-   public static <T> void insertListBatched(final Connection connection, final Iterable<T> iterable) throws SQLException
+   static <T> void insertListBatched(final Connection connection, final Iterable<T> iterable) throws SQLException
    {
       final Iterator<T> iterableIterator = iterable.iterator();
       if (!iterableIterator.hasNext()) {
@@ -76,7 +76,7 @@ public class OrmWriter extends OrmBase
       }
    }
 
-   public static <T> void insertListNotBatched(final Connection connection, final Iterable<T> iterable) throws SQLException
+   static <T> void insertListNotBatched(final Connection connection, final Iterable<T> iterable) throws SQLException
    {
       final Iterator<T> iterableIterator = iterable.iterator();
       if (!iterableIterator.hasNext()) {
@@ -121,7 +121,7 @@ public class OrmWriter extends OrmBase
 //      }
    }
 
-   public static <T> T insertObject(final Connection connection, final T target) throws SQLException
+   static <T> T insertObject(final Connection connection, final T target) throws SQLException
    {
       final Class<?> clazz = target.getClass();
       final Introspected introspected = Introspector.getIntrospected(clazz);
@@ -132,12 +132,12 @@ public class OrmWriter extends OrmBase
       return target;
    }
 
-   public static <T> T updateObject(final Connection connection, final T target) throws SQLException
+   static <T> T updateObject(final Connection connection, final T target) throws SQLException
    {
       return updateObject(connection, target, null);
    }
 
-   public static <T> T updateObject(final Connection connection, final T target, final Set<String> excludedColumns) throws SQLException
+   static <T> T updateObject(final Connection connection, final T target, final Set<String> excludedColumns) throws SQLException
    {
       final Class<?> clazz = target.getClass();
       final Introspected introspected = Introspector.getIntrospected(clazz);
@@ -155,7 +155,7 @@ public class OrmWriter extends OrmBase
       return target;
    }
 
-   public static <T> int deleteObject(final Connection connection, final T target) throws SQLException
+   static <T> int deleteObject(final Connection connection, final T target) throws SQLException
    {
       final Class<?> clazz = target.getClass();
       final Introspected introspected = Introspector.getIntrospected(clazz);
@@ -167,7 +167,7 @@ public class OrmWriter extends OrmBase
     *
     * @param args the primary key value or the composite primary key values.
     */
-   public static <T> int deleteObjectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
+   static <T> int deleteObjectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
    {
       final Introspected introspected = Introspector.getIntrospected(clazz);
 
@@ -188,7 +188,7 @@ public class OrmWriter extends OrmBase
       return executeUpdate(connection, sql.toString(), args);
    }
 
-   public static int executeUpdate(final Connection connection, final String sql, final Object... args) throws SQLException
+   static int executeUpdate(final Connection connection, final String sql, final Object... args) throws SQLException
    {
       try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
          populateStatementParameters(stmt, args);

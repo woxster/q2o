@@ -1,9 +1,5 @@
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.internal.Introspector;
-import com.zaxxer.q2o.internal.OrmReader;
-import com.zaxxer.q2o.internal.OrmWriter;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;

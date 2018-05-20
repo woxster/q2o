@@ -14,15 +14,11 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,7 +61,7 @@ class OrmBase
     *
     * @see #getColumnsCsvExclude(Class, String...)
     */
-   public static <T> String getColumnsCsv(final Class<T> clazz, final String... tablePrefix)
+   protected static <T> String getColumnsCsv(final Class<T> clazz, final String... tablePrefix)
    {
       final String cacheKey = (tablePrefix == null || tablePrefix.length == 0 ? clazz.getName() : tablePrefix[0] + clazz.getName());
       return csvCache.computeIfAbsent(cacheKey, key -> {
@@ -87,7 +83,7 @@ class OrmBase
     * @param excludeColumns Case as in name element or property name. In case of delimited column names provide name without delimiters.
     * @return Selectable columns. Comma separated. In case of delimited column names the column names are surrounded by delimiters.
     */
-   public static <T> String getColumnsCsvExclude(final Class<T> clazz, final String... excludeColumns)
+   protected static <T> String getColumnsCsvExclude(final Class<T> clazz, final String... excludeColumns)
    {
       final Set<String> excludes = new HashSet<>(Arrays.asList(excludeColumns));
       final StringBuilder sb = new StringBuilder();

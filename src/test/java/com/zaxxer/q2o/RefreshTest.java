@@ -1,7 +1,6 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
-import com.zaxxer.q2o.internal.OrmReader;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.TestUtils;
@@ -13,6 +12,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.*;
 
+import static com.zaxxer.q2o.Q2Obj.byId;
+import static com.zaxxer.q2o.Q2Obj.insert;
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static org.junit.Assert.*;
 
 /**
@@ -163,20 +165,21 @@ public class RefreshTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         SqlClosureElf.executeUpdate(
+         executeUpdate(
             " CREATE TABLE TestClass ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
                + "field1 VARCHAR(128), "
                + "field2 VARCHAR(128) "
                + ")");
 
-         TestClass obj = Q2Obj.insert(new TestClass());
+         TestClass obj = insert(new TestClass());
          assertEquals(1, obj.Id);
-         obj = Q2Obj.byId(TestClass.class, obj.Id);
+         obj = byId(TestClass.class, obj.Id);
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
-         SqlClosureElf.executeUpdate("update TestClass set field1 = 'changed'");
+         executeUpdate(
+            "update TestClass set field1 = 'changed'");
 
          TestClass obj2 = Q2Obj.refresh(con, obj);
          assertTrue(obj == obj2);
@@ -184,7 +187,8 @@ public class RefreshTest {
 
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE TestClass");
+         executeUpdate(
+            "DROP TABLE TestClass");
       }
    }
 
@@ -203,8 +207,8 @@ public class RefreshTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -222,13 +226,14 @@ public class RefreshTest {
 //         connection.close();
 //         assertEquals(1, rowCount);
 
-         TestClass2 obj = Q2Obj.insert(con, new TestClass2());
+         TestClass2 obj = insert(con, new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = Q2Obj.byId(TestClass2.class, obj.id1, obj.id2);
+         obj = byId(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
          assertEquals(null, obj.field);
 
-         SqlClosureElf.executeUpdate("update TestClass2 set field = 'changed' where id1 = " + id1 + " and id2 = " + id2);
+         executeUpdate(
+            "update TestClass2 set field = 'changed' where id1 = " + id1 + " and id2 = " + id2);
 
          TestClass2 obj2 = Q2Obj.refresh(con, obj);
          assertTrue(obj == obj2);
@@ -236,7 +241,8 @@ public class RefreshTest {
 
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE TestClass2");
+         executeUpdate(
+            "DROP TABLE TestClass2");
       }
    }
 

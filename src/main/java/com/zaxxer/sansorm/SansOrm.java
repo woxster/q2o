@@ -7,7 +7,9 @@ import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
-/** Single point of SansOrm configuration */
+/** Single point of SansOrm configuration
+ * @deprecated
+ */
 public final class SansOrm {
    private SansOrm() {
    }
@@ -17,6 +19,7 @@ public final class SansOrm {
     *
     * @param dataSource the {@link DataSource} to use by the default
     * @return dataSource that will be used for queries
+    * @deprecated
     */
    public static DataSource initializeTxNone(DataSource dataSource) {
       SqlClosure.setDefaultDataSource(dataSource);
@@ -28,6 +31,7 @@ public final class SansOrm {
     *
     * @param dataSource the {@link DataSource} to use by the default
     * @return dataSource that will be used for queries
+    * @deprecated
     */
    public static DataSource initializeTxSimple(DataSource dataSource) {
       TxTransactionManager txManager = new TxTransactionManager(dataSource);
@@ -41,6 +45,7 @@ public final class SansOrm {
     * @param txManager the {@link TransactionManager} to use for tx management
     * @param userTx the {@link UserTransaction} to use for tx management together with txManager
     * @return dataSource that will be used for queries
+    * @deprecated
     */
    public static DataSource initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
       TransactionElf.setTransactionManager(txManager);
@@ -51,6 +56,7 @@ public final class SansOrm {
    /**
     * You can reset SansOrm to a fresh state if desired.
     * E.g. if you want to call another initializeXXX method.
+    * @deprecated
     */
    public static void deinitialize() {
       SqlClosure.setDefaultDataSource(null);

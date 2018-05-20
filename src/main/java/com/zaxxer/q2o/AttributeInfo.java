@@ -1,4 +1,4 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import javax.persistence.*;
 import java.lang.reflect.*;
@@ -49,7 +49,7 @@ abstract class AttributeInfo
    private Class<?> actualType;
    private String tableName;
 
-   public AttributeInfo(final Field field, final Class<?> ownerClazz) {
+   AttributeInfo(final Field field, final Class<?> ownerClazz) {
       this.field = field;
       this.ownerClazz = ownerClazz;
       extractFieldName(field);
@@ -382,11 +382,11 @@ abstract class AttributeInfo
       return name + "->" + getColumnName();
    }
 
-   public void setConverter(final AttributeConverter converter) {
+   void setConverter(final AttributeConverter converter) {
       this.converter = converter;
    }
 
-   public AttributeConverter getConverter() {
+   AttributeConverter getConverter() {
       return converter;
    }
 
@@ -395,18 +395,18 @@ abstract class AttributeInfo
    }
 
    /** name without delimiter: lower cased; delimited name: name as is without delimiters */
-   public String getColumnName() {
+   String getColumnName() {
       return columnName;
    }
 
-   public String getName() {
+   String getName() {
       return name;
    }
 
    /**
     * @return If set &#64;Column name value else property name. In case of delimited fields without delimiters.
     */
-   public String getCaseSensitiveColumnName() {
+   String getCaseSensitiveColumnName() {
       return caseSensitiveColumnName;
    }
 
@@ -414,7 +414,7 @@ abstract class AttributeInfo
     *
     * @return case sensitive column name. In case of delimited fields surrounded by delimiters.
     */
-   public String getDelimitedColumnName() {
+   String getDelimitedColumnName() {
       return delimitedName;
    }
 
@@ -422,17 +422,17 @@ abstract class AttributeInfo
     *
     * @param tablePrefix Ignored when field has a non empty table element.
     */
-   public String getFullyQualifiedDelimitedFieldName(final String ... tablePrefix) {
+   String getFullyQualifiedDelimitedFieldName(final String... tablePrefix) {
       return delimitedTableName.isEmpty() && tablePrefix.length > 0
          ? tablePrefix[0] + "." + fullyQualifiedDelimitedName
          : fullyQualifiedDelimitedName;
    }
 
-   public boolean isDelimited() {
+   boolean isDelimited() {
       return isDelimited;
    }
 
-   public boolean isEnumerated() {
+   boolean isEnumerated() {
       return isEnumerated;
    }
 
@@ -464,7 +464,7 @@ abstract class AttributeInfo
       }
    }
 
-   public abstract Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException;
+   abstract Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException;
 
 
    protected Object idValueFromParentEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
@@ -478,7 +478,7 @@ abstract class AttributeInfo
       }
    }
 
-   public abstract void setValue(final Object target, final Object value) throws IllegalAccessException;
+   abstract void setValue(final Object target, final Object value) throws IllegalAccessException;
 
    boolean isTransient() {
       return isTransient;
@@ -503,7 +503,7 @@ abstract class AttributeInfo
       return !isTransient && toBeConsidered;
    }
 
-   public boolean isJoinFieldWithSecondTable() {
+   boolean isJoinFieldWithSecondTable() {
       return joinWithSecondTable;
    }
 
@@ -511,23 +511,23 @@ abstract class AttributeInfo
     * name without delimiter: name as is; delimited name: name as is with delimiters
     * @return empty string if field is member of mapped superclass.
     */
-   public String getDelimitedTableName() {
+   String getDelimitedTableName() {
       return delimitedTableName;
    }
 
-   public Class<?> getActualType() {
+   Class<?> getActualType() {
       return actualType;
    }
 
-   public String getTableName() {
+   String getTableName() {
       return tableName;
    }
 
-   public String getOwnerClassTableName() {
+   String getOwnerClassTableName() {
       return ownerClassTableName;
    }
 
-   public Class<?> getOwnerClazz() {
+   Class<?> getOwnerClazz() {
       return ownerClazz;
    }
 }

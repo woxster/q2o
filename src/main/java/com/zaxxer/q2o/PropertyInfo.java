@@ -1,4 +1,4 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import javax.persistence.*;
 import java.beans.IntrospectionException;
@@ -13,12 +13,12 @@ import java.lang.reflect.Method;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 23.04.18
  */
-public class PropertyInfo extends AttributeInfo {
+class PropertyInfo extends AttributeInfo {
 
    private PropertyDescriptor propertyDescriptor;
    private Method readMethod;
 
-   public PropertyInfo(Field field, Class clazz) {
+   PropertyInfo(Field field, Class clazz) {
       super(field, clazz);
    }
 
@@ -95,7 +95,7 @@ public class PropertyInfo extends AttributeInfo {
       return readMethod.getDeclaredAnnotation(Column.class);
    }
 
-   public Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException {
+   Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException {
       if (!isJoinColumn) {
          return readMethod.invoke(target);
       }

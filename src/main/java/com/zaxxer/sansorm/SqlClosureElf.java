@@ -16,16 +16,15 @@
 
 package com.zaxxer.sansorm;
 
-import com.zaxxer.q2o.internal.OrmReader;
-import com.zaxxer.q2o.internal.OrmWriter;
+import com.zaxxer.q2o.Q2Sql;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
 /**
  * Provides SQL closures around common query types
+ * @deprecated
  */
 public final class SqlClosureElf
 {
@@ -39,6 +38,7 @@ public final class SqlClosureElf
      * @param ids The ID or IDs of the object.
      * @param <T> The type of the object.
      * @return The object or {@code null}
+     * @deprecated
      */
     public static <T> T getObjectById(Class<T> type, Object... ids)
     {
@@ -63,6 +63,7 @@ public final class SqlClosureElf
      * @param object The object to insert.
      * @param <T> The type of the object.
      * @return The inserted object populated with any generated IDs.
+     * @deprecated
      */
     public static <T> T insertObject(T object)
     {
@@ -74,6 +75,7 @@ public final class SqlClosureElf
      * @param object The object to update.
      * @param <T> The type of the object.
      * @return The updated object.
+     * @deprecated
      */
     public static <T> T updateObject(T object)
     {
@@ -85,6 +87,7 @@ public final class SqlClosureElf
      * @param object the object to delete.
      * @param <T> The type of the object.
      * @return the number of rows affected.
+     * @deprecated
      */
     public static <T> int deleteObject(T object)
     {
@@ -97,6 +100,7 @@ public final class SqlClosureElf
      * @param args the IDs of the object, in order of appearance of declaration in the target object class.
      * @param <T> The type of the object.
      * @return the number of rows affected.
+     * @deprecated
      */
     public static <T> int deleteObjectById(Class<T> clazz, Object... args)
     {
@@ -110,6 +114,7 @@ public final class SqlClosureElf
      * @param args The arguments needed for the clause.
      * @param <T> The type of the objects.
      * @return The list of objects.
+     * @deprecated
      */
     public static <T> List<T> listFromClause(Class<T> clazz, String clause, Object... args)
     {
@@ -124,6 +129,7 @@ public final class SqlClosureElf
      * @param args The query parameters used to find the list of objects.
      * @param <T> the type of object to query.
      * @return The result count.
+     * @deprecated
      */
     public static <T> int countObjectsFromClause(Class<T> clazz, String clause, Object... args)
     {
@@ -138,6 +144,7 @@ public final class SqlClosureElf
      * @param sql a SQL statement string
      * @param args optional values for a parametrized query
      * @return the resulting number or {@code null}
+     * @deprecated
      */
     public static Number numberFromSql(String sql, Object... args)
     {
@@ -149,6 +156,7 @@ public final class SqlClosureElf
      * @param sql The SQL to execute.
      * @param args The query parameters used
      * @return the number of rows updated
+     * @deprecated
      */
     public static int executeUpdate(final String sql, final Object... args)
     {
@@ -163,6 +171,7 @@ public final class SqlClosureElf
     * @param <T> to ensure that all items are on the same type
     * @param items a list of items
     * @return a parenthetical String with {@code item.length} placeholders, eg. " (?,?,?,?) ".
+    * @deprecated
     */
    @SafeVarargs
    public static <T> String getInClausePlaceholders(final T... items)
@@ -176,6 +185,7 @@ public final class SqlClosureElf
     * @param placeholderCount a count of "?" placeholders
     * @return a parenthetical String with {@code item.length} placeholders, eg. " (?,?,?,?) ".
     * @throws IllegalArgumentException if placeholderCount is negative
+    * @deprecated
     */
    public static String getInClausePlaceholdersForCount(final int placeholderCount)
    {
@@ -208,28 +218,18 @@ public final class SqlClosureElf
     * @param args optional values for a parameterized query
     * @return the resulting number or {@code null}
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static Number numberFromSql(Connection connection, String sql, Object... args) throws SQLException
    {
-      return OrmReader.numberFromSql(connection, sql, args);
+      return Q2Sql.numberFromSql(connection, sql, args);
    }
 
    /**
-    * Execute the specified SQL as a PreparedStatement with the specified arguments.
-    *
-    * @param connection a Connection
-    * @param sql the SQL statement to prepare and execute
-    * @param args the optional arguments to execute with the query
-    * @return a ResultSet object
-    * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
-   public static ResultSet executeQuery(Connection connection, String sql, Object... args) throws SQLException
-   {
-      return OrmReader.statementToResultSet(connection.prepareStatement(sql), args);
-   }
-
    public static int executeUpdate(Connection connection, String sql, Object... args) throws SQLException
    {
-      return OrmWriter.executeUpdate(connection, sql, args);
+      return Q2Sql.executeUpdate(connection, sql, args);
    }
 }

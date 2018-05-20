@@ -1,11 +1,11 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.SelfJoinManyToOneFieldAccessTest;
 import com.zaxxer.q2o.entities.*;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.Test;
 import org.sansorm.TargetClass1;
+import org.sansorm.sqlite.TargetClassSQL;
 
 import javax.persistence.*;
 
@@ -16,6 +16,19 @@ import static org.junit.Assert.*;
 
 public class IntrospectedTest
 {
+
+   @Test
+   public void generatedId() {
+      Introspected is = Introspector.getIntrospected(TargetClass1.class);
+      assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
+      assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
+
+      is = Introspector.getIntrospected(TargetClassSQL.class);
+      assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
+      assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
+
+   }
+
    @Test
    public void shouldHandleCommonJPAAnnotations()
    {

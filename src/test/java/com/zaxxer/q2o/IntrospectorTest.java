@@ -1,5 +1,7 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
+import com.zaxxer.q2o.Introspected;
+import com.zaxxer.q2o.Introspector;
 import org.junit.Test;
 import org.sansorm.TargetClass1;
 

@@ -1,6 +1,5 @@
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.internal.OrmWriter;
 import com.zaxxer.q2o.entities.PropertyAccessedOneToOneSelfJoin;
 import org.assertj.core.api.Assertions;
 import org.h2.jdbcx.JdbcDataSource;
@@ -12,6 +11,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.zaxxer.q2o.OrmWriter.insertObject;
+import static com.zaxxer.q2o.Q2Obj.*;
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
+import static java.lang.System.out;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 
@@ -22,8 +26,8 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -35,24 +39,24 @@ public class SelfJoinOneToOnePropertyAccessTest {
          // store parent
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.setType("parent");
-         Q2Obj.insert(parent);
+         insert(parent);
          assertTrue(parent.getId() > 0);
 
          // SansOrm does not persist child when parent is persisted
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.setType("child");
          child.setParentId(parent);
-         Q2Obj.update(parent);
+         update(parent);
          assertEquals(0, child.getId());
 
          // persist child explicitely. parentId from parent is also stored.
-         OrmWriter.insertObject(con, child);
+         insertObject(con, child);
          assertTrue(child.getId() > 0);
-         int count = Q2Obj.countFromClause(PropertyAccessedOneToOneSelfJoin.class, null);
+         int count = countFromClause(PropertyAccessedOneToOneSelfJoin.class, null);
          assertEquals(2, count);
 
          // Load child together with parent instance. Only parent id is restored on parent instance, no further attributes.
-         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.fromClause
+         PropertyAccessedOneToOneSelfJoin childFromDb = fromClause
             (PropertyAccessedOneToOneSelfJoin.class, "id=2");
 //         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.objectById(con, PropertyAccessedOneToOneSelfJoin.class, 2);
          assertNotNull(childFromDb.getParentId());
@@ -60,11 +64,12 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          // To add remaining attributes to parent reload
          assertEquals(null, childFromDb.getParentId().getType());
-         Q2Obj.refresh(con, childFromDb.getParentId());
+         refresh(con, childFromDb.getParentId());
          assertEquals("parent", childFromDb.getParentId().getType());
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE JOINTEST");
+         executeUpdate(
+            "DROP TABLE JOINTEST");
       }
    }
 
@@ -73,8 +78,8 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -85,19 +90,20 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.setType("parent");
-         Q2Obj.insert(parent);
+         insert(parent);
 
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.setType("child");
          child.setParentId(parent);
-         OrmWriter.insertObject(con, child);
+         insertObject(con, child);
 
-         List<PropertyAccessedOneToOneSelfJoin> objs = Q2Obj.objectsFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
-         objs.forEach(System.out::println);
-         Assertions.assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
+         List<PropertyAccessedOneToOneSelfJoin> objs = objectsFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
+         objs.forEach(out::println);
+         assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE JOINTEST");
+         executeUpdate(
+            "DROP TABLE JOINTEST");
       }
    }
 
@@ -106,8 +112,8 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -118,11 +124,11 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
          PropertyAccessedOneToOneSelfJoin parent = new PropertyAccessedOneToOneSelfJoin();
          parent.setType("parent");
-         Q2Obj.insert(parent);
+         insert(parent);
 
          PropertyAccessedOneToOneSelfJoin parent2 = new PropertyAccessedOneToOneSelfJoin();
          parent2.setType("parent");
-         Q2Obj.insert(parent2);
+         insert(parent2);
 
          PropertyAccessedOneToOneSelfJoin child = new PropertyAccessedOneToOneSelfJoin();
          child.setType("child");
@@ -140,7 +146,8 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE JOINTEST");
+         executeUpdate(
+            "DROP TABLE JOINTEST");
       }
    }
 

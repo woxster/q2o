@@ -8,19 +8,23 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.List;
 
+import static com.zaxxer.q2o.Q2Obj.countFromClause;
+import static com.zaxxer.q2o.Q2Obj.insert;
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
+import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sansorm.TestUtils.makeH2DataSource;
 
 import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosureElf;
+import com.zaxxer.q2o.Q2Sql;
 
 
 public class QueryTest2
 {
    @BeforeClass
-   public static void setup() throws Throwable
-   {
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
-      SqlClosureElf.executeUpdate(
+   public static void setup() throws Throwable {
+      initializeTxNone(makeH2DataSource());
+      executeUpdate(
          "CREATE TABLE TargetClass2 ("
             + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"
             + " string VARCHAR(128),"
@@ -73,15 +77,14 @@ public class QueryTest2
    }
 
    @Test
-   public void testNumberFromSql()
-   {
-      Number initialCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
-      Q2Obj.insert(new TargetClass2(null, ""));
+   public void testNumberFromSql() {
+      Number initialCount = Q2Sql.numberFromSql("SELECT count(id) FROM TargetClass2");
+      insert(new TargetClass2(null, ""));
 
-      Number newCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM TargetClass2");
+      Number newCount = Q2Sql.numberFromSql("SELECT count(id) FROM TargetClass2");
       assertThat(newCount.intValue()).isEqualTo(initialCount.intValue() + 1);
 
-      int countCount = Q2Obj.countFromClause(TargetClass2.class, null);
+      int countCount = countFromClause(TargetClass2.class, null);
       assertThat(countCount).isEqualTo(newCount.intValue());
    }
 

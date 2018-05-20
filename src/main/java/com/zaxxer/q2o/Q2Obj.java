@@ -16,8 +16,6 @@
 
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.internal.*;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

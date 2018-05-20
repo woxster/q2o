@@ -16,21 +16,19 @@
 
 package com.zaxxer.sansorm;
 
-import com.zaxxer.q2o.internal.Introspector;
-import com.zaxxer.q2o.internal.OrmReader;
-import com.zaxxer.q2o.internal.OrmWriter;
+import com.zaxxer.q2o.Q2Obj;
+import com.zaxxer.q2o.Q2Sql;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
 * OrmElf
+ * @deprecated
 */
 //CHECKSTYLE:OFF
 @SuppressWarnings({"WeakerAccess", "unused"})
@@ -57,10 +55,11 @@ public final class OrmElf
     * @param <T> the type of the object to load
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T objectById(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
-      return OrmReader.objectById(connection, clazz, args);
+      return Q2Obj.byId(connection, clazz, args);
    }
 
    /**
@@ -79,10 +78,11 @@ public final class OrmElf
     * @param <T> the type of the object to load
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T objectFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return OrmReader.objectFromClause(connection, clazz, clause, args);
+      return Q2Obj.fromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -99,10 +99,11 @@ public final class OrmElf
     * @param <T> the type of the object to load
     * @return a list of populated objects
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> List<T> listFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return OrmReader.listFromClause(connection, clazz, clause, args);
+      return Q2Obj.objectsFromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -115,10 +116,11 @@ public final class OrmElf
     * @param <T> the type of object to query.
     * @return The result count.
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> int countObjectsFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return OrmReader.countObjectsFromClause(connection, clazz, clause, args);
+      return Q2Obj.countFromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -132,10 +134,11 @@ public final class OrmElf
     * @param <T> the class template
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
    {
-      return OrmReader.statementToObject(stmt, clazz, args);
+      return Q2Obj.fromStatement(stmt, clazz, args);
    }
 
    /**
@@ -148,10 +151,11 @@ public final class OrmElf
     * @param <T> the class template
     * @return a list of instance of the target class, or an empty list
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> List<T> statementToList(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
    {
-      return OrmReader.statementToList(stmt, clazz, args);
+      return Q2Obj.objectsFromStatement(stmt, clazz, args);
    }
 
    /**
@@ -164,10 +168,11 @@ public final class OrmElf
     * @param <T> the class template
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T resultSetToObject(ResultSet resultSet, T target) throws SQLException
    {
-      return OrmReader.resultSetToObject(resultSet, target);
+      return Q2Obj.fromResultSet(resultSet, target);
    }
 
    /**
@@ -181,10 +186,11 @@ public final class OrmElf
     * @param <T> the class template
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T resultSetToObject(ResultSet resultSet, T target, Set<String> ignoredColumns) throws SQLException
    {
-      return OrmReader.resultSetToObject(resultSet, target, ignoredColumns);
+      return Q2Obj.fromResultSet(resultSet, target, ignoredColumns);
    }
 
    /**
@@ -199,10 +205,11 @@ public final class OrmElf
     * @param <T> the class template
     * @return a list of instance of the target class, or an empty list
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> List<T> resultSetToList(ResultSet resultSet, Class<T> targetClass) throws SQLException
    {
-      return OrmReader.resultSetToList(resultSet, targetClass);
+      return Q2Obj.objectsFromResultSet(resultSet, targetClass);
    }
 
    // ------------------------------------------------------------------------
@@ -216,10 +223,11 @@ public final class OrmElf
     * @param iterable a list (or other {@link Iterable} collection) of annotated objects to insert
     * @param <T> the class template
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> void insertListNotBatched(Connection connection, Iterable<T> iterable) throws SQLException
    {
-      OrmWriter.insertListNotBatched(connection, iterable);
+      Q2Obj.insertNotBatched(connection, iterable);
    }
 
    /**
@@ -229,10 +237,11 @@ public final class OrmElf
     * @param iterable a list (or other {@link Iterable} collection) of annotated objects to insert
     * @param <T> the class template
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> void insertListBatched(Connection connection, Iterable<T> iterable) throws SQLException
    {
-      OrmWriter.insertListBatched(connection, iterable);
+      Q2Obj.insertBatched(connection, iterable);
    }
 
    /**
@@ -243,10 +252,11 @@ public final class OrmElf
     * @param <T> the class template
     * @return the same object that was passed in, but with possibly updated @Id field due to auto-generated keys
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T insertObject(Connection connection, T target) throws SQLException
    {
-      return OrmWriter.insertObject(connection, target);
+      return Q2Obj.insert(connection, target);
    }
 
    /**
@@ -258,17 +268,19 @@ public final class OrmElf
     * @param <T> the class template
     * @return the same object passed in
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> T updateObject(Connection connection, T target) throws SQLException
    {
-      return OrmWriter.updateObject(connection, target);
+      return Q2Obj.update(connection, target);
    }
 
+   /**
+    * @deprecated
+    */
    public static <T> T updateObject(Connection connection, T target, String... excludedColumns) throws SQLException
    {
-      HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
-      excludedCols.addAll(Arrays.asList(excludedColumns));
-      return OrmWriter.updateObject(connection, target, excludedCols);
+      return Q2Obj.updateExcludeColumns(connection, target, excludedColumns);
    }
 
    /**
@@ -280,15 +292,19 @@ public final class OrmElf
     * @param <T> the class template
     * @return 0 if no row was deleted, 1 if the row was deleted
     * @throws SQLException if a {@link SQLException} occurs
+    * @deprecated
     */
    public static <T> int deleteObject(Connection connection, T target) throws SQLException
    {
-      return OrmWriter.deleteObject(connection, target);
+      return Q2Obj.delete(connection, target);
    }
 
+   /**
+    * @deprecated
+    */
    public static <T> int deleteObjectById(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
-      return OrmWriter.deleteObjectById(connection, clazz, args);
+      return Q2Obj.deleteById(connection, clazz, args);
    }
 
    // ------------------------------------------------------------------------
@@ -301,10 +317,11 @@ public final class OrmElf
     * @param clazz The type.
     * @param propertyName The object property name.
     * @return The database column name.
+    * @deprecated
     */
    public static String getColumnFromProperty(Class<?> clazz, String propertyName)
    {
-      return Introspector.getIntrospected(clazz).getColumnNameForProperty(propertyName);
+      return Q2Sql.getColumnFromProperty(clazz, propertyName);
    }
 
    /**
@@ -315,10 +332,11 @@ public final class OrmElf
     * @param tablePrefix an optional table prefix to append to each column
     * @param <T> the class template
     * @return a CSV of annotated column names
+    * @deprecated
     */
    public static <T> String getColumnsCsv(Class<T> clazz, String... tablePrefix)
    {
-      return OrmReader.getColumnsCsv(clazz, tablePrefix);
+      return Q2Sql.getColumnsCsv(clazz, tablePrefix);
    }
 
    /**
@@ -331,10 +349,11 @@ public final class OrmElf
     * @param excludeColumns optional columns to exclude from the returned list of columns
     * @param <T> the class template
     * @return a CSV of annotated column names
+    * @deprecated
     */
    public static <T> String getColumnsCsvExclude(Class<T> clazz, String... excludeColumns)
    {
-      return OrmReader.getColumnsCsvExclude(clazz, excludeColumns);
+      return Q2Sql.getColumnsCsvExclude(clazz, excludeColumns);
    }
 
    /**
@@ -345,8 +364,9 @@ public final class OrmElf
     * @return the target object with all values updated or null if the object was not found anymore.
     * @throws SQLException if a {@link SQLException} occurs
     * @param <T> the type of the target object
+    * @deprecated
     */
    public static <T> T refresh(Connection connection, T target) throws SQLException {
-      return OrmReader.refresh(connection, target);
+      return Q2Obj.refresh(connection, target);
    }
 }

@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -57,7 +57,7 @@ public class ConnectionProxy implements InvocationHandler
       return ret;
    }
 
-   public static Connection wrapConnection(final Connection delegate) {
+   static Connection wrapConnection(final Connection delegate) {
       ConnectionProxy handler = new ConnectionProxy(delegate);
       return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(), new Class[] { Connection.class }, handler);
    }

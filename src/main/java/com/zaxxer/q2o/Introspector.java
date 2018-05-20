@@ -14,7 +14,9 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
+
+import com.zaxxer.q2o.Introspected;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

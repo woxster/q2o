@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
@@ -24,7 +24,7 @@ import java.util.*;
  * OrmReader
  */
 // MULTIPLESTRINGS:OFF
-public class OrmReader extends OrmBase
+class OrmReader extends OrmBase
 {
    private static final int CACHE_SIZE = Integer.getInteger("com.zaxxer.sansorm.statementCacheSize", 500);
 
@@ -42,21 +42,21 @@ public class OrmReader extends OrmBase
       });
    }
 
-   public static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException
+   static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException
    {
       try (final PreparedStatement closeStmt = stmt) {
          return resultSetToList(statementToResultSet(stmt, args), clazz);
       }
    }
 
-   public static ResultSet statementToResultSet(final PreparedStatement stmt, final Object... args) throws SQLException
+   static ResultSet statementToResultSet(final PreparedStatement stmt, final Object... args) throws SQLException
    {
       populateStatementParameters(stmt, args);
       return stmt.executeQuery();
    }
 
    // COMPLEXITY:OFF
-   public static <T> List<T> resultSetToList(final ResultSet resultSet, final Class<T> targetClass) throws SQLException
+   static <T> List<T> resultSetToList(final ResultSet resultSet, final Class<T> targetClass) throws SQLException
    {
       final List<T> list = new ArrayList<>();
       if (!resultSet.next()) {
@@ -122,7 +122,7 @@ public class OrmReader extends OrmBase
       }
    }
 
-   public static <T> T statementToObject(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException {
+   static <T> T statementToObject(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException {
       T target;
       try {
          target = clazz.newInstance();
@@ -133,13 +133,13 @@ public class OrmReader extends OrmBase
       return statementToObject(stmt, target, args);
    }
 
-   public static <T> T resultSetToObject(final ResultSet resultSet, final T target) throws SQLException
+   static <T> T resultSetToObject(final ResultSet resultSet, final T target) throws SQLException
    {
       final Set<String> ignoreNone = Collections.emptySet();
       return resultSetToObject(resultSet, target, ignoreNone);
    }
 
-   public static <T> T resultSetToObject(final ResultSet resultSet, final T target, final Set<String> ignoredColumns) throws SQLException
+   static <T> T resultSetToObject(final ResultSet resultSet, final T target, final Set<String> ignoredColumns) throws SQLException
    {
       final ResultSetMetaData metaData = resultSet.getMetaData();
 
@@ -218,13 +218,13 @@ public class OrmReader extends OrmBase
       return target;
    }
 
-   public static <T> T objectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
+   static <T> T objectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
    {
       String where = getWhereIdClause(Introspector.getIntrospected(clazz));
       return objectFromClause(connection, clazz, where, args);
    }
 
-   public static <T> T objectById(final Connection connection, final T target) throws SQLException {
+   static <T> T objectById(final Connection connection, final T target) throws SQLException {
       Introspected introspected = Introspector.getIntrospected(target.getClass());
       String where = getWhereIdClause(introspected);
       List<AttributeInfo> idFcInfos = introspected.getIdFcInfos();
@@ -241,7 +241,7 @@ public class OrmReader extends OrmBase
       return objectFromClause(connection, target, where, args);
    }
 
-   public static <T> T refresh(final Connection connection, final T target) throws SQLException {
+   static <T> T refresh(final Connection connection, final T target) throws SQLException {
       final Introspected introspected = Introspector.getIntrospected(target.getClass());
       final String where = getWhereIdClause(introspected);
       final String sql = generateSelectFromClause(target.getClass(), where);
@@ -263,7 +263,7 @@ public class OrmReader extends OrmBase
       return where.toString();
    }
 
-   public static <T> List<T> listFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
+   static <T> List<T> listFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
       final String sql = generateSelectFromClause(clazz, clause);
       final PreparedStatement stmt = connection.prepareStatement(sql);
@@ -271,21 +271,21 @@ public class OrmReader extends OrmBase
       return statementToList(stmt, clazz, args);
    }
 
-   public static <T> T objectFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
+   static <T> T objectFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
       final String sql = generateSelectFromClause(clazz, clause);
       final PreparedStatement stmt = connection.prepareStatement(sql);
       return statementToObject(stmt, clazz, args);
    }
 
-   public static <T> T objectFromClause(final Connection connection, final T target, final String clause, final Object... args) throws SQLException
+   static <T> T objectFromClause(final Connection connection, final T target, final String clause, final Object... args) throws SQLException
    {
       final String sql = generateSelectFromClause(target.getClass(), clause);
       final PreparedStatement stmt = connection.prepareStatement(sql);
       return statementToObject(stmt, target, args);
    }
 
-   public static <T> int countObjectsFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
+   static <T> int countObjectsFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
       final Introspected introspected = Introspector.getIntrospected(clazz);
 
@@ -309,7 +309,7 @@ public class OrmReader extends OrmBase
       return numberFromSql(connection, sql.toString(), args).intValue();
    }
 
-   public static Number numberFromSql(final Connection connection, final String sql, final Object... args) throws SQLException
+   static Number numberFromSql(final Connection connection, final String sql, final Object... args) throws SQLException
    {
       try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
          populateStatementParameters(stmt, args);

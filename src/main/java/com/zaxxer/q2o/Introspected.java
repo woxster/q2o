@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import org.postgresql.util.PGobject;
 
@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * An introspected class.
  */
-public final class Introspected {
+final class Introspected {
    private final Class<?> clazz;
    final List<AttributeInfo> idFcInfos;
    private String delimitedTableName;
@@ -585,7 +585,7 @@ public final class Introspected {
     *
     * @return true if this class has {@link JoinColumn} annotations
     */
-   public boolean hasSelfJoinColumn() {
+   boolean hasSelfJoinColumn() {
       return selfJoinFCInfo != null;
    }
 
@@ -595,7 +595,7 @@ public final class Introspected {
     * @param columnName The column name to check. Requires case sensitive match of name element or property name without delimiters.
     * @return true if the specified column is a self-join column
     */
-   public boolean isSelfJoinColumn(final String columnName) {
+   boolean isSelfJoinColumn(final String columnName) {
       return selfJoinFCInfo.getCaseSensitiveColumnName().equals(columnName);
    }
 
@@ -604,7 +604,7 @@ public final class Introspected {
     *
     * @return the self-join column name, or null
     */
-   public String getSelfJoinColumn() {
+   String getSelfJoinColumn() {
       return selfJoinFCInfo != null ? selfJoinFCInfo.getColumnName() : null;
    }
 
@@ -622,7 +622,7 @@ public final class Introspected {
     *
     * @return and array of column names
     */
-   public String[] getColumnNames() {
+   String[] getColumnNames() {
       return delimitedColumnNames;
    }
 
@@ -632,7 +632,7 @@ public final class Introspected {
     *
     * @return an array of column table names
     */
-   public String[] getColumnTableNames() {
+   String[] getColumnTableNames() {
       return columnTableNames;
    }
 
@@ -642,7 +642,7 @@ public final class Introspected {
     *
     * @return and array of column names
     */
-   public String[] getIdColumnNames() {
+   String[] getIdColumnNames() {
       return idColumnNames;
    }
 
@@ -652,11 +652,11 @@ public final class Introspected {
     *
     * @return and array of column names
     */
-   public String[] getColumnsSansIds() {
+   String[] getColumnsSansIds() {
       return delimitedColumnsSansIds;
    }
 
-   public boolean hasGeneratedId() {
+   boolean hasGeneratedId() {
       return isGeneratedId;
    }
 
@@ -667,7 +667,7 @@ public final class Introspected {
     * by delimiters.
     * @see #getUpdatableColumns()
     */
-   public String[] getInsertableColumns() {
+   String[] getInsertableColumns() {
       return insertableColumns;
    }
 
@@ -694,7 +694,7 @@ public final class Introspected {
     *
     * @return The names of the updatable columns. Case sensitive. In case of delimited fields surrounded by delimiters.
     */
-   public String[] getUpdatableColumns() {
+   String[] getUpdatableColumns() {
       return updatableColumns;
    }
 
@@ -722,7 +722,7 @@ public final class Introspected {
     * @param columnName Same case as in name element or property name without delimeters.
     * @return true if insertable, false otherwise
     */
-   public boolean isInsertableColumn(final String columnName) {
+   boolean isInsertableColumn(final String columnName) {
       // Use index iteration to avoid generating an Iterator as side-effect
       final AttributeInfo[] fcInfos = getInsertableFcInfos();
       for (int i = 0; i < fcInfos.length; i++) {
@@ -739,7 +739,7 @@ public final class Introspected {
     * @param columnName Same case as in name element or property name without delimeters.
     * @return true if updatable, false otherwise
     */
-   public boolean isUpdatableColumn(final String columnName) {
+   boolean isUpdatableColumn(final String columnName) {
       // Use index iteration to avoid generating an Iterator as side-effect
       final AttributeInfo[] fcInfos = getUpdatableFcInfos();
       for (int i = 0; i < fcInfos.length; i++) {
@@ -789,7 +789,7 @@ public final class Introspected {
     *
     * @return the delimited column name or {@code null}
     */
-   public String getColumnNameForProperty(final String propertyName) {
+   String getColumnNameForProperty(final String propertyName) {
       return Optional.ofNullable(propertyToField.get(propertyName))
          .map(fcInfo -> fcInfo.getDelimitedColumnName())
          .orElse(null);
@@ -875,7 +875,7 @@ public final class Introspected {
    /**
     * @return Any id field regardless of whether it is auto-generated or not.
     */
-   public List<AttributeInfo> getIdFcInfos() {
+   List<AttributeInfo> getIdFcInfos() {
       return idFcInfos;
    }
 }

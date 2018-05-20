@@ -1,4 +1,4 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import javax.persistence.*;
 import java.lang.reflect.*;
@@ -7,9 +7,9 @@ import java.lang.reflect.*;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 23.04.18
  */
-public class FieldInfo extends AttributeInfo {
+class FieldInfo extends AttributeInfo {
 
-   public FieldInfo(final Field field, final Class clazz) {
+   FieldInfo(final Field field, final Class clazz) {
       super(field, clazz);
       field.setAccessible(true);
    }
@@ -63,7 +63,7 @@ public class FieldInfo extends AttributeInfo {
       return field.getDeclaredAnnotation(GeneratedValue.class);
    }
 
-   public Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException {
+   Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException {
       if (!isSelfJoinField()) {
          return field.get(target);
       }
@@ -71,7 +71,7 @@ public class FieldInfo extends AttributeInfo {
       return idValueFromParentEntity(obj);
    }
 
-   public void setValue(final Object target, final Object value) throws IllegalAccessException {
+   void setValue(final Object target, final Object value) throws IllegalAccessException {
       try {
          if (!isSelfJoinField()) {
             field.set(target, value);

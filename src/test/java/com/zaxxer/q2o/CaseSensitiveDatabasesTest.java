@@ -2,7 +2,6 @@ package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
 import com.zaxxer.q2o.entities.InsertObjectH2;
-import com.zaxxer.q2o.internal.*;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
@@ -13,7 +12,11 @@ import javax.persistence.*;
 import java.sql.*;
 import java.util.HashSet;
 
+import static com.zaxxer.q2o.Q2Obj.*;
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
+import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.junit.Assert.*;
+import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
  * See Issue #22: <a href="https://github.com/brettwooldridge/SansOrm/issues/22">Problem with upper case column names</a>
@@ -700,24 +703,25 @@ public class CaseSensitiveDatabasesTest {
 
       q2o.initializeTxNone(TestUtils.makeH2DataSource());
       try {
-         SqlClosureElf.executeUpdate(
-               " CREATE TABLE \"Test Class\" ("
-            + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-            + "\"Delimited field name\" VARCHAR(128), "
-            + "Default_Case VARCHAR(128) "
-            + ")");
+         executeUpdate(
+            " CREATE TABLE \"Test Class\" ("
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
+               + "\"Delimited field name\" VARCHAR(128), "
+               + "Default_Case VARCHAR(128) "
+               + ")");
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = Q2Obj.insert(new InsertObjectH2());
+         InsertObjectH2 obj = insert(new InsertObjectH2());
          assertEquals(1, obj.Id);
-         obj = Q2Obj.byId(InsertObjectH2.class, obj.Id);
+         obj = byId(InsertObjectH2.class, obj.Id);
          assertNotNull(obj);
-         int count = Q2Obj.countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
+         int count = countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
          assertEquals(1, count);
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE \"Test Class\"");
+         executeUpdate(
+            "DROP TABLE \"Test Class\"");
       }
    }
 
@@ -726,23 +730,24 @@ public class CaseSensitiveDatabasesTest {
 
       q2o.initializeTxNone(TestUtils.makeH2DataSource());
       try {
-         SqlClosureElf.executeUpdate(
+         executeUpdate(
             " CREATE TABLE \"Test Class\" ("
-            + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-            + "\"Delimited field name\" VARCHAR(128), "
-            + "Default_Case VARCHAR(128) "
-            + ")");
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
+               + "\"Delimited field name\" VARCHAR(128), "
+               + "Default_Case VARCHAR(128) "
+               + ")");
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          InsertObjectH2 obj = new InsertObjectH2();
-         obj = Q2Obj.insert(obj);
+         obj = insert(obj);
          obj.defaultCase = "changed";
-         obj = Q2Obj.update(obj);
+         obj = update(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE \"Test Class\"");
+         executeUpdate(
+            "DROP TABLE \"Test Class\"");
       }
    }
 
@@ -760,25 +765,26 @@ public class CaseSensitiveDatabasesTest {
       }
 
       try {
-         JdbcDataSource dataSource = TestUtils.makeH2DataSource();
-         q2o.initializeTxNone(dataSource);
-         SqlClosureElf.executeUpdate(
+         JdbcDataSource dataSource = makeH2DataSource();
+         initializeTxNone(dataSource);
+         executeUpdate(
             " CREATE TABLE \"Test Class\" ("
-            + "\"Id\" INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-            + "\"Delimited field name\" VARCHAR(128), "
-            + "Default_Case VARCHAR(128) "
-            + ")");
+               + "\"Id\" INTEGER NOT NULL IDENTITY PRIMARY KEY, "
+               + "\"Delimited field name\" VARCHAR(128), "
+               + "Default_Case VARCHAR(128) "
+               + ")");
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          TestClass obj = new TestClass();
-         obj = Q2Obj.insert(obj);
+         obj = insert(obj);
          obj.defaultCase = "changed";
-         obj = Q2Obj.update(obj);
+         obj = update(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE \"Test Class\"");
+         executeUpdate(
+            "DROP TABLE \"Test Class\"");
       }
    }
 

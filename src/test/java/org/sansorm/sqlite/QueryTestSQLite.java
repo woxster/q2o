@@ -1,5 +1,7 @@
 package org.sansorm.sqlite;
 
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.q2o.*;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.sansorm.TestUtils;
@@ -14,25 +16,21 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
+import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.q2o.Q2Obj;
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosure;
-import com.zaxxer.q2o.SqlClosureElf;
-import com.zaxxer.q2o.internal.Introspected;
-import com.zaxxer.q2o.internal.Introspector;
+import static org.sansorm.TestUtils.makeSQLiteDataSource;
 
 public class QueryTestSQLite {
    public static Closeable prepareSQLiteDatasource(File db) {
-      HikariDataSource hds = TestUtils.makeSQLiteDataSource(db);
-      q2o.initializeTxNone(hds);
-      SqlClosureElf.executeUpdate("CREATE TABLE IF NOT EXISTS TargetClassSQL ("
-         + "id integer PRIMARY KEY AUTOINCREMENT,"
-         + "string text NOT NULL,"
-         + "timestamp INTEGER"
-         + ')');
+      HikariDataSource hds = makeSQLiteDataSource(db);
+      initializeTxNone(hds);
+      executeUpdate(
+         "CREATE TABLE IF NOT EXISTS TargetClassSQL ("
+            + "id integer PRIMARY KEY AUTOINCREMENT,"
+            + "string text NOT NULL,"
+            + "timestamp INTEGER"
+            + ')');
       return hds; // to close it properly
    }
 
@@ -44,10 +42,6 @@ public class QueryTestSQLite {
 
    @Test
    public void shouldPerformCRUD() throws IOException {
-      Introspected is = Introspector.getIntrospected(TargetClassSQL.class);
-      assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
-      assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
-
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          TargetClassSQL original = new TargetClassSQL("Hi", new Date(0));
          assertThat(original.getId()).isNull();
@@ -73,9 +67,6 @@ public class QueryTestSQLite {
 
    @Test
    public void shouldPerformCRUDAfterReconnect() throws IOException {
-      Introspected is = Introspector.getIntrospected(TargetClassSQL.class);
-      assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
-      assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
 
       File path = File.createTempFile("sansorm", ".db");
       path.deleteOnExit();
@@ -144,7 +135,7 @@ public class QueryTestSQLite {
          });
          List<TargetClassSQL> inserted = Q2Obj.objectsFromClause(
             TargetClassSQL.class,
-            "string in " + SqlClosureElf.getInClausePlaceholdersForCount(count),
+            "string in " + Q2Sql.getInClausePlaceholdersForCount(count),
             IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));
 
          // then

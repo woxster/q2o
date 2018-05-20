@@ -18,8 +18,14 @@ package com.zaxxer.sansorm;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * @deprecated
+ */
 @FunctionalInterface
 public interface SqlVarArgsFunction<T>
 {
+   /**
+    * @deprecated
+    */
    T execute(Connection connection, Object... args) throws SQLException;
 }

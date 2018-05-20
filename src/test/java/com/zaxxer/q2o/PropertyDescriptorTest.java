@@ -1,4 +1,4 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.PropertyDescriptorTestClass;
 import org.junit.Rule;

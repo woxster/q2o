@@ -19,8 +19,14 @@ package com.zaxxer.sansorm;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * @deprecated
+ */
 @FunctionalInterface
 public interface SqlFunction<T>
 {
+   /**
+    * @deprecated
+    */
    T execute(Connection connection) throws SQLException;
 }

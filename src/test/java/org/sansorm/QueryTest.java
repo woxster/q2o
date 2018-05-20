@@ -1,6 +1,6 @@
 package org.sansorm;
 
-import com.zaxxer.q2o.Q2Obj;
+import com.zaxxer.q2o.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,26 +14,25 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.zaxxer.q2o.Q2Obj.countFromClause;
+import static com.zaxxer.q2o.Q2Obj.insert;
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
+import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosure;
-import com.zaxxer.q2o.SqlClosureElf;
-import com.zaxxer.q2o.internal.Introspected;
-import com.zaxxer.q2o.internal.Introspector;
+import static org.sansorm.TestUtils.makeH2DataSource;
 
 public class QueryTest
 {
    @BeforeClass
-   public static void setup()
-   {
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
-      SqlClosureElf.executeUpdate("CREATE TABLE target_class1 ("
-         + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-         + "timestamp TIMESTAMP, "
-         + "string VARCHAR(128), "
-         + "string_from_number NUMERIC "
-         + ")");
+   public static void setup() {
+      initializeTxNone(makeH2DataSource());
+      executeUpdate(
+         "CREATE TABLE target_class1 ("
+            + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
+            + "timestamp TIMESTAMP, "
+            + "string VARCHAR(128), "
+            + "string_from_number NUMERIC "
+            + ")");
    }
 
    @AfterClass
@@ -45,10 +44,6 @@ public class QueryTest
    @Test
    public void shouldPerformCRUD()
    {
-      Introspected is = Introspector.getIntrospected(TargetClass1.class);
-      assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
-      assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
-
       TargetClass1 original = new TargetClass1(new Date(0), "Hi");
       assertThat(original.getId()).isEqualTo(0);
 
@@ -72,15 +67,14 @@ public class QueryTest
    }
 
    @Test
-   public void testNumberFromSql()
-   {
-      Number initialCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM target_class1");
-      Q2Obj.insert(new TargetClass1(null, ""));
+   public void testNumberFromSql() {
+      Number initialCount = Q2Sql.numberFromSql("SELECT count(id) FROM target_class1");
+      insert(new TargetClass1(null, ""));
 
-      Number newCount = SqlClosureElf.numberFromSql("SELECT count(id) FROM target_class1");
+      Number newCount = Q2Sql.numberFromSql("SELECT count(id) FROM target_class1");
       assertThat(newCount.intValue()).isEqualTo(initialCount.intValue() + 1);
 
-      int countCount = Q2Obj.countFromClause(TargetClass1.class, null);
+      int countCount = countFromClause(TargetClass1.class, null);
       assertThat(countCount).isEqualTo(newCount.intValue());
    }
 
@@ -115,7 +109,7 @@ public class QueryTest
    public void testConverterSave()
    {
       TargetClass1 target = Q2Obj.insert(new TargetClass1(null, null, "1234"));
-      Number number = SqlClosureElf.numberFromSql("SELECT string_from_number + 1 FROM target_class1 where id = ?", target.getId());
+      Number number = Q2Sql.numberFromSql("SELECT string_from_number + 1 FROM target_class1 where id = ?", target.getId());
       assertThat(number.intValue()).isEqualTo(1235);
    }
 
@@ -179,7 +173,7 @@ public class QueryTest
       // then
       List<TargetClass1> inserted = Q2Obj.objectsFromClause(
          TargetClass1.class,
-         "string in " + SqlClosureElf.getInClausePlaceholdersForCount(count),
+         "string in " + Q2Sql.getInClausePlaceholdersForCount(count),
          IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));
       Set<Integer> generatedIds = inserted.stream().map(BaseClass::getId).collect(Collectors.toSet());
       assertThat(generatedIds).doesNotContain(0).as("Generated ids should be filled for passed objects");

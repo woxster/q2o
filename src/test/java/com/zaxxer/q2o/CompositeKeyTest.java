@@ -1,8 +1,9 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
+import com.zaxxer.q2o.Introspected;
 import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.SqlClosureElf;
+import com.zaxxer.q2o.Q2Sql;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,6 +17,8 @@ import javax.persistence.Table;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static com.zaxxer.q2o.Q2Obj.*;
+import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static org.junit.Assert.*;
 
 /**
@@ -58,8 +61,8 @@ public class CompositeKeyTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -71,20 +74,22 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = Q2Obj.insert(new TestClass2());
+         TestClass2 obj = insert(new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = Q2Obj.byId(TestClass2.class, obj.id1, obj.id2);
+         obj = byId(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
 
-         SqlClosureElf.executeUpdate("update TestClass2 set field = 'changed'");
+         executeUpdate(
+            "update TestClass2 set field = 'changed'");
 
-         TestClass2 obj2 = Q2Obj.refresh(con, obj);
+         TestClass2 obj2 = refresh(con, obj);
          assertTrue(obj == obj2);
          assertEquals("changed", obj.field);
 
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE TestClass2");
+         executeUpdate(
+            "DROP TABLE TestClass2");
       }
    }
 
@@ -93,8 +98,8 @@ public class CompositeKeyTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -106,20 +111,21 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = Q2Obj.insert(new TestClass2());
+         TestClass2 obj = insert(new TestClass2());
 
-         obj = Q2Obj.byId(obj.getClass(), obj.id1, obj.id2);
+         obj = byId(obj.getClass(), obj.id1, obj.id2);
          assertNotNull(obj);
          assertEquals(null, obj.field);
 
          obj.field = "changed";
-         Q2Obj.update(con, obj);
-         obj = Q2Obj.byId(con, obj.getClass(), obj.id1, obj.id2);
+         update(con, obj);
+         obj = byId(con, obj.getClass(), obj.id1, obj.id2);
          assertEquals("changed", obj.field);
 
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE TestClass2");
+         executeUpdate(
+            "DROP TABLE TestClass2");
       }
    }
 
@@ -128,8 +134,8 @@ public class CompositeKeyTest {
 
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         SqlClosureElf.executeUpdate(
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -141,16 +147,17 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = Q2Obj.insert(new TestClass2());
-         int rowCount = Q2Obj.countFromClause(con, obj.getClass(), "field is null");
+         TestClass2 obj = insert(new TestClass2());
+         int rowCount = countFromClause(con, obj.getClass(), "field is null");
          assertEquals(1, rowCount);
 
-         Q2Obj.delete(con, obj);
-         rowCount = Q2Obj.countFromClause(con, obj.getClass(), "field is null");
+         delete(con, obj);
+         rowCount = countFromClause(con, obj.getClass(), "field is null");
          assertEquals(0, 0);
       }
       finally {
-         SqlClosureElf.executeUpdate("DROP TABLE TestClass2");
+         executeUpdate(
+            "DROP TABLE TestClass2");
       }
    }
 

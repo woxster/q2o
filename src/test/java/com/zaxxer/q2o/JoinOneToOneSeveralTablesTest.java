@@ -1,8 +1,6 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.Left;
-import com.zaxxer.q2o.internal.OrmWriter;
-import com.zaxxer.q2o.internal.PropertyInfo;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Rule;

@@ -18,7 +18,6 @@ package com.zaxxer.sansorm;
 
 import com.zaxxer.q2o.SqlFunction;
 import com.zaxxer.q2o.SqlVarArgsFunction;
-import com.zaxxer.q2o.internal.ConnectionProxy;
 import com.zaxxer.q2o.transaction.TransactionElf;
 
 import javax.sql.DataSource;
@@ -32,23 +31,20 @@ import java.sql.Statement;
  * with proper transaction demarcation and resource clean-up.
  *
  * @param <T> the templated return type of the closure
+ * @deprecated
  */
 public class SqlClosure<T>
 {
-   private static DataSource defaultDataSource;
-   private Object[] args;
-   private DataSource dataSource;
+   private com.zaxxer.q2o.SqlClosure q2oSqlClosure;
 
    /**
     * Default constructor using the default DataSource.  The {@code execute(Connection connection)}
     * method will be called when the closure executed.  A RuntimeException is thrown if the default
     * DataSource has not been set.
+    * @deprecated
     */
    public SqlClosure() {
-      dataSource = defaultDataSource;
-      if (dataSource == null) {
-         throw new RuntimeException("No default DataSource has been set");
-      }
+      q2oSqlClosure = new com.zaxxer.q2o.SqlClosure();
    }
 
    /**
@@ -57,18 +53,22 @@ public class SqlClosure<T>
     * A RuntimeException is thrown if the default DataSource has not been set.
     *
     * @param args arguments to be passed to the execute method
+    * @deprecated
     */
    public SqlClosure(final Object... args) {
-      this.args = args;
+
+      q2oSqlClosure = new com.zaxxer.q2o.SqlClosure(args);
    }
 
    /**
     * Construct a SqlClosure with a specific DataSource.
     *
     * @param ds the DataSource
+    * @deprecated
     */
    public SqlClosure(final DataSource ds) {
-      dataSource = ds;
+
+      q2oSqlClosure = new com.zaxxer.q2o.SqlClosure(ds);
    }
 
    /**
@@ -77,31 +77,33 @@ public class SqlClosure<T>
     *
     * @param ds the DataSource
     * @param args optional arguments to be used for execution
+    * @deprecated
     */
    public SqlClosure(final DataSource ds, final Object... args) {
-      this.dataSource = ds;
-      this.args = args;
+      q2oSqlClosure = new com.zaxxer.q2o.SqlClosure(ds, args);
    }
 
    /**
     * Construct a SqlClosure with the same DataSource as the closure passed in.
     *
     * @param copyClosure the SqlClosure to share a common DataSource with
+    * @deprecated
     */
    public SqlClosure(final SqlClosure copyClosure)
    {
-      this.dataSource = copyClosure.dataSource;
+      q2oSqlClosure = new com.zaxxer.q2o.SqlClosure(copyClosure);
    }
 
    /**
     * Set the default DataSource used by the SqlClosure when the default constructor
     * is used.
-    *
+    * @deprecated
     * @param ds the DataSource to use by the default
     */
    static void setDefaultDataSource(final DataSource ds)
    {
-      defaultDataSource = ds;
+
+      com.zaxxer.q2o.SqlClosure.setDefaultDataSource(ds);
    }
 
    /**
@@ -111,6 +113,7 @@ public class SqlClosure<T>
     * @param <V> the result type
     * @return the result specified by the lambda
     * @since 2.5
+    * @deprecated
     */
    public static <V> V sqlExecute(final SqlFunction<V> functional)
    {
@@ -131,6 +134,7 @@ public class SqlClosure<T>
     * @param <V> the result type
     * @return the result specified by the lambda
     * @since 2.5
+    * @deprecated
     */
    public static <V> V sqlExecute(final SqlVarArgsFunction<V> functional, final Object... args)
    {
@@ -150,6 +154,7 @@ public class SqlClosure<T>
     * @param functional the lambda function
     * @param <V> the result type
     * @return the result specified by the lambda
+    * @deprecated
     */
    public final <V> V exec(final SqlFunction<V> functional)
    {
@@ -170,6 +175,7 @@ public class SqlClosure<T>
     * @param args arguments to pass to the lamba function
     * @param <V> the result type
     * @return the result specified by the lambda
+    * @deprecated
     */
    public final <V> V exec(final SqlVarArgsFunction<V> functional, final Object... args)
    {
@@ -186,48 +192,11 @@ public class SqlClosure<T>
     * Execute the closure.
     *
     * @return the template return type of the closure
+    * @deprecated
     */
    public final T execute()
    {
-      boolean txOwner = !TransactionElf.hasTransactionManager() || TransactionElf.beginOrJoinTransaction();
-      Connection connection = null;
-      try {
-         connection = ConnectionProxy.wrapConnection(dataSource.getConnection());
-         if (txOwner) {
-            // disable autoCommit mode as we are going to handle transaction by ourselves
-            connection.setAutoCommit(false);
-         }
-         return (args == null)
-            ? execute(connection)
-            : execute(connection, args);
-      }
-      catch (SQLException e) {
-         if (e.getNextException() != null) {
-            e = e.getNextException();
-         }
-         if (txOwner) {
-            // set the txOwner to false as we no longer own the transaction and we shouldn't try to commit it later
-            txOwner = false;
-            rollback(connection);
-         }
-         throw new RuntimeException(e);
-      } catch (Throwable e) {
-         if (txOwner) {
-            txOwner = false;
-            rollback(connection);
-         }
-         throw e;
-      }
-      finally {
-         try {
-            if (txOwner) {
-               commit(connection);
-            }
-         }
-         finally {
-            quietClose(connection);
-         }
-      }
+      return (T) q2oSqlClosure.execute();
    }
 
    /**
@@ -238,11 +207,11 @@ public class SqlClosure<T>
     *
     * @param args arguments to be passed to the {@code execute(Connection connection, Object...args)} method
     * @return the result of the execution
+    * @deprecated
     */
    public final T executeWith(Object... args)
    {
-      this.args = args;
-      return execute();
+      return (T) q2oSqlClosure.executeWith(args);
    }
 
    /**
@@ -251,6 +220,7 @@ public class SqlClosure<T>
     * @param connection the Connection to be used, do not close this connection yourself
     * @return the templated return value from the closure
     * @throws SQLException thrown if a SQLException occurs
+    * @deprecated
     */
    protected T execute(final Connection connection) throws SQLException
    {
@@ -264,6 +234,7 @@ public class SqlClosure<T>
     * @param args the arguments passed into the {@code SqlClosure(Object...args)} constructor
     * @return the templated return value from the closure
     * @throws SQLException thrown if a SQLException occurs
+    * @deprecated
     */
    protected T execute(final Connection connection, Object... args) throws SQLException
    {
@@ -272,6 +243,7 @@ public class SqlClosure<T>
 
    /**
     * @param connection The database connection
+    * @deprecated
     */
    public static void quietClose(final Connection connection)
    {
@@ -285,6 +257,7 @@ public class SqlClosure<T>
    }
 
    /**
+    * @deprecated
     * @param statement The database connection
     */
    public static void quietClose(final Statement statement)
@@ -299,6 +272,7 @@ public class SqlClosure<T>
    }
 
    /**
+    * @deprecated
     * @param resultSet The database connection
     */
    public static void quietClose(final ResultSet resultSet)

@@ -1,11 +1,11 @@
-package com.zaxxer.q2o.internal;
+package com.zaxxer.q2o;
 
 import org.junit.Test;
 
 import javax.persistence.Column;
 import javax.persistence.Table;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)

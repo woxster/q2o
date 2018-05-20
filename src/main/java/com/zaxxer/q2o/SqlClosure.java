@@ -23,7 +23,6 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
-import com.zaxxer.q2o.internal.ConnectionProxy;
 import com.zaxxer.q2o.transaction.TransactionElf;
 
 /**
@@ -98,7 +97,8 @@ public class SqlClosure<T>
     *
     * @param ds the DataSource to use by the default
     */
-   static void setDefaultDataSource(final DataSource ds)
+   // TODO temporarily public to provide some SansOrm compatibility
+   public static void setDefaultDataSource(final DataSource ds)
    {
       defaultDataSource = ds;
    }
