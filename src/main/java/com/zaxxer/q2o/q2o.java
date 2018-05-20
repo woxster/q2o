@@ -4,11 +4,11 @@ import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
-import com.zaxxer.q2o.transaction.TransactionElf;
 import com.zaxxer.q2o.transaction.TxTransactionManager;
 
 /** Single point of q2o configuration */
 public final class q2o {
+
    private q2o() {
    }
 
@@ -43,8 +43,8 @@ public final class q2o {
     * @return dataSource that will be used for queries
     */
    public static DataSource initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
-      TransactionElf.setTransactionManager(txManager);
-      TransactionElf.setUserTransaction(userTx);
+      TransactionHelper.setTransactionManager(txManager);
+      TransactionHelper.setUserTransaction(userTx);
       return initializeTxNone(dataSource);
    }
 
@@ -54,7 +54,7 @@ public final class q2o {
     */
    public static void deinitialize() {
       SqlClosure.setDefaultDataSource(null);
-      TransactionElf.setUserTransaction(null);
-      TransactionElf.setTransactionManager(null);
+      TransactionHelper.setUserTransaction(null);
+      TransactionHelper.setTransactionManager(null);
    }
 }

@@ -1,7 +1,6 @@
 package com.zaxxer.sansorm;
 
-import com.zaxxer.q2o.transaction.TransactionElf;
-import com.zaxxer.q2o.transaction.TxTransactionManager;
+import com.zaxxer.q2o.q2o;
 
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
@@ -22,8 +21,7 @@ public final class SansOrm {
     * @deprecated
     */
    public static DataSource initializeTxNone(DataSource dataSource) {
-      SqlClosure.setDefaultDataSource(dataSource);
-      return dataSource;
+      return q2o.initializeTxNone(dataSource);
    }
 
    /**
@@ -34,8 +32,7 @@ public final class SansOrm {
     * @deprecated
     */
    public static DataSource initializeTxSimple(DataSource dataSource) {
-      TxTransactionManager txManager = new TxTransactionManager(dataSource);
-      return initializeTxCustom(txManager.getTxDataSource(), txManager, txManager);
+      return q2o.initializeTxSimple(dataSource);
    }
 
    /**
@@ -48,9 +45,7 @@ public final class SansOrm {
     * @deprecated
     */
    public static DataSource initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
-      TransactionElf.setTransactionManager(txManager);
-      TransactionElf.setUserTransaction(userTx);
-      return initializeTxNone(dataSource);
+      return q2o.initializeTxCustom(dataSource, txManager, userTx);
    }
 
    /**
@@ -59,8 +54,6 @@ public final class SansOrm {
     * @deprecated
     */
    public static void deinitialize() {
-      SqlClosure.setDefaultDataSource(null);
-      TransactionElf.setUserTransaction(null);
-      TransactionElf.setTransactionManager(null);
+      q2o.deinitialize();
    }
 }

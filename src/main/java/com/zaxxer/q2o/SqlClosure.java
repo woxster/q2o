@@ -23,8 +23,6 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
-import com.zaxxer.q2o.transaction.TransactionElf;
-
 /**
  * The {@code SqlClosure} class provides a convenient way to execute SQL
  * with proper transaction demarcation and resource clean-up.
@@ -188,7 +186,7 @@ public class SqlClosure<T>
     */
    public final T execute()
    {
-      boolean txOwner = !TransactionElf.hasTransactionManager() || TransactionElf.beginOrJoinTransaction();
+      boolean txOwner = !TransactionHelper.hasTransactionManager() || TransactionHelper.beginOrJoinTransaction();
       Connection connection = null;
       try {
          connection = ConnectionProxy.wrapConnection(dataSource.getConnection());
@@ -314,8 +312,8 @@ public class SqlClosure<T>
 
    private static void rollback(final Connection connection)
    {
-      if (TransactionElf.hasTransactionManager()) {
-         TransactionElf.rollback();
+      if (TransactionHelper.hasTransactionManager()) {
+         TransactionHelper.rollback();
       }
       else if (connection != null) {
          try {
@@ -329,8 +327,8 @@ public class SqlClosure<T>
 
    private static void commit(final Connection connection)
    {
-      if (TransactionElf.hasTransactionManager()) {
-         TransactionElf.commit();
+      if (TransactionHelper.hasTransactionManager()) {
+         TransactionHelper.commit();
       }
       else if (connection != null) {
          try {

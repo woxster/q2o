@@ -16,10 +16,6 @@
 
 package com.zaxxer.sansorm;
 
-import com.zaxxer.q2o.SqlFunction;
-import com.zaxxer.q2o.SqlVarArgsFunction;
-import com.zaxxer.q2o.transaction.TransactionElf;
-
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -117,7 +113,7 @@ public class SqlClosure<T>
     */
    public static <V> V sqlExecute(final SqlFunction<V> functional)
    {
-      return new SqlClosure<V>() {
+      return new com.zaxxer.q2o.SqlClosure<V>() {
          @Override
          public V execute(Connection connection) throws SQLException
          {
@@ -138,7 +134,7 @@ public class SqlClosure<T>
     */
    public static <V> V sqlExecute(final SqlVarArgsFunction<V> functional, final Object... args)
    {
-      return new SqlClosure<V>() {
+      return new com.zaxxer.q2o.SqlClosure<V>() {
          @Override
          public V execute(Connection connection, Object... params) throws SQLException
          {
@@ -158,7 +154,7 @@ public class SqlClosure<T>
     */
    public final <V> V exec(final SqlFunction<V> functional)
    {
-      return new SqlClosure<V>(this) {
+      return new com.zaxxer.q2o.SqlClosure<V>(this) {
          @Override
          public V execute(Connection connection) throws SQLException
          {
@@ -179,7 +175,7 @@ public class SqlClosure<T>
     */
    public final <V> V exec(final SqlVarArgsFunction<V> functional, final Object... args)
    {
-      return new SqlClosure<V>(this) {
+      return new com.zaxxer.q2o.SqlClosure<V>(this) {
          @Override
          public V execute(Connection connection, Object... params) throws SQLException
          {
@@ -286,33 +282,4 @@ public class SqlClosure<T>
       }
    }
 
-   private static void rollback(final Connection connection)
-   {
-      if (TransactionElf.hasTransactionManager()) {
-         TransactionElf.rollback();
-      }
-      else if (connection != null) {
-         try {
-            connection.rollback();
-         }
-         catch (SQLException e) {
-            throw new RuntimeException(e);
-         }
-      }
-   }
-
-   private static void commit(final Connection connection)
-   {
-      if (TransactionElf.hasTransactionManager()) {
-         TransactionElf.commit();
-      }
-      else if (connection != null) {
-         try {
-            connection.commit();
-         }
-         catch (SQLException e) {
-            throw new RuntimeException(e);
-         }
-      }
-   }
 }

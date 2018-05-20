@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.zaxxer.q2o.transaction;
+package com.zaxxer.q2o;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +25,13 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 
-public final class TransactionElf
+public final class TransactionHelper
 {
-   private static final Logger LOGGER = LoggerFactory.getLogger(TransactionElf.class);
+   private static final Logger LOGGER = LoggerFactory.getLogger(TransactionHelper.class);
    private static TransactionManager transactionManager;
    private static UserTransaction userTransaction;
 
-   private TransactionElf() {
+   private TransactionHelper() {
    }
 
    /**

@@ -176,7 +176,7 @@ public final class SqlClosureElf
    @SafeVarargs
    public static <T> String getInClausePlaceholders(final T... items)
    {
-      return getInClausePlaceholdersForCount(items.length);
+      return Q2Sql.getInClausePlaceholdersForCount(items.length);
    }
 
    /**
@@ -189,23 +189,7 @@ public final class SqlClosureElf
     */
    public static String getInClausePlaceholdersForCount(final int placeholderCount)
    {
-      // we cant overload method name because the only item for getInClausePlaceholders can be Integer which leads to ambiguity
-      if (placeholderCount < 0)
-      {
-         throw new IllegalArgumentException("Placeholder count must be greater than or equal to zero");
-      }
-      if (placeholderCount == 0)
-      {
-         return " ('s0me n0n-ex1st4nt v4luu') ";
-      }
-      // items.length of "?" + items.length-1 of "," + 2 spaces + 2 brackets
-      final StringBuilder sb = new StringBuilder(3 + placeholderCount * 2);
-      sb.append(" (?");
-      for (int i = 1; i < placeholderCount; i++)
-      {
-         sb.append(",?");
-      }
-      return sb.append(") ").toString();
+      return Q2Sql.getInClausePlaceholdersForCount(placeholderCount);
    }
 
    /**
