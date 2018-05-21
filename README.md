@@ -35,7 +35,7 @@ Fully JPA annotated classes, you already have, should be processed as-is, withou
 
 Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
-API reordering and renaming **(still subject of change!)** and more convenient methods. There is a SansOrm 3.7 compatibility layer.
+API clean-up **(still subject of change!)**. More convenient methods. There is a SansOrm 3.7 compatibility layer.
 
 Numerous tests added to stabilize further development.
 
