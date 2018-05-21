@@ -110,8 +110,8 @@ class PropertyInfo extends AttributeInfo {
          }
          else {
             final Object obj;
-            if (value.getClass() != getActualType()) {
-               obj = idValueToParentEntity(type, value);
+            if (value.getClass() != getActualType() && !isOneToManyAnnotated) {
+               obj = idValueToParentEntity(getType(), value);
             }
             else {
                obj = value;
@@ -149,7 +149,7 @@ class PropertyInfo extends AttributeInfo {
          ", ownerClazz=" + getOwnerClazz() +
          ", name='" + name + '\'' +
          ", field=" + field +
-         ", type=" + type +
+         ", type=" + getType() +
          ", isDelimited=" + isDelimited +
          ", updatable=" + updatable +
          ", insertable=" + insertable +

@@ -40,6 +40,7 @@ public class AccessTypePropertyTest {
          }
       }
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo field = introspected.getFieldColumnInfo("field");
       Test obj = new Test();
       field.setValue(obj, "changed");
@@ -63,6 +64,7 @@ public class AccessTypePropertyTest {
          }
       }
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo field = introspected.getFieldColumnInfo("fieldWithoutAccessors");
       assertNotNull(field);
       field = introspected.getFieldColumnInfo("field");
@@ -90,6 +92,7 @@ public class AccessTypePropertyTest {
       class SubTest extends Test { }
 
       Introspected introspected = new Introspected(SubTest.class);
+      introspected.introspect();
       AttributeInfo field = introspected.getFieldColumnInfo("id");
       assertEquals(field.getClass(), PropertyInfo.class);
       SubTest obj = new SubTest();
@@ -118,6 +121,7 @@ public class AccessTypePropertyTest {
       class SubTest extends Test { }
 
       Introspected introspected = new Introspected(SubTest.class);
+      introspected.introspect();
       AttributeInfo field = introspected.getFieldColumnInfo("id");
       assertNotNull(field);
       assertEquals(field.getClass(), FieldInfo.class);
@@ -150,6 +154,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(SubTest.class);
+      introspected.introspect();
       AttributeInfo field = introspected.getFieldColumnInfo("id");
       assertNotNull(field);
       assertEquals(field.getClass(), PropertyInfo.class);
@@ -185,6 +190,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(SubTest.class);
+      introspected.introspect();
       AttributeInfo field = introspected.getFieldColumnInfo("id");
       assertNotNull(field);
       assertEquals(field.getClass(), FieldInfo.class);
@@ -211,6 +217,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo info = introspected.getFieldColumnInfo("field");
       assertEquals(PropertyInfo.class, info.getClass());
    }
@@ -232,6 +239,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo info = introspected.getFieldColumnInfo("field");
       assertEquals(FieldInfo.class, info.getClass());
    }
@@ -255,6 +263,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo info = introspected.getFieldColumnInfo("field");
       assertEquals(FieldInfo.class, info.getClass());
    }
@@ -287,6 +296,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(SubTest.class);
+      introspected.introspect();
       AttributeInfo idInfo = introspected.getFieldColumnInfo("id");
       assertEquals(PropertyInfo.class, idInfo.getClass());
       AttributeInfo fieldInfo = introspected.getFieldColumnInfo("field");
@@ -330,6 +340,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(SubTest.class);
+      introspected.introspect();
       AttributeInfo idInfo = introspected.getFieldColumnInfo("id");
       assertEquals(PropertyInfo.class, idInfo.getClass());
       AttributeInfo fieldInfo = introspected.getFieldColumnInfo("field");
@@ -363,6 +374,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo fieldInfo = introspected.getFieldColumnInfo("field");
       assertEquals(FieldInfo.class, fieldInfo.getClass());
       AttributeInfo idInfo = introspected.getFieldColumnInfo("id");
@@ -397,6 +409,7 @@ public class AccessTypePropertyTest {
       }
 
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo fieldInfo = introspected.getFieldColumnInfo("field");
       assertEquals(PropertyInfo.class, fieldInfo.getClass());
       AttributeInfo idInfo = introspected.getFieldColumnInfo("id");
@@ -425,6 +438,7 @@ public class AccessTypePropertyTest {
       }
       thrown.expectMessage("A method can not be of access type field");
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
    }
 
    @Test
@@ -444,14 +458,16 @@ public class AccessTypePropertyTest {
       }
       thrown.expectMessage("A field can not be of access type property");
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
    }
 
    /**
-    * With IntelliJ from database schema reverse engineered entity. Associations must still be commected out or Introspection throws errors.
+    * With IntelliJ from database schema reverse engineered entity.
     */
    @Test
    public void annotatedGetters() throws IllegalAccessException {
       Introspected introspected = new Introspected(GetterAnnotatedPitMainEntity.class);
+      introspected.introspect();
       AttributeInfo[] selectableFcInfos = introspected
          .getSelectableFcInfos();
       Assertions.assertThat(selectableFcInfos).hasSize(10);
@@ -534,6 +550,7 @@ public class AccessTypePropertyTest {
       };
       obj.addPropertyChangeListener(listener);
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo idInfo = introspected.getFieldColumnInfo("id");
       idInfo.setValue(obj, 1);
       assertTrue(called[0]);

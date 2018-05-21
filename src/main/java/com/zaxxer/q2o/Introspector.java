@@ -16,14 +16,9 @@
 
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.Introspected;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Introspector
- */
 public final class Introspector
 {
    private static final Map<Class<?>, Introspected> descriptorMap;
@@ -32,15 +27,11 @@ public final class Introspector
       descriptorMap = new ConcurrentHashMap<>();
    }
 
-   /**
-    * Private constructor.
-    */
    private Introspector() {
-      // private constructor
    }
 
    public static Introspected getIntrospected(Class<?> clazz)
    {
-      return descriptorMap.computeIfAbsent(clazz, cls -> new Introspected(cls));
+      return descriptorMap.computeIfAbsent(clazz, cls -> new Introspected(cls).introspect());
    }
 }

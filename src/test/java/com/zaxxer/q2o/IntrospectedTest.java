@@ -33,6 +33,7 @@ public class IntrospectedTest
    public void shouldHandleCommonJPAAnnotations()
    {
       Introspected inspected = new Introspected(TargetClass1.class);
+      inspected.introspect();
       assertThat(inspected).isNotNull();
       assertThat(inspected.hasGeneratedId()).isTrue();
       assertThat(inspected.getIdColumnNames()).isEqualTo(new String[]{"id"});
@@ -59,6 +60,7 @@ public class IntrospectedTest
       }
 
       Introspected inspected = new Introspected(SomeEntity.class);
+      inspected.introspect();
       assertThat(inspected).isNotNull();
       assertThat(inspected.getDelimitedTableName()).isEqualTo("SomeEntity").as("According to Table::name javadoc, empty name should default to entity name");
       assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("According to Column::name javadoc, empty name should default to field name");
@@ -88,6 +90,7 @@ public class IntrospectedTest
       }
 
       Introspected inspected = new Introspected(SomeEntity.class);
+      inspected.introspect();
       assertThat(inspected).isNotNull();
       assertThat(inspected.getDelimitedTableName()).isEqualTo("SomeEntity");
       assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
@@ -124,6 +127,7 @@ public class IntrospectedTest
       }
 
       Introspected inspected = new Introspected(SomeEntitySub.class);
+      inspected.introspect();
       assertThat(inspected).isNotNull();
       assertThat(inspected.getDelimitedTableName()).isEqualTo("SomeEntitySub");
       assertThat(inspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
@@ -164,6 +168,7 @@ public class IntrospectedTest
       }
 
       Introspected introspected = new Introspected(SomeEntitySub.class);
+      introspected.introspect();
       assertThat(introspected).isNotNull();
       assertThat(introspected.getDelimitedTableName()).isEqualTo("SomeEntitySub");
       assertThat(introspected.getColumnNameForProperty("id")).isEqualTo("id").as("Field declarations from MappedSuperclass should be available");
@@ -180,6 +185,7 @@ public class IntrospectedTest
       @Access(value = AccessType.FIELD)
       class Entity { }
       Introspected introspected = new Introspected(Entity.class);
+      introspected.introspect();
       assertTrue(introspected.isExplicitFieldAccess(Entity.class));
       assertFalse(introspected.isExplicitPropertyAccess(Entity.class));
    }
@@ -188,6 +194,7 @@ public class IntrospectedTest
    public void accessTypeClassNotSpecified() {
       class Entity { }
       Introspected introspected = new Introspected(Entity.class);
+      introspected.introspect();
       assertFalse(introspected.isExplicitFieldAccess(Entity.class));
       assertFalse(introspected.isExplicitPropertyAccess(Entity.class));
    }
@@ -201,6 +208,7 @@ public class IntrospectedTest
          private String field;
       }
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       assertEquals(1, introspected.getColumnNames().length);
    }
 
@@ -211,6 +219,7 @@ public class IntrospectedTest
          private Test parent;
       }
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo info = introspected.getSelfJoinColumnInfo();
       assertTrue(info.isToBeConsidered());
    }
@@ -219,6 +228,7 @@ public class IntrospectedTest
    public void introspectJoinColumn() {
 
       Introspected introspected = new Introspected(SelfJoinManyToOneFieldAccessTest.FieldAccessedSelfJoin.class);
+      introspected.introspect();
       AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
 //      Arrays.stream(insertableFcInfos).forEach(System.out::println);
       assertEquals(2, insertableFcInfos.length);
@@ -228,6 +238,7 @@ public class IntrospectedTest
    public void introspectJoinColumnPropertyAccessSelfJoin() {
 
       Introspected introspected = new Introspected(PropertyAccessedSelfJoin.class);
+      introspected.introspect();
       AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
 //      Arrays.stream(insertableFcInfos).forEach(System.out::println);
       assertEquals(2, insertableFcInfos.length);
@@ -237,6 +248,7 @@ public class IntrospectedTest
    public void introspectJoinColumnPropertyAccessOneToOne() {
 
       Introspected introspected = new Introspected(PropertyAccessedOneToOneSelfJoin.class);
+      introspected.introspect();
       AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
 //      Arrays.stream(insertableFcInfos).forEach(System.out::println);
       assertEquals(2, insertableFcInfos.length);
@@ -250,6 +262,7 @@ public class IntrospectedTest
          private Test parent;
       }
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo info = introspected.getSelfJoinColumnInfo();
       assertTrue(info.isToBeConsidered());
    }
@@ -257,6 +270,7 @@ public class IntrospectedTest
    @Test
    public void introspect() {
       Introspected introspected = new Introspected(Left.class);
+      introspected.introspect();
 
       AttributeInfo[] selectableFcInfos = introspected.getSelectableFcInfos();
       Assertions.assertThat(selectableFcInfos).extracting("name").containsExactly("id", "type", "right");
@@ -290,6 +304,7 @@ public class IntrospectedTest
       assertEquals("D_PIT_REFERENCE", info.getDelimitedTableName());
 
       Introspected introspected = new Introspected(Test.class);
+      introspected.introspect();
       AttributeInfo fcInfo = introspected.getFieldColumnInfo("D_PIT_REFERENCE", "PIR_PIT_IDENT");
       assertNotNull(fcInfo);
    }
@@ -297,6 +312,7 @@ public class IntrospectedTest
    @Test
    public void getColumnNames() {
       Introspected introspected = new Introspected(InsertObjectH2.class);
+      introspected.introspect();
       String[] columnNames = introspected.getColumnNames();
       // Preserve field order!!!
       assertArrayEquals(new String[]{"Id", "\"Delimited field name\"", "Default_Case"}, columnNames);
@@ -310,6 +326,7 @@ public class IntrospectedTest
          String columnName;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String colName = introspected.getColumnNameForProperty("columnName");
       assertEquals("Column_Name", colName);
    }
@@ -322,6 +339,7 @@ public class IntrospectedTest
          String columnName;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String colName = introspected.getColumnNameForProperty("columnName");
       assertEquals("\"Column Name\"", colName);
    }
@@ -334,6 +352,7 @@ public class IntrospectedTest
          TestClass joinColumnName;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String colName = introspected.getColumnNameForProperty("joinColumnName");
       assertEquals("Join_Column_Name", colName);
    }
@@ -346,6 +365,7 @@ public class IntrospectedTest
          TestClass joinColumnName;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String colName = introspected.getColumnNameForProperty("joinColumnName");
       assertEquals("\"Join Column Name\"", colName);
    }
@@ -355,6 +375,7 @@ public class IntrospectedTest
       @Table(name = "TableName")
       class TestClass { }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String tableName = introspected.getDelimitedTableName();
       assertEquals("TableName", tableName);
    }
@@ -366,6 +387,7 @@ public class IntrospectedTest
          String columnName;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String[] columnTableNames = introspected.getColumnTableNames();
       assertEquals("Table_Name", columnTableNames[0]);
    }
@@ -377,6 +399,7 @@ public class IntrospectedTest
          String columnName;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String[] columnTableNames = introspected.getColumnTableNames();
       assertEquals("\"Table Name\"", columnTableNames[0]);
    }
@@ -409,6 +432,7 @@ public class IntrospectedTest
          String defaultCase = defaultCaseValue;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       assertTrue(introspected.isInsertableColumn("Default_Case"));
       assertTrue(introspected.isInsertableColumn("Delimited Field Name"));
    }
@@ -630,6 +654,7 @@ public class IntrospectedTest
          String defaultCase = defaultCaseValue;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       assertTrue(introspected.isUpdatableColumn("Default_Case"));
       assertTrue(introspected.isUpdatableColumn("Delimited Field Name"));
    }
@@ -650,6 +675,7 @@ public class IntrospectedTest
          String Id5;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String[] idColumnNames = introspected.getIdColumnNames();
       assertTrue(idColumnNames.length == 5);
       assertEquals("\"ID\"", idColumnNames[0]);
@@ -667,6 +693,7 @@ public class IntrospectedTest
          String Id;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
       String[] idColumnNames = introspected.getIdColumnNames();
       assertEquals("Id", idColumnNames[0]);
    }
@@ -689,6 +716,7 @@ public class IntrospectedTest
          String Col4;
       }
       Introspected introspected = new Introspected(TestClass.class);
+      introspected.introspect();
 
       String[] columnsSansIds = introspected.getColumnsSansIds();
       assertTrue(columnsSansIds.length == 4);

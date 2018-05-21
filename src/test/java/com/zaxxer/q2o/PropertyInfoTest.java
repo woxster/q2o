@@ -176,24 +176,4 @@ public class PropertyInfoTest {
       assertNotNull(left.getRight());
       assertEquals(1, left.getRight().getId());
    }
-
-   @Test
-   public void extractTableNameOneToManyInverseSide() throws NoSuchFieldException {
-      class Test {
-         private Collection<GetterAnnotatedPitMainEntity> notes;
-
-         @OneToMany(mappedBy = "pitMainByPitIdent")
-         public Collection<GetterAnnotatedPitMainEntity> getNotes() {
-            return notes;
-         }
-
-         public void setNotes(Collection<GetterAnnotatedPitMainEntity> notes) {
-            this.notes = notes;
-         }
-      }
-      Field field = Test.class.getDeclaredField("notes");
-      PropertyInfo info = new PropertyInfo(field, Test.class);
-      assertEquals("D_PIT_MAIN", info.getDelimitedTableName());
-      assertEquals(Collection.class, info.type);
-   }
 }

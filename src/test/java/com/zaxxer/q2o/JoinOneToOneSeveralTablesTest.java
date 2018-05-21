@@ -433,6 +433,54 @@ public class JoinOneToOneSeveralTablesTest {
       }
    }
 
+   @Test
+   public void join3TablesSelectOrderChanged() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE LEFT_TABLE ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", type VARCHAR(128)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE MIDDLE_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", type VARCHAR(128)"
+               + ", rightId INTEGER UNIQUE"
+               + ", CONSTRAINT MIDDLE_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE RIGHT_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", type VARCHAR(128)"
+               + ", CONSTRAINT RIGHT_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE_TABLE (rightId)"
+               + ")");
+
+         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('type: left')");
+         Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
+         Q2Sql.executeUpdate("insert into RIGHT_TABLE (id, type) values(1, 'type: right')");
+
+         Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT_TABLE, LEFT_TABLE, MIDDLE_TABLE where LEFT_TABLE.id = MIDDLE_TABLE.id and MIDDLE_TABLE.RIGHTID = RIGHT_TABLE.ID and LEFT_TABLE.id = ?", 1);
+
+         System.out.println(left);
+         assertNotNull(left.getMiddle());
+         assertNotNull(left.getMiddle().getRight());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left.toString());
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+         throw e;
+      }
+      finally {
+         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE MIDDLE_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
+      }
+   }
+
 
 
    @Test
@@ -510,88 +558,6 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("DROP TABLE MIDDLE_TABLE");
          Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
          Q2Sql.executeUpdate("DROP TABLE FAR_RIGHT_TABLE");
-      }
-   }
-
-   @Entity @Table(name = "LEFT_TABLE")
-   public static class LeftOneToMany {
-      private int id;
-      private String type;
-      private Collection<Right> rights;
-
-      @Id @GeneratedValue
-      public int getId() {
-         return id;
-      }
-
-      public void setId(int id) {
-         this.id = id;
-      }
-
-      @OneToMany @JoinColumn(name = "id", table = "RIGHT_TABLE")
-      public Collection<Right> getRights() {
-         return rights;
-      }
-
-      public void setRights(Collection<Right> rights) {
-         this.rights = rights;
-      }
-
-      @Column(name = "type")
-      public String getType() {
-         return type;
-      }
-
-      public void setType(String type) {
-         this.type = type;
-      }
-
-      @Override
-      public String toString() {
-         return "LeftOneToMany{" +
-            "id=" + id +
-            ", type='" + type + '\'' +
-            ", rights=" + rights +
-            '}';
-      }
-   }
-
-   /**
-    * OneToMany annotation is ignored.
-    */
-   @Test
-   public void oneToMany() throws SQLException {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
-
-         Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT_TABLE ("
-               + " id INTEGER"
-               + ")");
-
-         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left')");
-         Q2Sql.executeUpdate("insert into RIGHT_TABLE (id) values(1)");
-
-         LeftOneToMany left = SqlClosure.sqlExecute(c -> {
-            PreparedStatement pstmt = c.prepareStatement(
-               "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?");
-            return Q2Obj.fromStatement(pstmt, LeftOneToMany.class, 1);
-         });
-         assertEquals("LeftOneToMany{id=1, type='left', rights=null}", left.toString());
-      }
-      catch (Exception e) {
-         e.printStackTrace();
-         throw e;
-      }
-      finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
       }
    }
 

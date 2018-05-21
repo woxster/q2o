@@ -18,7 +18,7 @@ abstract class AttributeInfo
    protected String name;
 
    final Field field;
-   Class<?> type;
+   private Class<?> type;
 
    protected boolean isDelimited;
    protected Boolean updatable;
@@ -106,6 +106,7 @@ abstract class AttributeInfo
       }
    }
 
+   // TODO Is duplicate of com.zaxxer.q2o.Introspected.extractClassTableName().
    private void extractOwnerClassTableName() {
       Entity entity = ownerClazz.getAnnotation(Entity.class);
       if (entity != null) {
@@ -115,6 +116,12 @@ abstract class AttributeInfo
       if (tableAnnotation != null && !tableAnnotation.name().isEmpty()) {
          ownerClassTableName = tableAnnotation.name();
       }
+      ownerClassTableName = ownerClassTableName == null || ownerClassTableName.isEmpty()
+         ? ownerClazz.getSimpleName()
+         : ownerClassTableName;
+      ownerClassTableName = ownerClassTableName.startsWith("\"") || ownerClassTableName.endsWith("\"")
+         ? ownerClassTableName.substring(1, ownerClassTableName.length() - 1)
+         : ownerClassTableName;
    }
 
    protected abstract void extractFieldName(final Field field);
@@ -199,9 +206,15 @@ abstract class AttributeInfo
    private void extractRelationship() {
       final OneToMany oneToMany = extractOneToManyAnnotation();
       if (oneToMany != null) {
-         isOneToManyAnnotated = true;
-         toBeConsidered = false;
-         initializeJoinWithSecondTable();
+         if (oneToMany.mappedBy().isEmpty()) {
+            isOneToManyAnnotated = true;
+            toBeConsidered = true;
+            initializeJoinWithSecondTable();
+         }
+         else {
+            isOneToManyAnnotated = true;
+            toBeConsidered = false;
+         }
       }
       else {
          final ManyToMany manyToMany = extractManyToManyAnnotation();
@@ -469,7 +482,7 @@ abstract class AttributeInfo
 
    protected Object idValueFromParentEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
       if (obj != null) {
-         final Introspected introspected = new Introspected(obj.getClass());
+         final Introspected introspected = Introspector.getIntrospected(obj.getClass());
          final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
          return generatedIdFcInfo.getValue(obj);
       }
@@ -490,7 +503,7 @@ abstract class AttributeInfo
 
    protected Object idValueToParentEntity(final Object target, final Object value) throws InstantiationException, IllegalAccessException {
       final Object obj = target.getClass().newInstance();
-      final Introspected introspected = new Introspected(obj.getClass());
+      final Introspected introspected = Introspector.getIntrospected(obj.getClass());
       final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
       generatedIdFcInfo.setValue(obj, value);
       return obj;
@@ -529,5 +542,9 @@ abstract class AttributeInfo
 
    Class<?> getOwnerClazz() {
       return ownerClazz;
+   }
+
+   public Class<?> getType() {
+      return type;
    }
 }

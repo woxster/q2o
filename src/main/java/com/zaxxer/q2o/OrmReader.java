@@ -16,6 +16,8 @@
 
 package com.zaxxer.q2o;
 
+import org.apache.maven.settings.RuntimeInfo;
+
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
@@ -148,74 +150,86 @@ class OrmReader extends OrmBase
       HashMap<String, Object> tableNameToTarget = new HashMap<>();
       tableNameToTarget.putIfAbsent(introspected.getTableName(), target);
 
-      for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
-         final String columnName = metaData.getColumnName(colIdx);
-         // To make names in ignoredColumns independend from database case sensitivity. Otherwise you have to write database dependent code.
-         if (isIgnoredColumn(ignoredColumns, columnName)) {
-            continue;
-         }
+      do {
+         for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+            final String columnName = metaData.getColumnName(colIdx);
+            // To make names in ignoredColumns independend from database case sensitivity. Otherwise you have to write database dependent code.
+            if (isIgnoredColumn(ignoredColumns, columnName)) {
+               continue;
+            }
 
-         final Object columnValue = resultSet.getObject(colIdx);
-         if (columnValue == null) {
-            continue;
-         }
-         String tableName = metaData.getTableName(colIdx);
-         // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
-         if (!tableName.isEmpty() && !tableName.equalsIgnoreCase(introspected.getTableName())) {
+            final Object columnValue = resultSet.getObject(colIdx);
+            if (columnValue == null) {
+               continue;
+            }
+            String tableName = metaData.getTableName(colIdx);
+            // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
+            if (!tableName.isEmpty() && !tableName.equalsIgnoreCase(introspected.getTableName())) {
+               processJoinedTable(target, introspected, tableNameToTarget, columnName, columnValue, tableName);
 
-            Object currentTarget = tableNameToTarget.computeIfAbsent(tableName, tblName -> {
-               try {
-                  return introspected.getTableTarget(tblName);
-               }
-               catch (IllegalAccessException | InstantiationException e) {
-                  throw new RuntimeException(e);
-               }
-            });
-            // currentTarget is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
-            currentTarget = currentTarget == null ? target : currentTarget;
-
-            Class<?> currentTargetClass = currentTarget.getClass();
-            AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
-            // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-            introspected.set(currentTarget, currentTargetInfo, columnValue);
-
-            // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
-            AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
-            if (parentInfo != null) {
-               Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
+            }
+            else {
+               final AttributeInfo fcInfo = !tableName.isEmpty()
+                  ? introspected.getFieldColumnInfo(tableName, columnName)
+                  : introspected.getFieldColumnInfo(columnName);
+               Object parent = tableNameToTarget.computeIfAbsent(introspected.getTableName(), tbl -> {
                   try {
-                     return parentInfo.getOwnerClazz().newInstance();
+                     return introspected.getTableTarget(introspected.getTableName());
                   }
-                  catch (InstantiationException | IllegalAccessException e) {
+                  catch (IllegalAccessException | InstantiationException e) {
                      throw new RuntimeException(e);
                   }
                });
-               // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-               introspected.set(parent, parentInfo, currentTarget);
-            }
-
-         }
-         else {
-            final AttributeInfo fcInfo = !tableName.isEmpty()
-               ? introspected.getFieldColumnInfo(tableName, columnName)
-               : introspected.getFieldColumnInfo(columnName);
-            Object parent = tableNameToTarget.computeIfAbsent(introspected.getTableName(), tbl -> {
-               try {
-                  return introspected.getTableTarget(introspected.getTableName());
+               // If objectFromSelect() does more fields retrieve as are defined on the entity fcInfo is null.
+               if (fcInfo != null) {
+                  // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+                  introspected.set(parent, fcInfo, columnValue);
                }
-               catch (IllegalAccessException | InstantiationException e) {
-                  throw new RuntimeException(e);
-               }
-            });
-            // If objectFromSelect() does more fields retrieve as are defined on the entity fcInfo is null.
-            if (fcInfo != null) {
-               // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-               introspected.set(parent, fcInfo, columnValue);
             }
          }
-
-      }
+      } while (resultSet.next());
       return target;
+   }
+
+   private static <T> void processJoinedTable(final T target, final Introspected introspected, final HashMap<String, Object> tableNameToTarget, final String columnName, final Object columnValue, final String tableName) {
+      Object currentTarget = tableNameToTarget.computeIfAbsent(tableName, tblName -> {
+         try {
+            return introspected.getTableTarget(tblName);
+         }
+         catch (IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException(e);
+         }
+      });
+      // currentTarget is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
+      currentTarget = currentTarget == null ? target : currentTarget;
+
+      Class<?> currentTargetClass = currentTarget.getClass();
+      AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
+      // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+      introspected.set(currentTarget, currentTargetInfo, columnValue);
+
+      // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
+      AttributeInfo parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
+      if (parentInfo != null) {
+         Object parent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
+            try {
+               return parentInfo.getOwnerClazz().newInstance();
+            }
+            catch (InstantiationException | IllegalAccessException e) {
+               throw new RuntimeException(e);
+            }
+         });
+         // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+         if (!parentInfo.isOneToManyAnnotated) {
+            introspected.set(parent, parentInfo, currentTarget);
+         }
+         else if (parentInfo.getType() == Collection.class){
+            Collection collection = new ArrayList();
+            collection.add(currentTarget);
+            introspected.set(parent, parentInfo, collection);
+
+         }
+      }
    }
 
    static <T> T objectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException

@@ -124,9 +124,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet getGeneratedKeys() throws SQLException {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
                      public boolean next() throws SQLException {
-                        return true;
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override
@@ -180,9 +187,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet getGeneratedKeys() {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
-                     public boolean next() {
-                        return true;
+                     public boolean next() throws SQLException {
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override
@@ -228,9 +242,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet executeQuery() {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
-                     public boolean next() {
-                        return true;
+                     public boolean next() throws SQLException {
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override
@@ -351,9 +372,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet getGeneratedKeys() throws SQLException {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
                      public boolean next() throws SQLException {
-                        return true;
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override
@@ -412,9 +440,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet getGeneratedKeys() {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
-                     public boolean next() {
-                        return true;
+                     public boolean next() throws SQLException {
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override
@@ -562,9 +597,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet executeQuery() {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
                      public boolean next() {
-                        return true;
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override
@@ -680,9 +722,16 @@ public class CaseSensitiveDatabasesTest {
                @Override
                public ResultSet executeQuery() {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
-                     public boolean next() {
-                        return true;
+                     public boolean next() throws SQLException {
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
                      @Override
                      public Object getObject(int columnIndex) {
@@ -809,9 +858,16 @@ public class CaseSensitiveDatabasesTest {
       String ignoredColValue = "ignored col";
 
       DummyResultSet rs = new DummyResultSet() {
+         private boolean next = true;
          @Override
-         public boolean next() {
-            return true;
+         public boolean next() throws SQLException {
+            if (next) {
+               next = false;
+               return true;
+            }
+            else {
+               return false;
+            }
          }
 
          @Override
@@ -881,9 +937,16 @@ public class CaseSensitiveDatabasesTest {
       String ignoredColValue = "ignored col";
 
       DummyResultSet rs = new DummyResultSet() {
+         private boolean next = true;
          @Override
-         public boolean next() {
-            return true;
+         public boolean next() throws SQLException {
+            if (next) {
+               next = false;
+               return true;
+            }
+            else {
+               return false;
+            }
          }
 
          @Override

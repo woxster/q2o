@@ -52,9 +52,16 @@ public class RefreshTest {
                @Override
                public ResultSet executeQuery() {
                   return new DummyResultSet() {
+                     private boolean next = true;
                      @Override
-                     public boolean next() {
-                        return true;
+                     public boolean next() throws SQLException {
+                        if (next) {
+                           next = false;
+                           return true;
+                        }
+                        else {
+                           return false;
+                        }
                      }
 
                      @Override

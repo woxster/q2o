@@ -50,8 +50,7 @@ final class Introspected {
    private AttributeInfo selfJoinFCInfo;
    private HashMap<Field, AccessType> fieldsAccessType;
    private final HashMap<String, ArrayList<AttributeInfo>> allFcInfosByTableName = new HashMap<>();
-   private final HashMap<String, Class<?>> tableNameToClass;
-   private final TreeMap<String,Introspected> tableNameToIntrospected = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final TreeMap<String,Class<?>> tableNameToClassCaseInsensitive = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
    private final HashMap<Class<?>, AttributeInfo> actualTypeToFieldColumnInfo = new HashMap<Class<?>, AttributeInfo>();
 
    private boolean isGeneratedId;
@@ -164,6 +163,8 @@ final class Introspected {
       jpaAnnotations.add(Version.class);
    }
 
+   private boolean initialized;
+
    /**
     * Constructor. Introspect the specified class and cache various annotation data about it.
     *
@@ -178,45 +179,59 @@ final class Introspected {
       this.updatableFcInfos = new ArrayList<>();
       this.allFcInfos = new ArrayList<>();
       this.idFcInfos = new ArrayList<>();
-      tableNameToClass = new HashMap<>();
+   }
 
-      extractClassTableName();
-      tableNameToIntrospected.put(tableName, this);
+   Introspected introspect() {
+      if (!initialized) {
+         extractClassTableName();
+         tableNameToClassCaseInsensitive.put(tableName, clazz);
 
-      try {
-         for (final Field field : getDeclaredFields()) {
-            final int modifiers = field.getModifiers();
-            if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers) || Modifier.isTransient(modifiers)) {
-               continue;
-            }
-
-            final Class<?> fieldClass = field.getDeclaringClass();
-            final AttributeInfo fcInfo =
-               fieldsAccessType.get(field) == AccessType.FIELD
-                  ? new FieldInfo(field, clazz)
-                  : new PropertyInfo(field, clazz);
-            if (fcInfo.isToBeConsidered()) {
-
-               List<AttributeInfo> attributeInfos = columnToField.computeIfAbsent(fcInfo.getCaseSensitiveColumnName(), k -> new ArrayList<>());
-               attributeInfos.add(fcInfo);
-
-               propertyToField.put(fcInfo.getName(), fcInfo);
-               allFcInfos.add(fcInfo);
-               addToAllFcInfosByTableName(fcInfo);
-
-               if (fcInfo.isJoinFieldWithSecondTable()) {
-                  tableNameToClass.putIfAbsent(fcInfo.getTableName(), fcInfo.getActualType());
-                  actualTypeToFieldColumnInfo.put(fcInfo.getActualType(), fcInfo);
+         try {
+            for (final Field field : getDeclaredFields()) {
+               final int modifiers = field.getModifiers();
+               if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers) || Modifier.isTransient(modifiers)) {
+                  continue;
                }
 
-               if (fcInfo.isIdField) {
-                  // Is it a problem that Class.getDeclaredFields() claims the fields are returned unordered?  We count on order.
-                  idFcInfos.add(fcInfo);
-                  isGeneratedId = isGeneratedId || fcInfo.isGeneratedId;
-                  if (isGeneratedId && idFcInfos.size() > 1) {
-                     throw new IllegalStateException("Cannot have multiple @Id annotations and @GeneratedValue at the same time.");
+               final Class<?> fieldClass = field.getDeclaringClass();
+               final AttributeInfo fcInfo =
+                  fieldsAccessType.get(field) == AccessType.FIELD
+                     ? new FieldInfo(field, clazz)
+                     : new PropertyInfo(field, clazz);
+               if (fcInfo.isToBeConsidered()) {
+
+                  List<AttributeInfo> attributeInfos = columnToField.computeIfAbsent(fcInfo.getCaseSensitiveColumnName(), k -> new ArrayList<>());
+                  attributeInfos.add(fcInfo);
+
+                  propertyToField.put(fcInfo.getName(), fcInfo);
+                  allFcInfos.add(fcInfo);
+                  addToAllFcInfosByTableName(fcInfo);
+
+                  if (fcInfo.isJoinFieldWithSecondTable()) {
+                     actualTypeToFieldColumnInfo.put(fcInfo.getActualType(), fcInfo);
+                     tableNameToClassCaseInsensitive.putIfAbsent(fcInfo.getTableName(), fcInfo.getActualType());
                   }
-                  if (!fcInfo.isGeneratedId) {
+
+                  if (fcInfo.isIdField) {
+                     // Is it a problem that Class.getDeclaredFields() claims the fields are returned unordered?  We count on order.
+                     idFcInfos.add(fcInfo);
+                     isGeneratedId = isGeneratedId || fcInfo.isGeneratedId;
+                     if (isGeneratedId && idFcInfos.size() > 1) {
+                        throw new IllegalStateException("Cannot have multiple @Id annotations and @GeneratedValue at the same time.");
+                     }
+                     if (!fcInfo.isGeneratedId) {
+                        if (fcInfo.isInsertable() == null || fcInfo.isInsertable()) {
+                           insertableFcInfos.add(fcInfo);
+                        }
+                        if (fcInfo.isUpdatable() == null || fcInfo.isUpdatable()) {
+                           updatableFcInfos.add(fcInfo);
+                        }
+                     }
+                  }
+                  else {
+                     if (fcInfo.isSelfJoinField()) {
+                        selfJoinFCInfo = fcInfo;
+                     }
                      if (fcInfo.isInsertable() == null || fcInfo.isInsertable()) {
                         insertableFcInfos.add(fcInfo);
                      }
@@ -225,46 +240,34 @@ final class Introspected {
                      }
                   }
                }
-               else {
-                  if (fcInfo.isSelfJoinField()) {
-                     selfJoinFCInfo = fcInfo;
-                  }
-                  if (fcInfo.isInsertable() == null || fcInfo.isInsertable()) {
-                     insertableFcInfos.add(fcInfo);
-                  }
-                  if (fcInfo.isUpdatable() == null || fcInfo.isUpdatable()) {
-                     updatableFcInfos.add(fcInfo);
-                  }
-               }
             }
+
+            precalculateColumnInfos(idFcInfos);
+
          }
-
-         precalculateColumnInfos(idFcInfos);
-
+         catch (Exception e) {
+            throw new RuntimeException(e);
+         }
       }
-      catch (Exception e) {
-         throw new RuntimeException(e);
-      }
+      initialized = true;
+      return this;
    }
 
    private void addToAllFcInfosByTableName(final AttributeInfo fcInfo) {
       String tableName = fcInfo.getTableName();
       ArrayList<AttributeInfo> attributeInfos = allFcInfosByTableName.computeIfAbsent(tableName, tblName -> new ArrayList<>());
       attributeInfos.add(fcInfo);
-      if (fcInfo.isJoinFieldWithSecondTable()) {
-         // Without "if" a dead lock will happen.
-         Introspected introspected = Introspector.getIntrospected(fcInfo.getActualType());
-         tableNameToIntrospected.putIfAbsent(tableName, introspected);
-      }
    }
 
    Object getTableTarget(String tableName) throws IllegalAccessException, InstantiationException {
-      Introspected i = tableNameToIntrospected.get(tableName);
-      if (i != null) {
+      Class<?> cls = tableNameToClassCaseInsensitive.get(tableName);
+      if (cls != null) {
+         Introspected i = Introspector.getIntrospected(cls);
          return i.clazz.newInstance();
       }
       else {
-         for (Introspected introspected : tableNameToIntrospected.values()) {
+         for (Class<?> c : tableNameToClassCaseInsensitive.values()) {
+            Introspected introspected = Introspector.getIntrospected(c);
             if (introspected != this) {
                Object target = introspected.getTableTarget(tableName);
                if (target != null) {
@@ -277,7 +280,8 @@ final class Introspected {
    }
 
    AttributeInfo getFieldColumnInfo(String tableName, String columnName) {
-      Introspected introspected = tableNameToIntrospected.get(tableName);
+      Class<?> cls = tableNameToClassCaseInsensitive.get(tableName);
+      Introspected introspected = Introspector.getIntrospected(cls);
       return introspected.getFieldColumnInfo(columnName);
    }
 
@@ -287,8 +291,8 @@ final class Introspected {
          return info;
       }
       else {
-         for (Map.Entry<String, Introspected> tblNameToIntrospected : tableNameToIntrospected.entrySet()) {
-            Introspected introspected = tblNameToIntrospected.getValue();
+         for (Class<?> cls : tableNameToClassCaseInsensitive.values()) {
+            Introspected introspected = Introspector.getIntrospected(cls);
             if (introspected != this) {
                AttributeInfo fieldColumnInfo = introspected.getFieldColumnInfo(actualType);
                if (fieldColumnInfo != null) {
@@ -531,7 +535,7 @@ final class Introspected {
       }
 
       try {
-         final Class<?> fieldType = fcInfo.type;
+         final Class<?> fieldType = fcInfo.getType();
          Class<?> columnType = value.getClass();
          Object columnValue = value;
 
