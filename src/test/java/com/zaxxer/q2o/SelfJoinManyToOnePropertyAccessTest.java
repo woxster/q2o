@@ -1,7 +1,6 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.PropertyAccessedSelfJoin;
-import org.assertj.core.api.Assertions;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.TestUtils;
@@ -96,7 +95,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
          child.setParentId(parent);
          insertObject(con, child);
 
-         List<PropertyAccessedSelfJoin> objs = objectsFromClause(PropertyAccessedSelfJoin.class, "id=2");
+         List<PropertyAccessedSelfJoin> objs = Q2ObjList.fromClause(PropertyAccessedSelfJoin.class, "id=2");
          objs.forEach(out::println);
          assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
@@ -130,7 +129,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
          child.setParentId(parent);
          insertObject(con, child);
 
-         List<PropertyAccessedSelfJoin> objs = objectsFromClause(PropertyAccessedSelfJoin.class, "type like '%'");
+         List<PropertyAccessedSelfJoin> objs = Q2ObjList.fromClause(PropertyAccessedSelfJoin.class, "type like '%'");
          objs.forEach(out::println);
          assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
@@ -159,7 +158,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
          Q2Sql.executeUpdate("insert into JOINTEST (type) values ('test')");
          Q2Sql.executeUpdate("insert into JOINTEST (type) values ('test2')");
 
-         List<PropertyAccessedSelfJoin> objs = Q2Obj.objectsFromClause(PropertyAccessedSelfJoin.class, null);
+         List<PropertyAccessedSelfJoin> objs = Q2ObjList.fromClause(PropertyAccessedSelfJoin.class, null);
          objs.forEach(System.out::println);
       }
       finally {

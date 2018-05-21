@@ -17,6 +17,7 @@
 package com.zaxxer.sansorm;
 
 import com.zaxxer.q2o.Q2Obj;
+import com.zaxxer.q2o.Q2ObjList;
 import com.zaxxer.q2o.Q2Sql;
 
 import java.sql.Connection;
@@ -103,7 +104,7 @@ public final class OrmElf
     */
    public static <T> List<T> listFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return Q2Obj.objectsFromClause(connection, clazz, clause, args);
+      return Q2ObjList.fromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -155,7 +156,7 @@ public final class OrmElf
     */
    public static <T> List<T> statementToList(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
    {
-      return Q2Obj.objectsFromStatement(stmt, clazz, args);
+      return Q2ObjList.fromStatement(stmt, clazz, args);
    }
 
    /**
@@ -209,7 +210,7 @@ public final class OrmElf
     */
    public static <T> List<T> resultSetToList(ResultSet resultSet, Class<T> targetClass) throws SQLException
    {
-      return Q2Obj.objectsFromResultSet(resultSet, targetClass);
+      return Q2ObjList.fromResultSet(resultSet, targetClass);
    }
 
    // ------------------------------------------------------------------------

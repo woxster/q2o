@@ -283,28 +283,32 @@ class OrmReader extends OrmBase
          metaData = resultSet.getMetaData();
          introspected = Introspector.getIntrospected(targetClass);
          targets = new ArrayList<>();
-         resultSet.next();
 
-         do {
-            try {
-               this.target = targetClass.newInstance();
-               tableNameToTarget = new HashMap<>();
-               tableNameToTarget.put(introspected.getTableName(), target);
-            }
-            catch (InstantiationException | IllegalAccessException e) {
-               throw new RuntimeException(e);
-            }
+         if (resultSet.next()) {
+            do {
+               try {
+                  this.target = targetClass.newInstance();
+                  tableNameToTarget = new HashMap<>();
+                  tableNameToTarget.put(introspected.getTableName(), target);
+               }
+               catch (InstantiationException | IllegalAccessException e) {
+                  throw new RuntimeException(e);
+               }
 
-            for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
-               processColumn(colIdx);
-            }
+               for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+                  processColumn(colIdx);
+               }
 
-            targets.add(target);
-            currentRow++;
+               targets.add(target);
+               currentRow++;
 
-         } while (resultSet.next());
+            } while (resultSet.next());
 
-         return targets;
+            return targets;
+         }
+         else {
+            return null;
+         }
       }
 
       private void processColumn(final int colIdx) throws SQLException {

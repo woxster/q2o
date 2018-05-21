@@ -1,7 +1,6 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.PropertyAccessedOneToOneSelfJoin;
-import org.assertj.core.api.Assertions;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.TestUtils;
@@ -97,7 +96,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
          child.setParentId(parent);
          insertObject(con, child);
 
-         List<PropertyAccessedOneToOneSelfJoin> objs = objectsFromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
+         List<PropertyAccessedOneToOneSelfJoin> objs = Q2ObjList.fromClause(PropertyAccessedOneToOneSelfJoin.class, "id=2");
          objs.forEach(out::println);
          assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }

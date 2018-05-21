@@ -52,7 +52,7 @@ public class QueryTest
       int idAfterInsert = inserted.getId();
       assertThat(idAfterInsert).isNotEqualTo(0);
 
-      List<TargetClass1> selectedAll = Q2Obj.objectsFromClause(TargetClass1.class, null);
+      List<TargetClass1> selectedAll = Q2ObjList.fromClause(TargetClass1.class, null);
       assertThat(selectedAll).isNotEmpty();
 
       TargetClass1 selected = Q2Obj.fromClause(TargetClass1.class, "string = ?", "Hi");
@@ -171,7 +171,7 @@ public class QueryTest
       });
 
       // then
-      List<TargetClass1> inserted = Q2Obj.objectsFromClause(
+      List<TargetClass1> inserted = Q2ObjList.fromClause(
          TargetClass1.class,
          "string in " + Q2Sql.getInClausePlaceholdersForCount(count),
          IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));

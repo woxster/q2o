@@ -16,7 +16,6 @@ import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
-import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -191,7 +190,7 @@ public class JoinOneToOneSeveralTablesTest {
          Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left 2')");
          Q2Sql.executeUpdate("insert into RIGHT_TABLE (id) values(2)");
 
-         List<Left> leftList = Q2Obj.objectsFromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id");
+         List<Left> leftList = Q2ObjList.fromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id");
 
          System.out.println(leftList);
          assertEquals("[Left{id=1, type='left 1', right=Right{id=1}}, Left{id=2, type='left 2', right=Right{id=2}}]", leftList.toString());

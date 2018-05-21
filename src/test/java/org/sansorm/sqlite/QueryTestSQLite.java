@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.q2o.*;
 import org.junit.AfterClass;
 import org.junit.Test;
-import org.sansorm.TestUtils;
 
 import java.io.Closeable;
 import java.io.File;
@@ -50,7 +49,7 @@ public class QueryTestSQLite {
          Integer idAfterInsert = inserted.getId();
          assertThat(idAfterInsert).isNotNull();
 
-         List<TargetClassSQL> selectedAll = Q2Obj.objectsFromClause(TargetClassSQL.class, null);
+         List<TargetClassSQL> selectedAll = Q2ObjList.fromClause(TargetClassSQL.class, null);
          assertThat(selectedAll).isNotEmpty();
 
          TargetClassSQL selected = Q2Obj.fromClause(TargetClassSQL.class, "string = ?", "Hi");
@@ -133,7 +132,7 @@ public class QueryTestSQLite {
             Q2Obj.insertBatched(c, toInsert);
             return null;
          });
-         List<TargetClassSQL> inserted = Q2Obj.objectsFromClause(
+         List<TargetClassSQL> inserted = Q2ObjList.fromClause(
             TargetClassSQL.class,
             "string in " + Q2Sql.getInClausePlaceholdersForCount(count),
             IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));

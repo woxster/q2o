@@ -1,6 +1,7 @@
 package org.sansorm;
 
 import com.zaxxer.q2o.Q2Obj;
+import com.zaxxer.q2o.Q2ObjList;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -69,7 +70,7 @@ public class QueryTest2
       Q2Obj.insert(original);
 
       // when
-      List<TargetClass2> target = Q2Obj.objectsFromClause(TargetClass2.class, "string = ?", string);
+      List<TargetClass2> target = Q2ObjList.fromClause(TargetClass2.class, "string = ?", string);
 
       // then
       assertThat(target.get(0).getString()).isEqualTo(string);
