@@ -95,6 +95,8 @@ public class JoinManyToOneTest {
       int bookId;
       int referencedlibraryId;
       String title;
+      @OneToMany @JoinColumn(name = "referencedBookId")
+      Collection<Chapter> chapters;
 
       @Override
       public String toString() {
@@ -102,6 +104,23 @@ public class JoinManyToOneTest {
             "bookId=" + bookId +
             ", referencedlibraryId=" + referencedlibraryId +
             ", title='" + title + '\'' +
+            ", chapters=" + chapters +
+            '}';
+      }
+   }
+
+   public static class Chapter {
+      @Id @GeneratedValue
+      int chapterId;
+      int referencedBookId;
+      String chapterTitle;
+
+      @Override
+      public String toString() {
+         return "Chapter{" +
+            "chapterId=" + chapterId +
+            ", referencedBookId=" + referencedBookId +
+            ", chapterTitle='" + chapterTitle + '\'' +
             '}';
       }
    }
@@ -134,7 +153,7 @@ public class JoinManyToOneTest {
 
          library = Q2Obj.fromSelect(Library.class, "select * from library left join book on libraryId = referencedLibraryId");
 //         System.out.println(library);
-         assertEquals("Library{libraryId=1, books=[Book{bookId=1, referencedlibraryId=1, title='book title'}], name='library name'}", library.toString());
+         assertEquals("Library{libraryId=1, books=[Book{bookId=1, referencedlibraryId=1, title='book title', chapters=null}], name='library name'}", library.toString());
 
       }
       catch (Exception e) {
@@ -144,6 +163,54 @@ public class JoinManyToOneTest {
       finally {
          Q2Sql.executeUpdate("DROP TABLE LIBRARY");
          Q2Sql.executeUpdate("DROP TABLE BOOK");
+      }
+   }
+
+   @Test
+   public void join3TablesSingleRow() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()){
+         Q2Sql.executeUpdate(
+            "CREATE TABLE LIBRARY ("
+               + " libraryId INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", name VARCHAR(128)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE BOOK ("
+               + " bookId INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", referencedlibraryId INTEGER NOT NULL"
+               + ", title VARCHAR(128)"
+               + ", CONSTRAINT cnst1 FOREIGN KEY(referencedlibraryId) REFERENCES LIBRARY (libraryId)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE CHAPTER ("
+               + " chapterId INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", referencedBookId INTEGER NOT NULL"
+               + ", title VARCHAR(128)"
+               + ", CONSTRAINT cnst2 FOREIGN KEY(referencedBookId) REFERENCES BOOK (bookId)"
+               + ")");
+
+
+         Q2Sql.executeUpdate("insert into LIBRARY (name) values('library name')");
+         Q2Sql.executeUpdate("insert into BOOK (referencedlibraryId, title) values(1, 'book title')");
+         Q2Sql.executeUpdate("insert into CHAPTER (referencedBookId, title) values(1, 'chapter title')");
+
+         Library library = Q2Obj.fromSelect(Library.class, "select * from library left join book on libraryId = referencedLibraryId left join chapter on bookId = referencedBookId");
+//         System.out.println(library);
+         assertEquals("Library{libraryId=1, books=[Book{bookId=1, referencedlibraryId=1, title='book title', chapters=null}], name='library name'}", library.toString());
+
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+         throw e;
+      }
+      finally {
+         Q2Sql.executeUpdate("DROP TABLE LIBRARY");
+         Q2Sql.executeUpdate("DROP TABLE BOOK");
+         Q2Sql.executeUpdate("DROP TABLE CHAPTER");
       }
    }
 
@@ -212,7 +279,7 @@ public class JoinManyToOneTest {
 
          library = Q2Obj.fromSelect(Library.class, "select * from library left join book on libraryId = referencedLibraryId");
 //         System.out.println(library);
-         assertEquals("Library{libraryId=1, books=[Book{bookId=1, referencedlibraryId=1, title='book title 1'},Book{bookId=2, referencedlibraryId=1, title='book title 2'}], name='library name'}", library.toString());
+         assertEquals("Library{libraryId=1, books=[Book{bookId=1, referencedlibraryId=1, title='book title 1', chapters=null}, Book{bookId=2, referencedlibraryId=1, title='book title 2', chapters=null}], name='library name'}", library.toString());
 
       }
       catch (Exception e) {

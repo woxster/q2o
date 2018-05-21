@@ -12,9 +12,7 @@ import javax.persistence.*;
 import java.sql.*;
 import java.util.HashSet;
 
-import static com.zaxxer.q2o.Q2Obj.*;
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
-import static com.zaxxer.q2o.q2o.initializeTxNone;
+import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static org.junit.Assert.*;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
@@ -122,11 +120,11 @@ public class CaseSensitiveDatabasesTest {
                }
 
                @Override
-               public ResultSet getGeneratedKeys() throws SQLException {
+               public ResultSet getGeneratedKeys() {
                   return new DummyResultSet() {
                      private boolean next = true;
                      @Override
-                     public boolean next() throws SQLException {
+                     public boolean next() {
                         if (next) {
                            next = false;
                            return true;
@@ -137,7 +135,7 @@ public class CaseSensitiveDatabasesTest {
                      }
 
                      @Override
-                     public Object getObject(int columnIndex) throws SQLException {
+                     public Object getObject(int columnIndex) {
                         return "auto-generated id";
                      }
                   };
@@ -189,7 +187,7 @@ public class CaseSensitiveDatabasesTest {
                   return new DummyResultSet() {
                      private boolean next = true;
                      @Override
-                     public boolean next() throws SQLException {
+                     public boolean next() {
                         if (next) {
                            next = false;
                            return true;
@@ -244,7 +242,7 @@ public class CaseSensitiveDatabasesTest {
                   return new DummyResultSet() {
                      private boolean next = true;
                      @Override
-                     public boolean next() throws SQLException {
+                     public boolean next() {
                         if (next) {
                            next = false;
                            return true;
@@ -271,7 +269,7 @@ public class CaseSensitiveDatabasesTest {
                            }
 
                            @Override
-                           public String getTableName(final int column) throws SQLException {
+                           public String getTableName(final int column) {
                               return "Test_Class";
                            }
                         };
@@ -370,11 +368,11 @@ public class CaseSensitiveDatabasesTest {
                }
 
                @Override
-               public ResultSet getGeneratedKeys() throws SQLException {
+               public ResultSet getGeneratedKeys() {
                   return new DummyResultSet() {
                      private boolean next = true;
                      @Override
-                     public boolean next() throws SQLException {
+                     public boolean next() {
                         if (next) {
                            next = false;
                            return true;
@@ -385,7 +383,7 @@ public class CaseSensitiveDatabasesTest {
                      }
 
                      @Override
-                     public Object getObject(int columnIndex) throws SQLException {
+                     public Object getObject(int columnIndex) {
                         return "123";
                      }
                   };
@@ -442,7 +440,7 @@ public class CaseSensitiveDatabasesTest {
                   return new DummyResultSet() {
                      private boolean next = true;
                      @Override
-                     public boolean next() throws SQLException {
+                     public boolean next() {
                         if (next) {
                            next = false;
                            return true;
@@ -557,7 +555,7 @@ public class CaseSensitiveDatabasesTest {
                }
 
                @Override
-               public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
+               public void setObject(int parameterIndex, Object x, int targetSqlType) {
                   fetchedId[0] = (String) x;
                }
             };
@@ -626,7 +624,7 @@ public class CaseSensitiveDatabasesTest {
                            }
 
                            @Override
-                           public String getTableName(final int column) throws SQLException {
+                           public String getTableName(final int column) {
                               return "Test_Class";
                            }
                         };
@@ -724,7 +722,7 @@ public class CaseSensitiveDatabasesTest {
                   return new DummyResultSet() {
                      private boolean next = true;
                      @Override
-                     public boolean next() throws SQLException {
+                     public boolean next() {
                         if (next) {
                            next = false;
                            return true;
@@ -742,7 +740,7 @@ public class CaseSensitiveDatabasesTest {
             };
          }
       };
-      int count = Q2Obj.countFromClause(con, TestClass.class, "where \"Delimited Field Name\" = null");
+      int count = countFromClause(con, TestClass.class, "where \"Delimited Field Name\" = null");
       assertEquals("SELECT COUNT(TestClass.Id) FROM TestClass TestClass where \"Delimited Field Name\" = null", fetchedSql[0]);
       assertEquals(123, count);
    }
@@ -752,7 +750,7 @@ public class CaseSensitiveDatabasesTest {
 
       q2o.initializeTxNone(TestUtils.makeH2DataSource());
       try {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
                + "\"Delimited field name\" VARCHAR(128), "
@@ -761,15 +759,15 @@ public class CaseSensitiveDatabasesTest {
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = insert(new InsertObjectH2());
+         InsertObjectH2 obj = Q2Obj.insert(new InsertObjectH2());
          assertEquals(1, obj.Id);
-         obj = byId(InsertObjectH2.class, obj.Id);
+         obj = Q2Obj.byId(InsertObjectH2.class, obj.Id);
          assertNotNull(obj);
-         int count = countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
+         int count = Q2Obj.countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
          assertEquals(1, count);
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE \"Test Class\"");
       }
    }
@@ -779,7 +777,7 @@ public class CaseSensitiveDatabasesTest {
 
       q2o.initializeTxNone(TestUtils.makeH2DataSource());
       try {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
                + "\"Delimited field name\" VARCHAR(128), "
@@ -789,19 +787,19 @@ public class CaseSensitiveDatabasesTest {
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          InsertObjectH2 obj = new InsertObjectH2();
-         obj = insert(obj);
+         obj = Q2Obj.insert(obj);
          obj.defaultCase = "changed";
-         obj = update(obj);
+         obj = Q2Obj.update(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE \"Test Class\"");
       }
    }
 
    @Test
-   public void updateObjectH2GeneratedDelimitedId() throws SQLException {
+   public void updateObjectH2GeneratedDelimitedId() {
 
       @Table(name = "\"Test Class\"")
       class TestClass {
@@ -815,8 +813,8 @@ public class CaseSensitiveDatabasesTest {
 
       try {
          JdbcDataSource dataSource = makeH2DataSource();
-         initializeTxNone(dataSource);
-         executeUpdate(
+         q2o.initializeTxNone(dataSource);
+         Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
                + "\"Id\" INTEGER NOT NULL IDENTITY PRIMARY KEY, "
                + "\"Delimited field name\" VARCHAR(128), "
@@ -826,13 +824,13 @@ public class CaseSensitiveDatabasesTest {
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
          TestClass obj = new TestClass();
-         obj = insert(obj);
+         obj = Q2Obj.insert(obj);
          obj.defaultCase = "changed";
-         obj = update(obj);
+         obj = Q2Obj.update(obj);
          assertEquals("changed", obj.defaultCase);
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE \"Test Class\"");
       }
    }
@@ -860,7 +858,7 @@ public class CaseSensitiveDatabasesTest {
       DummyResultSet rs = new DummyResultSet() {
          private boolean next = true;
          @Override
-         public boolean next() throws SQLException {
+         public boolean next() {
             if (next) {
                next = false;
                return true;
@@ -888,7 +886,7 @@ public class CaseSensitiveDatabasesTest {
                }
 
                @Override
-               public String getTableName(final int column) throws SQLException {
+               public String getTableName(final int column) {
                   return "TEST";
                }
             };
@@ -939,7 +937,7 @@ public class CaseSensitiveDatabasesTest {
       DummyResultSet rs = new DummyResultSet() {
          private boolean next = true;
          @Override
-         public boolean next() throws SQLException {
+         public boolean next() {
             if (next) {
                next = false;
                return true;
@@ -967,7 +965,7 @@ public class CaseSensitiveDatabasesTest {
                }
 
                @Override
-               public String getTableName(final int column) throws SQLException {
+               public String getTableName(final int column) {
                   return "TEST";
                }
             };

@@ -143,6 +143,16 @@ public class RefreshTest {
                      public boolean next() {
                         return false;
                      }
+
+                     @Override
+                     public ResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData() {
+                           @Override
+                           public int getColumnCount() throws SQLException {
+                              return 0;
+                           }
+                        };
+                     }
                   };
                }
             };

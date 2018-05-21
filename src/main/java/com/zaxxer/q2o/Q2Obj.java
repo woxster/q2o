@@ -179,8 +179,7 @@ public final class Q2Obj
    }
 
    /**
-    * Get an object from the specified ResultSet.  ResultSet.next() is <i>NOT</i> called,
-    * this should be done by the caller.  <b>The ResultSet is not closed as a result of this
+    * Get an object from the specified ResultSet.  ResultSet.next() must <i>NOT</i> not been called. <b>The ResultSet is not closed as a result of this
     * method.</b>
     *
     * @param resultSet a {@link ResultSet}

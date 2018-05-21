@@ -17,6 +17,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -154,9 +155,47 @@ public class JoinOneToOneSeveralTablesTest {
 
          Left left = Q2Obj.fromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?", 1);
 
-//         System.out.println(left);
+         System.out.println(left);
          assertNotNull(left.getRight());
          assertEquals(1, left.getRight().getId());
+      }
+      catch (Exception e) {
+         e.printStackTrace();
+         throw e;
+      }
+      finally {
+         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
+      }
+   }
+
+   @Test
+   public void join2TablesTwoRows() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()){
+         Q2Sql.executeUpdate(
+            "CREATE TABLE LEFT_TABLE ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", type VARCHAR(128)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE RIGHT_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", CONSTRAINT cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ")");
+
+         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left 1')");
+         Q2Sql.executeUpdate("insert into RIGHT_TABLE (id) values(1)");
+         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('left 2')");
+         Q2Sql.executeUpdate("insert into RIGHT_TABLE (id) values(2)");
+
+         List<Left> leftList = Q2Obj.objectsFromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id");
+
+         System.out.println(leftList);
+         assertEquals("[Left{id=1, type='left 1', right=Right{id=1}}, Left{id=2, type='left 2', right=Right{id=2}}]", leftList.toString());
+
       }
       catch (Exception e) {
          e.printStackTrace();

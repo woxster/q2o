@@ -500,12 +500,23 @@ public class AccessTypePropertyTest {
                      }
                   };
                }
+
                @Override
                public ResultSet executeQuery() {
                   return new DummyResultSet() {
                      @Override
                      public boolean next() {
                         return false;
+                     }
+
+                     @Override
+                     public ResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData() {
+                           @Override
+                           public int getColumnCount() throws SQLException {
+                              return 0;
+                           }
+                        };
                      }
                   };
                }
