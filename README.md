@@ -92,15 +92,15 @@ public class Customer {
    }
 }
 ```
-Here we introduce the most important q2o class, ```Q2Obj```. Let's look at how the ```Q2Obj``` class can help us:
+Here we introduce the most important q2o classes, ```Q2Obj``` and ```Q2ObjList```. Let's look at how they can help:
 ```Java
 public List<Customer> getAllCustomers() {
-   return Q2Obj.objectsFromClause(Customer.class, null);
+   return Q2ObjList.fromClause(Customer.class, null);
 }
 ```
 As a second argument to ```Q2Obj.objectFromClause()``` you can provide a where clause, to restrict the found objects:
 ```
-Q2Obj.objectsFromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
+Q2ObjList.fromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
 ```
 
 Now lets store a new customer
@@ -108,7 +108,7 @@ Now lets store a new customer
 Customer customer = new Customer();
 customer.setFirstName = "...";
 customer.setLastName = "...";
-Q2Obj.insertObject(customer);
+Q2Obj.insert(customer);
 ```
 The very useful thing that happens here is that after storing the object you can immediately access its id:
 ```
@@ -122,20 +122,20 @@ Note that the returned customer object is identical with the one you supplied as
 
 What if your object has many fields and you only want to retrieve some of them?
 ```
-Q2Obj.objectFromSelect(Customer.class, "select id, last_name from customer where id = ?", id)
+Q2Obj.fromSelect(Customer.class, "select id, last_name from customer where id = ?", id)
 ```
 As long as your object has the id set, you can refresh its values with refresh(customer) or change its values and update it with updateObject(customer).
 
 There are much more useful methods like:
 
-* ```Q2Obj.objectById(Class<T> type, Object... ids)```
-* ```Q2Obj.updateObject(customer)```
-* ```Q2Obj.deleteObject(customer)```
-* ```Q2Obj.resultSetToObject(ResultSet resultSet, T target)```
-* ```Q2Obj.statementToObject(PreparedStatement stmt, Class<T> clazz, Object... args)```
-* ```Q2Obj.countObjectsFromClause(Class<T> clazz, String clause, Object... args)```
+* ```Q2Obj.byId(Class<T> type, Object... ids)```
+* ```Q2Obj.update(customer)```
+* ```Q2Obj.delete(customer)```
+* ```Q2Obj.fromResultSet(ResultSet resultSet, T target)```
+* ```Q2Obj.fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args)```
+* ```Q2Obj.countFromClause(Class<T> clazz, String clause, Object... args)```
 
-Many of these methods can also work with lists of objects. [See Javadoc.](http://javadoc.io/page/com.github.h-thurow/q2o/latest/com/zaxxer/q2o/Q2Obj.html)
+Many of these methods can also work with lists of objects. [See Javadoc.](http://javadoc.io/page/com.github.h-thurow/q2o/latest/com/zaxxer/q2o/Q2ObjList.html)
 
 ### Supported Annotations
 
@@ -166,7 +166,7 @@ Many of these methods can also work with lists of objects. [See Javadoc.](http:/
 &lt;dependency>
     &lt;groupId>com.github.h-thurow&lt;/groupId>
     &lt;artifactId>q2o&lt;/artifactId>
-    &lt;version>3.9&lt;/version>
+    &lt;version>3.11&lt;/version>
 &lt;/dependency>
 </pre>
 or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thurow%22%20AND%20a%3A%22q2o%22>download from here</a>.
