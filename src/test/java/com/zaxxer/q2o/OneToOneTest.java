@@ -26,7 +26,7 @@ import static org.junit.Assert.assertNotNull;
  * @since 04.05.18
  */
 
-public class JoinOneToOneSeveralTablesTest {
+public class OneToOneTest {
 
    @After
    public void tearDown() throws Exception {
@@ -86,7 +86,7 @@ public class JoinOneToOneSeveralTablesTest {
                   return new DummyParameterMetaData() {
                      @Override
                      public int getParameterCount() {
-                        return JoinOneToOneSeveralTablesTest.this.getParameterCount(fetchedSql[0]);
+                        return OneToOneTest.this.getParameterCount(fetchedSql[0]);
                      }
                      @Override
                      public int getParameterType(int param) {

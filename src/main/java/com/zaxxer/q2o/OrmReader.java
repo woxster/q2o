@@ -46,7 +46,14 @@ class OrmReader extends OrmBase
    static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException
    {
       try (final PreparedStatement closeStmt = stmt) {
-         return resultSetToList(statementToResultSet(stmt, args), clazz);
+         ResultSet rs = statementToResultSet(stmt, args);
+         boolean next = rs.next();
+         if (next) {
+            return resultSetToList(rs, clazz);
+         }
+         else {
+            return new ArrayList<T>();
+         }
       }
    }
 
@@ -71,7 +78,7 @@ class OrmReader extends OrmBase
       populateStatementParameters(stmt, args);
 
       try (final ResultSet resultSet = stmt.executeQuery()) {
-         return resultSetToObject(resultSet, target);
+         return resultSet.next() ? resultSetToObject(resultSet, target) : null;
       }
       catch (Exception e) {
          throw new RuntimeException(e);
@@ -237,45 +244,91 @@ class OrmReader extends OrmBase
 
    private static class ResultSetToObjectProcessor<T> {
       private final ResultSet resultSet;
+      /** the provided target ({@link #process(Object)}) for a single row result or the target for the currently processed row in a multiple row result. */
       private T target;
       private final Set<String> ignoredColumns;
       private ResultSetMetaData metaData;
       private Introspected introspected;
-      private HashMap<String, Object> tableNameToTarget;
+      /** scope is the currently processed row. */
+      private HashMap<String, Object> tableNameToEntitiesInCurrentRow;
+      private HashMap<String, Object> tableNameToEntities;
       private int currentRow = 0;
-      private Object currentTarget;
-      private AtomicBoolean isNewTarget;
+      /** scope is the currently processed column if its a join column. */
+      private Object currentEntity;
+      /** scope is the currently processed join column if its type is an entity that is first seen in the current row and must be therefore created. */
+      private AtomicBoolean isNewEntity;
+      /** scope is the currently processed column if its a join column. */
       private AttributeInfo parentInfo;
       private Object currentParent;
+      /** the per row created targets in a multi row result */
       private List<T> targets;
 
+      /**
+       *
+       * @param resultSet With next() already been called on. To be compatible with Spring JDBC.
+       */
       public ResultSetToObjectProcessor(final ResultSet resultSet, final Set<String> ignoredColumns) {
          this.resultSet = resultSet;
          this.ignoredColumns = ignoredColumns;
       }
 
+      T forTestOnly(final T target) throws SQLException {
+         this.target = target;
+
+         metaData = resultSet.getMetaData();
+         introspected = Introspector.getIntrospected(target.getClass());
+         tableNameToEntitiesInCurrentRow = new HashMap<>();
+         tableNameToEntitiesInCurrentRow.putIfAbsent(introspected.getTableName().toUpperCase(), target);
+         tableNameToEntities = new HashMap<>();
+
+         // do ... while collides with usage within org.springframework.jdbc.core.RowMapper
+//         do {
+            if (currentRow > 0) {
+//                  tableNameToEntitiesInCurrentRow.keySet().removeIf(tableName -> !tableName.equalsIgnoreCase(introspected.getTableName()));
+
+               tableNameToEntities = tableNameToEntitiesInCurrentRow;
+               tableNameToEntitiesInCurrentRow = new HashMap<>();
+            }
+            for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+               processColumn(colIdx);
+            }
+
+//               if (currentRow > 0) {
+//                  for (Map.Entry<Object, AttributeInfo> entry : entityTojoinField.entrySet()) {
+//                     AttributeInfo info = entry.getValue();
+//                     Object trgt = tableNameToEntitiesInCurrentRow.remove(info.getOwnerClassTableName().toUpperCase());
+//                     Object value = introspected.get(trgt, info);
+//                     Object entity = entry.getKey();
+//                     if (info.getType() == Collection.class) {
+//                        ((Collection) value).add(entity);
+//                     }
+//                     else {
+//                        introspected.set(trgt, info, entity);
+//                     }
+//                  }
+////                  tableNameToEntitiesInCurrentRow = new HashMap<>();
+//                  entityTojoinField = new HashMap<>();
+//               }
+
+            currentRow++;
+//         } while (resultSet.next());
+
+         return currentRow > 0 ? target : null;
+      }
+
       T process(final T target) throws SQLException {
          this.target = target;
-         if (resultSet.next()) {
-            metaData = resultSet.getMetaData();
-            introspected = Introspector.getIntrospected(target.getClass());
-            tableNameToTarget = new HashMap<>();
-            tableNameToTarget.putIfAbsent(introspected.getTableName(), target);
+         metaData = resultSet.getMetaData();
+         introspected = Introspector.getIntrospected(target.getClass());
+         tableNameToEntitiesInCurrentRow = new HashMap<>();
+         tableNameToEntitiesInCurrentRow.putIfAbsent(introspected.getTableName().toUpperCase(), target);
+         tableNameToEntities = new HashMap<>();
 
-            do {
-               if (currentRow > 0) {
-                  tableNameToTarget.keySet().removeIf(tableName -> !tableName.equalsIgnoreCase(introspected.getTableName()));
-               }
-               for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
-                  processColumn(colIdx);
-               }
-               currentRow++;
-            } while (resultSet.next());
-            return target;
+         for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+            processColumn(colIdx);
          }
-         else {
-            return null;
-         }
+
+         return target;
       }
 
       List<T> process(final Class<T> targetClass) throws SQLException {
@@ -284,31 +337,26 @@ class OrmReader extends OrmBase
          introspected = Introspector.getIntrospected(targetClass);
          targets = new ArrayList<>();
 
-         if (resultSet.next()) {
-            do {
-               try {
-                  this.target = targetClass.newInstance();
-                  tableNameToTarget = new HashMap<>();
-                  tableNameToTarget.put(introspected.getTableName(), target);
-               }
-               catch (InstantiationException | IllegalAccessException e) {
-                  throw new RuntimeException(e);
-               }
+         do {
+            try {
+               target = targetClass.newInstance();
+               tableNameToEntitiesInCurrentRow = new HashMap<>();
+               tableNameToEntitiesInCurrentRow.put(introspected.getTableName().toUpperCase(), target);
+            }
+            catch (InstantiationException | IllegalAccessException e) {
+               throw new RuntimeException(e);
+            }
 
-               for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
-                  processColumn(colIdx);
-               }
+            for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+               processColumn(colIdx);
+            }
 
-               targets.add(target);
-               currentRow++;
+            targets.add(target);
+            currentRow++;
 
-            } while (resultSet.next());
+         } while (resultSet.next());
 
-            return targets;
-         }
-         else {
-            return null;
-         }
+         return targets;
       }
 
       private void processColumn(final int colIdx) throws SQLException {
@@ -325,13 +373,13 @@ class OrmReader extends OrmBase
          String tableName = metaData.getTableName(colIdx);
          // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
          if (!tableName.isEmpty() && !tableName.equalsIgnoreCase(introspected.getTableName())) {
-            processColumnsOfJoinedTable(columnName, columnValue, tableName);
+            processColumnOfJoinedTable(columnName, columnValue, tableName);
          }
          else {
             final AttributeInfo fcInfo = !tableName.isEmpty()
                ? introspected.getFieldColumnInfo(tableName, columnName)
                : introspected.getFieldColumnInfo(columnName);
-            Object parent = tableNameToTarget.computeIfAbsent(introspected.getTableName(), tbl -> {
+            Object parent = tableNameToEntitiesInCurrentRow.computeIfAbsent(introspected.getTableName().toUpperCase(), tbl -> {
                try {
                   return introspected.getTableTarget(introspected.getTableName());
                }
@@ -339,7 +387,7 @@ class OrmReader extends OrmBase
                   throw new RuntimeException(e);
                }
             });
-            // If objectFromSelect() does more fields retrieve as are defined on the entity fcInfo is null.
+            // If objectFromSelect() does more fields retrieve as are defined on the entity then fcInfo is null.
             if (fcInfo != null) {
                // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
                introspected.set(parent, fcInfo, columnValue);
@@ -347,33 +395,36 @@ class OrmReader extends OrmBase
          }
       }
 
-      private void processColumnsOfJoinedTable(
+      /**
+       * Called for every table of a joined table.
+       */
+      private void processColumnOfJoinedTable(
          final String columnName,
          final Object columnValue,
          final String tableName)
       {
-         isNewTarget = new AtomicBoolean(false);
-         currentTarget = tableNameToTarget.computeIfAbsent(tableName, tblName -> {
+         isNewEntity = new AtomicBoolean(false);
+         currentEntity = tableNameToEntitiesInCurrentRow.computeIfAbsent(tableName.toUpperCase(), tblName -> {
             try {
-               isNewTarget.set(true);
+               isNewEntity.set(true);
                return introspected.getTableTarget(tblName);
             }
             catch (IllegalAccessException | InstantiationException e) {
                throw new RuntimeException(e);
             }
          });
-         // currentTarget is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
-         currentTarget = currentTarget == null ? target : currentTarget;
+         // currentEntity is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
+         currentEntity = currentEntity == null ? target : currentEntity;
 
-         Class<?> currentTargetClass = currentTarget.getClass();
+         Class<?> currentTargetClass = currentEntity.getClass();
          AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
          // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-         introspected.set(currentTarget, currentTargetInfo, columnValue);
+         introspected.set(currentEntity, currentTargetInfo, columnValue);
 
          // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
          parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
          if (parentInfo != null) {
-            currentParent = tableNameToTarget.computeIfAbsent(parentInfo.getOwnerClassTableName(), tbln -> {
+            currentParent = tableNameToEntitiesInCurrentRow.computeIfAbsent(parentInfo.getOwnerClassTableName().toUpperCase(), tbln -> {
                try {
                   return parentInfo.getOwnerClazz().newInstance();
                }
@@ -383,26 +434,27 @@ class OrmReader extends OrmBase
             });
             // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
             if (!parentInfo.isOneToManyAnnotated) {
-               introspected.set(currentParent, parentInfo, currentTarget);
+               introspected.set(currentParent, parentInfo, currentEntity);
             }
             else if (parentInfo.getType() == Collection.class){
-               manageManyToOneField();
-
+               setManyToOneField();
             }
          }
       }
 
-      private void manageManyToOneField() {
+      private void setManyToOneField() {
          try {
             Object value = parentInfo.getValue(currentParent);
             if (value == null) {
                Collection collection = new ArrayList();
-               collection.add(currentTarget);
+               collection.add(currentEntity);
                introspected.set(currentParent, parentInfo, collection);
-            }
-            else {
-               if (isNewTarget.get()) {
-                  ((Collection) value).add(currentTarget);
+
+               String parentTableName = parentInfo.getOwnerClassTableName().toUpperCase();
+               Object parentEntity = tableNameToEntities.get(parentTableName);
+               if (parentEntity != null) {
+                  Collection c = (Collection) introspected.get(parentEntity, parentInfo);
+                  c.add(currentEntity);
                }
             }
          }

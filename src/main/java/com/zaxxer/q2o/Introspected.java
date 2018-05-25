@@ -259,6 +259,10 @@ final class Introspected {
       attributeInfos.add(fcInfo);
    }
 
+   /**
+    *
+    * @return new entity representing this table
+    */
    Object getTableTarget(String tableName) throws IllegalAccessException, InstantiationException {
       Class<?> cls = tableNameToClassCaseInsensitive.get(tableName);
       if (cls != null) {

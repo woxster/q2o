@@ -16,6 +16,9 @@
 
 package com.zaxxer.q2o;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
@@ -28,6 +31,7 @@ class OrmWriter extends OrmBase
    private static final int CACHE_SIZE = Integer.getInteger("com.zaxxer.sansorm.statementCacheSize", 500);
    private static final Map<Introspected, String> createStatementCache;
    private static final Map<Introspected, String> updateStatementCache;
+   private static final Logger logger = LoggerFactory.getLogger(OrmBase.class);
 
    static {
       createStatementCache = Collections.synchronizedMap(new LinkedHashMap<Introspected, String>(CACHE_SIZE) {
@@ -93,32 +97,18 @@ class OrmWriter extends OrmBase
          final int[] parameterTypes = getParameterTypes(stmt);
          for (final T item : iterable) {
             setStatementParameters(item, introspected, insertableFcInfos, stmt, parameterTypes, null);
-            stmt.executeUpdate();
+            try {
+               stmt.executeUpdate();
+            }
+            catch (SQLException e) {
+               logger.error("Insert failed for: {}", item);
+               System.out.println("Insert failed for: " + item);
+               throw e;
+            }
             fillGeneratedId(item, introspected, stmt, /*checkExistingId=*/false);
             stmt.clearParameters();
          }
       }
-
-      // If there is a self-referencing column, update it with the generated IDs
-//      if (hasSelfJoinColumn) {
-//         final AttributeInfo selfJoinfcInfo = introspected.getSelfJoinColumnInfo();
-//         final String idColumn = idColumnNames[0];
-//         final StringBuilder sql = new StringBuilder("UPDATE ").append(introspected.getDelimitedTableName())
-//            .append(" SET ").append(selfJoinfcInfo.getDelimitedColumnName())
-//            .append("=? WHERE ").append(idColumn).append("=?");
-//         try (final PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
-//            for (final T item : iterable) {
-//               final Object referencedItem = introspected.get(item, selfJoinfcInfo);
-//               if (referencedItem != null) {
-//                  stmt.setObject(1, introspected.getActualIds(referencedItem)[0]);
-//                  stmt.setObject(2, introspected.getActualIds(item)[0]);
-//                  stmt.addBatch();
-//                  stmt.clearParameters();
-//               }
-//            }
-//            stmt.executeBatch();
-//         }
-//      }
    }
 
    static <T> T insertObject(final Connection connection, final T target) throws SQLException
@@ -184,6 +174,17 @@ class OrmWriter extends OrmBase
          sql.append(idColumn).append("=? AND ");
       }
       sql.setLength(sql.length() - 5);
+
+      return executeUpdate(connection, sql.toString(), args);
+   }
+
+   static <T> int deleteByWhereClause(final Connection connection, final Class<T> clazz, final String whereClause, final Object... args) throws SQLException
+   {
+      final Introspected introspected = Introspector.getIntrospected(clazz);
+
+      final StringBuilder sql = new StringBuilder()
+        .append("DELETE FROM ").append(introspected.getDelimitedTableName())
+        .append(" WHERE ").append(whereClause);
 
       return executeUpdate(connection, sql.toString(), args);
    }

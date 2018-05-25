@@ -106,7 +106,7 @@ public class QueryTestSQLite {
       // when
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          SqlClosure.sqlExecute(c -> {
-            Q2Obj.insertNotBatched(c, toInsert);
+            Q2ObjList.insertNotBatched(c, toInsert);
             return null;
          });
       }
@@ -129,7 +129,7 @@ public class QueryTestSQLite {
       // when
       try (Closeable ignored = prepareSQLiteDatasource(null)) {
          SqlClosure.sqlExecute(c -> {
-            Q2Obj.insertBatched(c, toInsert);
+            Q2ObjList.insertBatched(c, toInsert);
             return null;
          });
          List<TargetClassSQL> inserted = Q2ObjList.fromClause(

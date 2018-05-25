@@ -26,6 +26,7 @@ import static org.sansorm.TestUtils.makeH2DataSource;
 
 @RunWith(Parameterized.class)
 public class SqlClosureSansOrmCompatibilityTest {
+
    @Parameterized.Parameters(name = "autocommit={0}, ut={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {

@@ -145,7 +145,7 @@ public class QueryTest
 
       // when
       SqlClosure.sqlExecute(c -> {
-         Q2Obj.insertNotBatched(c, toInsert);
+         Q2ObjList.insertNotBatched(c, toInsert);
          return null;
       });
 
@@ -166,7 +166,7 @@ public class QueryTest
 
       // when
       SqlClosure.sqlExecute(c -> {
-         Q2Obj.insertBatched(c, toInsert);
+         Q2ObjList.insertBatched(c, toInsert);
          return null;
       });
 

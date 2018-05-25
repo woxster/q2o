@@ -228,7 +228,7 @@ public final class OrmElf
     */
    public static <T> void insertListNotBatched(Connection connection, Iterable<T> iterable) throws SQLException
    {
-      Q2Obj.insertNotBatched(connection, iterable);
+      Q2ObjList.insertNotBatched(connection, iterable);
    }
 
    /**
@@ -242,7 +242,7 @@ public final class OrmElf
     */
    public static <T> void insertListBatched(Connection connection, Iterable<T> iterable) throws SQLException
    {
-      Q2Obj.insertBatched(connection, iterable);
+      Q2ObjList.insertBatched(connection, iterable);
    }
 
    /**

@@ -92,4 +92,54 @@ public class Q2ObjList {
       PreparedStatement stmnt = connection.prepareStatement(select);
       return fromStatement(stmnt, clazz, args);
    }
+
+   public static <T> void insertBatched(Iterable<T> iterable) {
+      SqlClosure.sqlExecute((SqlFunction<T>) connection -> {
+         OrmWriter.insertListBatched(connection, iterable);
+         return null;
+      });
+   }
+
+   /**
+    * Insert a collection of objects in a non-batched manner (i.e. using iteration and individual INSERTs).
+    *
+    * @param connection a SQL connection
+    * @param iterable a list (or other {@link Iterable} collection) of annotated objects to insert
+    * @param <T> the class template
+    * @throws SQLException if a {@link SQLException} occurs
+    */
+   public static <T> void insertNotBatched(Connection connection, Iterable<T> iterable) throws SQLException
+   {
+      OrmWriter.insertListNotBatched(connection, iterable);
+   }
+
+   public static <T> void insertNotBatched(Iterable<T> iterable) {
+      SqlClosure.sqlExecute(connection -> {
+         OrmWriter.insertListNotBatched(connection, iterable);
+         return null;
+      });
+   }
+
+   /**
+    * Insert a collection of objects using JDBC batching.
+    *
+    * @param connection a SQL connection
+    * @param iterable a list (or other {@link Iterable} collection) of annotated objects to insert
+    * @param <T> the class template
+    * @throws SQLException if a {@link SQLException} occurs
+    */
+   public static <T> void insertBatched(Connection connection, Iterable<T> iterable) throws SQLException
+   {
+      OrmWriter.insertListBatched(connection, iterable);
+   }
+
+   public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
+      return SqlClosure.sqlExecute(connection -> {
+         return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+      });
+   }
+
+   public static int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
+      return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+   }
 }

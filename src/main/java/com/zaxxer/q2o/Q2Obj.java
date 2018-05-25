@@ -125,15 +125,7 @@ public final class Q2Obj
    }
 
    /**
-    * Get an object from the specified ResultSet.  ResultSet.next() is <i>NOT</i> called,
-    * this should be done by the caller.  <b>The ResultSet is not closed as a result of this
-    * method.</b>
-    *
-    * @param resultSet a {@link ResultSet}
-    * @param target the target object to set values on
-    * @param <T> the class template
-    * @return the populated object
-    * @throws SQLException if a {@link SQLException} occurs
+    * @see #fromResultSet(ResultSet, Object, Set)
     */
    public static <T> T fromResultSet(ResultSet resultSet, T target) throws SQLException
    {
@@ -141,7 +133,7 @@ public final class Q2Obj
    }
 
    /**
-    * Get an object from the specified ResultSet.  ResultSet.next() must <i>NOT</i> not been called. <b>The ResultSet is not closed as a result of this
+    * Get an object from the specified ResultSet.  For compatibility with Spring RowMapper ResultSet.next() must been called. <b>The ResultSet is not closed as a result of this
     * method.</b>
     *
     * @param resultSet a {@link ResultSet}
@@ -159,47 +151,6 @@ public final class Q2Obj
    // ------------------------------------------------------------------------
    //                               Write Methods
    // ------------------------------------------------------------------------
-
-   /**
-    * Insert a collection of objects in a non-batched manner (i.e. using iteration and individual INSERTs).
-    *
-    * @param connection a SQL connection
-    * @param iterable a list (or other {@link Iterable} collection) of annotated objects to insert
-    * @param <T> the class template
-    * @throws SQLException if a {@link SQLException} occurs
-    */
-   public static <T> void insertNotBatched(Connection connection, Iterable<T> iterable) throws SQLException
-   {
-      OrmWriter.insertListNotBatched(connection, iterable);
-   }
-
-   public static <T> void insertNotBatched(Iterable<T> iterable) throws SQLException
-   {
-      SqlClosure.sqlExecute(connection -> {
-         OrmWriter.insertListNotBatched(connection, iterable);
-         return null;
-      });
-   }
-
-   /**
-    * Insert a collection of objects using JDBC batching.
-    *
-    * @param connection a SQL connection
-    * @param iterable a list (or other {@link Iterable} collection) of annotated objects to insert
-    * @param <T> the class template
-    * @throws SQLException if a {@link SQLException} occurs
-    */
-   public static <T> void insertBatched(Connection connection, Iterable<T> iterable) throws SQLException
-   {
-      OrmWriter.insertListBatched(connection, iterable);
-   }
-
-   public static <T> void insertBatched(Iterable<T> iterable) {
-      SqlClosure.sqlExecute((SqlFunction<T>) connection -> {
-         OrmWriter.insertListBatched(connection, iterable);
-         return null;
-      });
-   }
 
    /**
     * Insert an annotated object into the database.

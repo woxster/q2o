@@ -199,6 +199,7 @@ public class SqlClosure<T>
             : execute(connection, args);
       }
       catch (SQLException e) {
+         e.printStackTrace();
          if (e.getNextException() != null) {
             e = e.getNextException();
          }
