@@ -4,24 +4,21 @@
 
 # q2o
 
-q2o is an object mapping library that translates SQL results into JPA annotated JavaBeans with limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
+q2o is an object mapping library that will reduce the amount of SQL you have to write to perform CRUD operations. It can translate SQL ResultSets into Objects (e. g. to return from Spring's RowMapper). It also offers limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
 
 [OrmHate (by Martin Fowler)](https://martinfowler.com/bliki/OrmHate.html)<br>
 [ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
-q2o will _never_...
+q2o will never...
 
-* Perform a JOIN for you
-* Persist a graph of objects for you
-* Lazily retrieve anything for you
-* Page data for you
+* Perform a JOIN
+* Persist a graph of objects
+* Lazily retrieve anything
+* Page data
 
-These things that q2o will _never_ do are better and more efficiently performed by _you_.  q2o will _help_ you
-do them simply, but there isn't much magic under the covers.
-
-You could consider the philosophy of q2o to be SQL-first.  That is, think about a correct SQL relational schema *first*, and then once that is correct, consider how to use q2o to make your life easier.  In order to scale, your SQL schema design and the queries that run against it need to be efficient.  There is no way to go from an "object model" to SQL with any kind of real efficiency, due to an inherent mis-match between the "object world" and the "relational world".  As others have noted, if you truly need to develop in the currency of pure objects, then what you need is not a relational database but instead an object database.
+These things are better and more efficiently performed by you.
 
 **Note:** *q2o does not currently support MySQL because the MySQL JDBC driver does not return proper metadata
 which is required by q2o for mapping.  In the future, q2o may support a purely 100% annotation-based type
