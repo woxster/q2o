@@ -11,15 +11,6 @@ q2o is an object mapping library that will reduce the amount of SQL you have to 
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
-q2o will never...
-
-* Perform a JOIN
-* Persist a graph of objects
-* Lazily retrieve anything
-* Page data
-
-These things are better and more efficiently performed by you.
-
 **Note:** *q2o does not currently support MySQL because the MySQL JDBC driver does not return proper metadata
 which is required by q2o for mapping.  In the future, q2o may support a purely 100% annotation-based type
 mapping but this would merely be a concession to MySQL and in no way desirable.*
