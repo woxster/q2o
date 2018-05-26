@@ -121,7 +121,7 @@ What if your object has many fields and you only want to retrieve some of them?
 ```
 Q2Obj.fromSelect(Customer.class, "select id, last_name from customer where id = ?", id)
 ```
-As long as your object has the id set, you can refresh its values with refresh(customer) or change its values and update it with updateObject(customer).
+As long as your object has the id set, you can refresh its values with ```refresh(customer)``` or change its values and update it with ```updateObject(customer)```.
 
 There are much more useful methods like:
 
