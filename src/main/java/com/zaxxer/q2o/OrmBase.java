@@ -16,13 +16,11 @@
 
 package com.zaxxer.q2o;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -132,5 +130,56 @@ class OrmBase
     */
    protected static boolean isIgnoredColumn(final Set<String> ignoredColumns, final String columnName) {
       return ignoredColumns.stream().anyMatch(s -> s.equalsIgnoreCase(columnName));
+   }
+
+   protected static <T> String idsAsInClause(Class<T> clazz, List<T> objects) {
+      Introspected introspected = Introspector.getIntrospected(clazz);
+      List<AttributeInfo> idFcInfos = introspected.getIdFcInfos();
+      StringBuilder ids = new StringBuilder();
+      if (!introspected.hasCompositePrimaryKey()) {
+         idsAsInClauseSinglePrimaryKey(objects, idFcInfos.get(0), ids);
+      }
+      else {
+         idsAsInClauseCompositePrimaryKey(objects, idFcInfos, ids);
+      }
+      return ids.toString();
+   }
+
+   private static <T> void idsAsInClauseCompositePrimaryKey(final List<T> objects, final List<AttributeInfo> idFcInfos, final StringBuilder ids) {
+      ids.append("(");
+      objects.forEach(obj -> {
+         ids.append(" (");
+         idFcInfos.forEach(info -> {
+            try {
+               Object value = info.getValue(obj);
+               String name = info.getDelimitedColumnName();
+               String delimiter = info.getType() != String.class ? "" : "'";
+               ids.append(" ").append(name).append("=").append(delimiter).append(value).append(delimiter).append(" AND");
+            }
+            catch (IllegalAccessException | InvocationTargetException e) {
+               throw new RuntimeException(e);
+            }
+         });
+         ids.setLength(ids.length() - 4);
+         ids.append(") OR");
+      });
+      ids.setLength(ids.length() - 3);
+      ids.append(")");
+   }
+
+   private static <T> void idsAsInClauseSinglePrimaryKey(final List<T> objects, final AttributeInfo idFcInfo, final StringBuilder ids) {
+      ids.append(idFcInfo.getDelimitedColumnName()).append(" ").append("IN (");
+      String delimiter = idFcInfo.getType() != String.class ? "" : "'";
+      objects.forEach(obj -> {
+         try {
+            Object value = idFcInfo.getValue(obj);
+            ids.append(delimiter).append(value).append(delimiter).append(",");
+         }
+         catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+         }
+      });
+      ids.setLength(ids.length() - 1);
+      ids.append(")");
    }
 }

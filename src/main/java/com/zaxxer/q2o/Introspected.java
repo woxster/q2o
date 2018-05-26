@@ -886,4 +886,8 @@ final class Introspected {
    List<AttributeInfo> getIdFcInfos() {
       return idFcInfos;
    }
+
+   boolean hasCompositePrimaryKey() {
+      return getIdFcInfos().size() > 1;
+   }
 }

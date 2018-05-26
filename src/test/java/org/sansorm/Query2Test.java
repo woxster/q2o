@@ -20,7 +20,7 @@ import com.zaxxer.q2o.q2o;
 import com.zaxxer.q2o.Q2Sql;
 
 
-public class QueryTest2
+public class Query2Test
 {
    @BeforeClass
    public static void setup() throws Throwable {

@@ -189,6 +189,10 @@ class OrmWriter extends OrmBase
       return executeUpdate(connection, sql.toString(), args);
    }
 
+   static <T> int deleteObjects(Connection connection, Class<T> clazz, List<T> objects) throws SQLException {
+      return deleteByWhereClause(connection, clazz, idsAsInClause(clazz, objects));
+   }
+
    static int executeUpdate(final Connection connection, final String sql, final Object... args) throws SQLException
    {
       try (final PreparedStatement stmt = connection.prepareStatement(sql)) {

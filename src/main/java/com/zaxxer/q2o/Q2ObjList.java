@@ -139,7 +139,50 @@ public class Q2ObjList {
       });
    }
 
+   /**
+    *
+    * @param whereClause withouth "where" (is prepended automatically).
+    */
    public static int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
       return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+   }
+
+   /**
+    * Deletes all objects by its id(s) in a single bulk operation.
+    */
+   public static <T> int delete(Connection connection, Class<T> clazz, List<T> objects) throws SQLException {
+      return OrmWriter.deleteObjects(connection, clazz, objects);
+   }
+
+   /**
+    * @see #delete(Connection, Class, List)
+    */
+   public static <T> int delete(Class<T> clazz, List<T> objects) {
+      return SqlClosure.sqlExecute(connection -> {
+         return OrmWriter.deleteObjects(connection, clazz, objects);
+      });
+   }
+
+   /**
+    * @see #delete(Connection, Class, List)
+    */
+   public static <T> int delete(List<T> objects) {
+      T obj = objects.get(0);
+      if (obj != null) {
+         //noinspection unchecked
+         return delete((Class<T>)obj.getClass(), objects);
+      }
+      else {
+         return 0;
+      }
+   }
+
+   /**
+    * @see #delete(Connection, Class, List)
+    */
+   public static <T> int delete(Connection connection, List<T> objects) throws SQLException {
+      T obj = objects.get(0);
+      //noinspection unchecked
+      return OrmWriter.deleteObjects(connection, (Class<T>)obj.getClass(), objects);
    }
 }

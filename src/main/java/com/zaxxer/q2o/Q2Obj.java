@@ -133,7 +133,7 @@ public final class Q2Obj
    }
 
    /**
-    * Get an object from the specified ResultSet.  For compatibility with Spring RowMapper ResultSet.next() must been called. <b>The ResultSet is not closed as a result of this
+    * Get an object from the specified ResultSet. For compatibility with Spring RowMapper ResultSet.next() must been called. <b>The ResultSet is not closed as a result of this
     * method.</b>
     *
     * @param resultSet a {@link ResultSet}
@@ -375,6 +375,21 @@ public final class Q2Obj
    public static <T> T fromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
       PreparedStatement stmnt = connection.prepareStatement(select);
       return Q2Obj.fromStatement(stmnt, clazz, args);
+   }
+
+   public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
+      return SqlClosure.sqlExecute(connection -> {
+         return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+      });
+   }
+
+   /**
+    * Deletes all objects from the corresponding table that matches the where clause.
+    *
+    * @param whereClause withouth "where"
+    */
+   public static int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
+      return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
    }
 
 }
