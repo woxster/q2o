@@ -57,7 +57,7 @@ CREATE TABLE customer (
    email VARCHAR(255)
 );
 ```
-Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations:
+Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations. These annotations will instruct q2o how to map objects to SQL and ResultSets to Objects):
 
 Customer:
 ```Java
