@@ -6,6 +6,7 @@
 
 q2o is an object mapping library that will reduce the amount of SQL you have to write to perform CRUD operations. It can translate SQL ResultSets into Objects (e. g. to return from Spring's RowMapper). It also offers limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
 
+[How Hibernate Almost Ruined My Career](https://www.toptal.com/java/how-hibernate-ruined-my-career)<br>
 [OrmHate (by Martin Fowler)](https://martinfowler.com/bliki/OrmHate.html)<br>
 [ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
