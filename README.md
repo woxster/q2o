@@ -112,12 +112,20 @@ Q2Obj.fromSelect(Customer.class, "select id, last_name from customer where id = 
 ```
 As long as your object has the id set, you can refresh its values with ```refresh(customer)``` or change its values and update it with ```updateObject(customer)```.
 
+q2o is helpful even when you depend on Spring JDBC:
+```
+List<Customer> customers = jdbcTemplate.query("...", new RowMapper<Customer>() {
+    @Override
+    public Customer mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+        return Q2Obj.fromResultSet(rs, Customer.class);
+    }
+});
+```
 There are much more useful methods like:
 
 * ```Q2Obj.byId(Class<T> type, Object... ids)```
 * ```Q2Obj.update(customer)```
 * ```Q2Obj.delete(customer)```
-* ```Q2Obj.fromResultSet(ResultSet resultSet, T target)```
 * ```Q2Obj.fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args)```
 * ```Q2Obj.countFromClause(Class<T> clazz, String clause, Object... args)```
 
