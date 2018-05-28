@@ -153,7 +153,8 @@ Many of these methods can also work with lists of objects. [See Javadoc.](http:/
 
 [Performing Joins](https://github.com/h-thurow/q2o/wiki/Performing-Joins)<br>
 [Help with raw JDBC](https://github.com/h-thurow/q2o/wiki/SqlClosure)<br>
-[Automatic Data Type Conversions](https://github.com/h-thurow/q2o/wiki/Automatic-Data-Type-Conversions)
+[Automatic Data Type Conversions](https://github.com/h-thurow/q2o/wiki/Automatic-Data-Type-Conversions)<br>
+[Change log](https://github.com/h-thurow/q2o/wiki/Change-log)
 
 ## Download
 
