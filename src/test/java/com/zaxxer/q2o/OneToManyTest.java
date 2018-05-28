@@ -25,7 +25,7 @@ import static org.junit.Assert.assertNull;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 20.05.18
  */
-public class ManyToOneOwnerTest {
+public class OneToManyTest {
 
    @Test
    public void extractTableNameOneToManyInverseSide() throws NoSuchFieldException {

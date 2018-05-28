@@ -156,14 +156,14 @@ public final class Q2Obj
     * Insert an annotated object into the database.
     *
     * @param connection a SQL connection
-    * @param target the annotated object to insert
+    * @param object the annotated object to insert
     * @param <T> the class template
     * @return the same object that was passed in, but with possibly updated @Id field due to auto-generated keys
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T insert(Connection connection, T target) throws SQLException
+   public static <T> T insert(Connection connection, T object) throws SQLException
    {
-      return OrmWriter.insertObject(connection, target);
+      return OrmWriter.insertObject(connection, object);
    }
 
    /**
@@ -171,27 +171,27 @@ public final class Q2Obj
     * clause of the generated UPDATE statement.
     *
     * @param connection a SQL connection
-    * @param target the annotated object to use to update a row in the database
+    * @param object the annotated object to use to update a row in the database
     * @param <T> the class template
     * @return the same object passed in
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T update(Connection connection, T target) throws SQLException
+   public static <T> T update(Connection connection, T object) throws SQLException
    {
-      return OrmWriter.updateObject(connection, target);
+      return OrmWriter.updateObject(connection, object);
    }
 
-   public static <T> T updateExcludeColumns(Connection connection, T target, String... excludedColumns) throws SQLException
+   public static <T> T updateExcludeColumns(Connection connection, T object, String... excludedColumns) throws SQLException
    {
       HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
       excludedCols.addAll(Arrays.asList(excludedColumns));
-      return OrmWriter.updateObject(connection, target, excludedCols);
+      return OrmWriter.updateObject(connection, object, excludedCols);
    }
 
-   public static <T> T updateExcludeColumns(T target, String... excludedColumns) {
+   public static <T> T updateExcludeColumns(T object, String... excludedColumns) {
       HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
       excludedCols.addAll(Arrays.asList(excludedColumns));
-      return SqlClosure.sqlExecute(c -> OrmWriter.updateObject(c, target, excludedCols));
+      return SqlClosure.sqlExecute(c -> OrmWriter.updateObject(c, object, excludedCols));
    }
 
    /**
@@ -200,9 +200,9 @@ public final class Q2Obj
     * @param includedColumns case insensitive
     * @see #update(Connection, Object)
     */
-   public static <T> T updateIncludeColumns(Connection connection, T target, String... includedColumns) throws SQLException
+   public static <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
    {
-      Introspected introspected = Introspector.getIntrospected(target.getClass());
+      Introspected introspected = Introspector.getIntrospected(object.getClass());
       String[] updatableColumns = introspected.getUpdatableColumns();
       HashSet<String> excludedCols = new HashSet<>();
       for (int i = 0; i < updatableColumns.length; i++) {
@@ -212,14 +212,14 @@ public final class Q2Obj
             }
          }
       }
-      return OrmWriter.updateObject(connection, target, excludedCols);
+      return OrmWriter.updateObject(connection, object, excludedCols);
    }
 
    /**
     * @see #updateIncludeColumns(Connection, Object, String...)
     */
-   public static <T> T updateIncludeColumns(T target, String... includedColumns) {
-      return SqlClosure.sqlExecute(c -> Q2Obj.updateIncludeColumns(c, target, includedColumns));
+   public static <T> T updateIncludeColumns(T object, String... includedColumns) {
+      return SqlClosure.sqlExecute(c -> Q2Obj.updateIncludeColumns(c, object, includedColumns));
    }
 
    /**
