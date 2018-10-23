@@ -4,24 +4,13 @@
 
 # q2o
 
-q2o is an object mapping library that translates SQL results into JPA annotated JavaBeans with limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
+q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It also offers limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
 
+[How Hibernate Almost Ruined My Career](https://www.toptal.com/java/how-hibernate-ruined-my-career)<br>
 [OrmHate (by Martin Fowler)](https://martinfowler.com/bliki/OrmHate.html)<br>
 [ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
-
-q2o will _never_...
-
-* Perform a JOIN for you
-* Persist a graph of objects for you
-* Lazily retrieve anything for you
-* Page data for you
-
-These things that q2o will _never_ do are better and more efficiently performed by _you_.  q2o will _help_ you
-do them simply, but there isn't much magic under the covers.
-
-You could consider the philosophy of q2o to be SQL-first.  That is, think about a correct SQL relational schema *first*, and then once that is correct, consider how to use q2o to make your life easier.  In order to scale, your SQL schema design and the queries that run against it need to be efficient.  There is no way to go from an "object model" to SQL with any kind of real efficiency, due to an inherent mis-match between the "object world" and the "relational world".  As others have noted, if you truly need to develop in the currency of pure objects, then what you need is not a relational database but instead an object database.
 
 **Note:** *q2o does not currently support MySQL because the MySQL JDBC driver does not return proper metadata
 which is required by q2o for mapping.  In the future, q2o may support a purely 100% annotation-based type
@@ -69,9 +58,7 @@ CREATE TABLE customer (
    email VARCHAR(255)
 );
 ```
-Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations:
-
-Customer:
+Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations. These annotations will instruct q2o how to map objects to SQL and ResultSets to Objects:
 ```Java
 @Table(name = "customer")
 public class Customer {
@@ -124,14 +111,22 @@ What if your object has many fields and you only want to retrieve some of them?
 ```
 Q2Obj.fromSelect(Customer.class, "select id, last_name from customer where id = ?", id)
 ```
-As long as your object has the id set, you can refresh its values with refresh(customer) or change its values and update it with updateObject(customer).
+As long as your object has the id set, you can refresh its values with ```refresh(customer)``` or change its values and update it with ```updateObject(customer)```.
 
+q2o is helpful even when you depend on Spring JDBC:
+```
+List<Customer> customers = jdbcTemplate.query("...", new RowMapper<Customer>() {
+    @Override
+    public Customer mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+        return Q2Obj.fromResultSet(rs, Customer.class);
+    }
+});
+```
 There are much more useful methods like:
 
 * ```Q2Obj.byId(Class<T> type, Object... ids)```
 * ```Q2Obj.update(customer)```
 * ```Q2Obj.delete(customer)```
-* ```Q2Obj.fromResultSet(ResultSet resultSet, T target)```
 * ```Q2Obj.fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args)```
 * ```Q2Obj.countFromClause(Class<T> clazz, String clause, Object... args)```
 
@@ -158,7 +153,8 @@ Many of these methods can also work with lists of objects. [See Javadoc.](http:/
 
 [Performing Joins](https://github.com/h-thurow/q2o/wiki/Performing-Joins)<br>
 [Help with raw JDBC](https://github.com/h-thurow/q2o/wiki/SqlClosure)<br>
-[Automatic Data Type Conversions](https://github.com/h-thurow/q2o/wiki/Automatic-Data-Type-Conversions)
+[Automatic Data Type Conversions](https://github.com/h-thurow/q2o/wiki/Automatic-Data-Type-Conversions)<br>
+[Change log](https://github.com/h-thurow/q2o/wiki/Change-log)
 
 ## Download
 
