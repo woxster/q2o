@@ -85,7 +85,7 @@ public List<Customer> getAllCustomers() {
    return Q2ObjList.fromClause(Customer.class, null);
 }
 ```
-As a second argument to ```Q2Obj.objectFromClause()``` you can provide a where clause, to restrict the found objects:
+As a second argument to ```Q2ObjList.fromClause()``` you can provide a where clause, to restrict the found objects:
 ```
 Q2ObjList.fromClause(Customer.class, "id BETWEEN ? AND ?", minId, maxId)
 ```
