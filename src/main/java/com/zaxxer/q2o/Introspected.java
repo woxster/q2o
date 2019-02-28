@@ -556,15 +556,23 @@ final class Introspected {
                   columnValue = ((BigDecimal) columnValue).toBigInteger();
                }
                else if (fieldType == Integer.class) {
-                  columnValue = (int) ((BigDecimal) columnValue).longValue();
+                  columnValue = (int) ((BigDecimal) columnValue).intValue();
                }
                else if (fieldType == Long.class) {
                   columnValue = ((BigDecimal) columnValue).longValue();
+               }
+               else if (fieldType == Double.class) {
+                  columnValue = ((BigDecimal) columnValue).doubleValue();
                }
             }
             else if (columnType == Long.class) {
                if (fieldType == Integer.class) {
                   columnValue = ((Long) columnValue).intValue();
+               }
+            }
+            else if (columnType == Double.class) {
+               if (fieldType == Integer.class) {
+                  columnValue = ((Double) columnValue).intValue();
                }
             }
             else if (columnType == java.util.UUID.class && fieldType == String.class) {
