@@ -3,6 +3,7 @@ package org.sansorm.sqlite;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.q2o.*;
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -64,7 +65,7 @@ public class SQLiteQueryTest {
       }
    }
 
-   @Test
+   @Test @Ignore
    public void shouldPerformCRUDAfterReconnect() throws IOException {
 
       File path = File.createTempFile("sansorm", ".db");

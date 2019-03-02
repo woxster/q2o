@@ -3,6 +3,7 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.GetterAnnotatedPitMainEntity;
 import com.zaxxer.q2o.entities.LeftOneToMany;
 import org.h2.jdbcx.JdbcDataSource;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.sansorm.TestUtils;
 
@@ -17,14 +18,13 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 20.05.18
  */
+@Ignore
 public class OneToManyTest {
 
    @Test

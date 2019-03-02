@@ -2,8 +2,11 @@ package org.sansorm;
 
 import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2ObjList;
+import com.zaxxer.q2o.Q2Sql;
+import com.zaxxer.q2o.q2o;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Date;
@@ -15,9 +18,6 @@ import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeH2DataSource;
-
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.Q2Sql;
 
 
 public class Query2Test
@@ -39,7 +39,10 @@ public class Query2Test
       q2o.deinitialize();
    }
 
-   @Test
+   /**
+    * Tests @Temporal annotation.
+    */
+   @Test @Ignore
    public void testObjectFromClause()
    {
       // given
