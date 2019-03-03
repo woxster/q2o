@@ -3,17 +3,24 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
 import com.zaxxer.q2o.entities.InsertObjectH2;
 import org.h2.jdbcx.JdbcDataSource;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sansorm.TestUtils;
 import org.sansorm.testutils.*;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.sql.*;
 import java.util.HashSet;
 
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
@@ -24,9 +31,14 @@ import static org.sansorm.TestUtils.makeH2DataSource;
  */
 public class CaseSensitiveDatabasesTest {
 
-   @After
-   public void tearDown()
-   {
+
+   @BeforeClass
+   public static void beforeClass() throws Exception {
+      q2o.initializeTxNone(null);
+   }
+
+   @AfterClass
+   public static void tearDown() {
       q2o.deinitialize();
    }
 

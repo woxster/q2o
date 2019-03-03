@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Q2Sql {
+   static boolean isSpringTxAware;
+
    /**
     * Get a single Number from a SQL query, useful for getting a COUNT(), SUM(), MIN/MAX(), etc.
     * from a SQL statement.  If the SQL query is parametrized, the parameter values can
@@ -16,7 +18,16 @@ public class Q2Sql {
     */
    public static Number numberFromSql(String sql, Object... args)
    {
-      return SqlClosure.sqlExecute(c -> numberFromSql(c, sql, args));
+      return sqlExecute(c -> numberFromSql(c, sql, args));
+   }
+
+   private static <T> T sqlExecute(SqlFunction<T> function) {
+      if (!isSpringTxAware) {
+         return SqlClosure.sqlExecute(function);
+      }
+      else {
+         return SqlClosureSpringTxAware.sqlExecute(function);
+      }
    }
 
    /**
@@ -25,9 +36,8 @@ public class Q2Sql {
     * @param args The query parameters used
     * @return the number of rows updated
     */
-   public static int executeUpdate(final String sql, final Object... args)
-   {
-      return SqlClosure.sqlExecute(c -> executeUpdate(c, sql, args));
+   public static int executeUpdate(final String sql, final Object... args) {
+      return sqlExecute(c -> executeUpdate(c, sql, args));
    }
 
    /**
@@ -101,6 +111,10 @@ public class Q2Sql {
    public static ResultSet executeQuery(Connection connection, String sql, Object... args) throws SQLException
    {
       return OrmReader.statementToResultSet(connection.prepareStatement(sql), args);
+   }
+
+   public static ResultSet executeQuery(String sql, Object... args) {
+      return SqlClosure.sqlExecute((connection, args1) -> executeQuery(connection, sql, args1));
    }
 
    public static int executeUpdate(Connection connection, String sql, Object... args) throws SQLException

@@ -1,10 +1,10 @@
 package com.zaxxer.q2o;
 
+import com.zaxxer.q2o.transaction.TxTransactionManager;
+
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-
-import com.zaxxer.q2o.transaction.TxTransactionManager;
 
 /** Single point of q2o configuration */
 public final class q2o {
@@ -20,6 +20,7 @@ public final class q2o {
     */
    public static DataSource initializeTxNone(DataSource dataSource) {
       SqlClosure.setDefaultDataSource(dataSource);
+      Q2Obj.q2Object = new Q2Object();
       return dataSource;
    }
 
@@ -49,6 +50,16 @@ public final class q2o {
    }
 
    /**
+    * To make q2o support spring managed transactions, if available.
+    */
+   public static DataSource initializeWithSpringTxSupport(DataSource dataSource) {
+      SqlClosureSpringTxAware.setDefaultDataSource(dataSource);
+      Q2Obj.q2Object = new Q2ObjSpringTxAware(dataSource);
+      Q2Sql.isSpringTxAware = true;
+      return dataSource;
+   }
+
+   /**
     * You can reset q2o to a fresh state if desired.
     * E.g. if you want to call another initializeXXX method.
     */
@@ -56,5 +67,13 @@ public final class q2o {
       SqlClosure.setDefaultDataSource(null);
       TransactionHelper.setUserTransaction(null);
       TransactionHelper.setTransactionManager(null);
+      Q2Obj.q2Object = null;
+      Q2Sql.isSpringTxAware = false;
+   }
+
+   public static void deinitializeWithSpringTxSupport() {
+      deinitialize();
+      Q2ObjSpringTxAware.setDefaultDataSource(null);
+      SqlClosureSpringTxAware.setDefaultDataSource(null);
    }
 }

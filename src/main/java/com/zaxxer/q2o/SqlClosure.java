@@ -16,12 +16,8 @@
 
 package com.zaxxer.q2o;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import javax.sql.DataSource;
+import java.sql.*;
 
 /**
  * The {@code SqlClosure} class provides a convenient way to execute SQL
@@ -36,8 +32,7 @@ public class SqlClosure<T>
    private DataSource dataSource;
 
    /**
-    * Default constructor using the default DataSource.  The {@code execute(Connection connection)}
-    * method will be called when the closure executed.  A RuntimeException is thrown if the default
+    * Default constructor using the default DataSource, set with one of the methods in {@link q2o}. A RuntimeException is thrown if the default
     * DataSource has not been set.
     */
    public SqlClosure() {
@@ -69,10 +64,11 @@ public class SqlClosure<T>
 
    /**
     * Construct a SqlClosure with a specific DataSource and arguments to be passed to the
-    * {@code execute} method.  @see #SqlClosure(Object...args)
+    * {@code execute} method.
     *
     * @param ds the DataSource
     * @param args optional arguments to be used for execution
+    * @see SqlClosure(Object...args)
     */
    public SqlClosure(final DataSource ds, final Object... args) {
       this.dataSource = ds;
@@ -162,6 +158,8 @@ public class SqlClosure<T>
    /**
     * Execute a lambda {@code SqlVarArgsFunction} closure using the current instance as the base (i.e. share
     * the same DataSource).
+    * <p>
+    * This method differs from {@link SqlClosure#execute()} in that you can reuse the SqlClosure instance to execute various SQL statements.
     *
     * @param functional the lambda function
     * @param args arguments to pass to the lamba function
@@ -186,11 +184,11 @@ public class SqlClosure<T>
     */
    public final T execute()
    {
-      boolean txOwner = !TransactionHelper.hasTransactionManager() || TransactionHelper.beginOrJoinTransaction();
+      boolean isTxOwner = !TransactionHelper.hasTransactionManager() || TransactionHelper.beginOrJoinTransaction();
       Connection connection = null;
       try {
          connection = ConnectionProxy.wrapConnection(dataSource.getConnection());
-         if (txOwner) {
+         if (isTxOwner) {
             // disable autoCommit mode as we are going to handle transaction by ourselves
             connection.setAutoCommit(false);
          }
@@ -203,23 +201,23 @@ public class SqlClosure<T>
          if (e.getNextException() != null) {
             e = e.getNextException();
          }
-         if (txOwner) {
-            // set the txOwner to false as we no longer own the transaction and we shouldn't try to commit it later
-            txOwner = false;
+         if (isTxOwner) {
+            // set the isTxOwner to false as we no longer own the transaction and we shouldn't try to commit it later
+            isTxOwner = false;
             rollback(connection);
          }
          throw new RuntimeException(e);
       } catch (Throwable e) {
          e.printStackTrace();
-         if (txOwner) {
-            txOwner = false;
+         if (isTxOwner) {
+            isTxOwner = false;
             rollback(connection);
          }
          throw e;
       }
       finally {
          try {
-            if (txOwner) {
+            if (isTxOwner) {
                commit(connection);
             }
          }
@@ -253,7 +251,7 @@ public class SqlClosure<T>
     */
    protected T execute(final Connection connection) throws SQLException
    {
-      throw new AbstractMethodError("You must provide an implementation of this method.");
+      throw new AbstractMethodError("You must provide an implementation of SqlClosure#execute(Connection).");
    }
 
    /**
@@ -266,7 +264,7 @@ public class SqlClosure<T>
     */
    protected T execute(final Connection connection, Object... args) throws SQLException
    {
-      throw new AbstractMethodError("You must provide an implementation of this method.");
+      throw new AbstractMethodError("You must provide an implementation of SqlClosure#execute(Connection, Object...).");
    }
 
    /**
@@ -339,5 +337,9 @@ public class SqlClosure<T>
             throw new RuntimeException(e);
          }
       }
+   }
+
+   public static ResultSet statementToResultSet(PreparedStatement stmnt, Object... args) throws SQLException {
+      return OrmReader.statementToResultSet(stmnt, args);
    }
 }

@@ -118,6 +118,12 @@
          <version>2.5</version>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-jdbc</artifactId>
+         <version>5.1.4.RELEASE</version>
+         <scope>provided</scope>
+      </dependency>
    </dependencies>
 
    <distributionManagement>

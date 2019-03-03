@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeSQLiteDataSource;
 
 public class SQLiteQueryTest {
+
    public static Closeable prepareSQLiteDatasource(File db) {
       HikariDataSource hds = makeSQLiteDataSource(db);
       initializeTxNone(hds);

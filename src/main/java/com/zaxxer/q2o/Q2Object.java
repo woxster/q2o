@@ -20,18 +20,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Encapsulates object-, not SQL-centric database operations. For SQL -centric operations use {@link Q2Sql}.
- */
+* Encapsulates object, not SQL centric database operations. For SQL centric operations use {@link Q2Sql}.
+*/
 //CHECKSTYLE:OFF
-@SuppressWarnings({"WeakerAccess", "unused"})
-public final class Q2Obj {
-
-   static Q2Object q2Object;
-
-   private Q2Obj() { }
+public class Q2Object
+{
+   Q2Object() { }
 
    // ------------------------------------------------------------------------
    //                               Read Methods
@@ -48,9 +47,9 @@ public final class Q2Obj {
     * @return the populated object (a new instance of clazz)
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T byId(Connection connection, Class<T> clazz, Object... args) throws SQLException
+   <T> T byId(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
-      return q2Object.byId(connection, clazz, args);
+      return OrmReader.objectById(connection, clazz, args);
    }
 
    /**
@@ -59,9 +58,9 @@ public final class Q2Obj {
     * @param target The id field(s) must be set. The returned object is the same as was provided, but with all fields loaded from database.
     *
     */
-   public static <T> T byId(Connection connection, T target) throws SQLException
+   <T> T byId(Connection connection, T target) throws SQLException
    {
-      return q2Object.byId(connection, target);
+      return OrmReader.objectById(connection, target);
    }
 
    /**
@@ -81,9 +80,9 @@ public final class Q2Obj {
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T fromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
+   <T> T fromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return q2Object.fromClause(connection, clazz, clause, args);
+      return OrmReader.objectFromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -97,9 +96,9 @@ public final class Q2Obj {
     * @return The result count.
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> int countFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
+   <T> int countFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return q2Object.countFromClause(connection, clazz, clause, args);
+      return OrmReader.countObjectsFromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -114,17 +113,17 @@ public final class Q2Obj {
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
+   <T> T fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
    {
-      return q2Object.fromStatement(stmt, clazz, args);
+      return OrmReader.statementToObject(stmt, clazz, args);
    }
 
    /**
     * @see #fromResultSet(ResultSet, Object, Set)
     */
-   public static <T> T fromResultSet(ResultSet resultSet, T target) throws SQLException
+   <T> T fromResultSet(ResultSet resultSet, T target) throws SQLException
    {
-      return q2Object.fromResultSet(resultSet, target);
+      return OrmReader.resultSetToObject(resultSet, target);
    }
 
    /**
@@ -138,9 +137,9 @@ public final class Q2Obj {
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T fromResultSet(ResultSet resultSet, T target, Set<String> ignoredColumns) throws SQLException
+   <T> T fromResultSet(ResultSet resultSet, T target, Set<String> ignoredColumns) throws SQLException
    {
-      return q2Object.fromResultSet(resultSet, target, ignoredColumns);
+      return OrmReader.resultSetToObject(resultSet, target, ignoredColumns);
    }
 
    // ------------------------------------------------------------------------
@@ -156,9 +155,9 @@ public final class Q2Obj {
     * @return the same object that was passed in, but with possibly updated @Id field due to auto-generated keys
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T insert(Connection connection, T object) throws SQLException
+   <T> T insert(Connection connection, T object) throws SQLException
    {
-      return q2Object.insert(connection, object);
+      return OrmWriter.insertObject(connection, object);
    }
 
    /**
@@ -171,18 +170,22 @@ public final class Q2Obj {
     * @return the same object passed in
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T update(Connection connection, T object) throws SQLException
+   <T> T update(Connection connection, T object) throws SQLException
    {
-      return q2Object.update(connection, object);
+      return OrmWriter.updateObject(connection, object);
    }
 
-   public static <T> T updateExcludeColumns(Connection connection, T object, String... excludedColumns) throws SQLException
+   <T> T updateExcludeColumns(Connection connection, T object, String... excludedColumns) throws SQLException
    {
-      return q2Object.updateExcludeColumns(connection, object, excludedColumns);
+      HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
+      excludedCols.addAll(Arrays.asList(excludedColumns));
+      return OrmWriter.updateObject(connection, object, excludedCols);
    }
 
-   public static <T> T updateExcludeColumns(T object, String... excludedColumns) {
-      return q2Object.updateExcludeColumns(object, excludedColumns);
+   <T> T updateExcludeColumns(T object, String... excludedColumns) {
+      HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
+      excludedCols.addAll(Arrays.asList(excludedColumns));
+      return SqlClosure.sqlExecute(connection -> OrmWriter.updateObject(connection, object, excludedCols));
    }
 
    /**
@@ -191,16 +194,26 @@ public final class Q2Obj {
     * @param includedColumns case insensitive
     * @see #update(Connection, Object)
     */
-   public static <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
+   <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
    {
-      return q2Object.updateIncludeColumns(connection, object, includedColumns);
+      Introspected introspected = Introspector.getIntrospected(object.getClass());
+      String[] updatableColumns = introspected.getUpdatableColumns();
+      HashSet<String> excludedCols = new HashSet<>();
+      for (int i = 0; i < updatableColumns.length; i++) {
+         for (int j = 0; j < includedColumns.length; j++) {
+            if (!updatableColumns[i].equalsIgnoreCase(includedColumns[j])) {
+               excludedCols.add(updatableColumns[i]);
+            }
+         }
+      }
+      return OrmWriter.updateObject(connection, object, excludedCols);
    }
 
    /**
     * @see #updateIncludeColumns(Connection, Object, String...)
     */
-   public static <T> T updateIncludeColumns(T object, String... includedColumns) {
-      return q2Object.updateIncludeColumns(object, includedColumns);
+   <T> T updateIncludeColumns(T object, String... includedColumns) {
+      return SqlClosure.sqlExecute(connection -> updateIncludeColumns(connection, object, includedColumns));
    }
 
    /**
@@ -213,17 +226,17 @@ public final class Q2Obj {
     * @return 0 if no row was deleted, 1 if the row was deleted
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> int delete(Connection connection, T target) throws SQLException
+   <T> int delete(Connection connection, T target) throws SQLException
    {
-      return q2Object.delete(connection, target);
+      return OrmWriter.deleteObject(connection, target);
    }
 
    /**
     * @see OrmWriter#deleteObjectById(Connection, Class, Object...)
     */
-   public static <T> int deleteById(Connection connection, Class<T> clazz, Object... args) throws SQLException
+   <T> int deleteById(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
-      return q2Object.deleteById(connection, clazz, args);
+      return OrmWriter.deleteObjectById(connection, clazz, args);
    }
 
    // ------------------------------------------------------------------------
@@ -240,26 +253,28 @@ public final class Q2Obj {
     * @throws SQLException if a {@link SQLException} occurs
     * @param <T> the type of the target object
     */
-   public static <T> T refresh(Connection connection, T target) throws SQLException {
-      return q2Object.refresh(connection, target);
+   <T> T refresh(Connection connection, T target) throws SQLException {
+      return OrmReader.refresh(connection, target);
    }
 
-   public static <T> T refresh(T target) throws SQLException {
-      return q2Object.refresh(target);
+   <T> T refresh(T target) {
+      return SqlClosure.sqlExecute(connection -> refresh(connection, target));
    }
 
    /**
     * @see #byId(Connection, Class, Object...)
     */
-   public static <T> T byId(Class<T> type, Object... ids) {
-      return q2Object.byId(type, ids);
+   <T> T byId(Class<T> type, Object... ids)
+   {
+      return SqlClosure.sqlExecute(connection -> byId(connection, type, ids));
    }
 
    /**
     * @see #byId(Connection, Object)
     */
-   public static <T> T byId(T target) {
-      return q2Object.byId(target);
+   <T> T byId(T target)
+   {
+      return SqlClosure.sqlExecute(connection -> OrmReader.objectById(connection, target));
    }
 
    /**
@@ -271,9 +286,9 @@ public final class Q2Obj {
     * @return The object or {@code null}
     * @see #fromClause(Connection, Class, String, Object...)
     */
-   public static <T> T fromClause(Class<T> type, String clause, Object... args)
+   <T> T fromClause(Class<T> type, String clause, Object... args)
    {
-      return q2Object.fromClause(type, clause, args);
+      return SqlClosure.sqlExecute(connection -> fromClause(connection, type, clause, args));
    }
 
    /**
@@ -282,9 +297,9 @@ public final class Q2Obj {
     * @param <T> The type of the object.
     * @return The inserted object populated with any generated IDs.
     */
-   public static <T> T insert(T object)
+   <T> T insert(T object)
    {
-      return q2Object.insert(object);
+      return SqlClosure.sqlExecute(connection -> insert(connection, object));
    }
 
    /**
@@ -293,17 +308,17 @@ public final class Q2Obj {
     * @param <T> The type of the object.
     * @return The updated object.
     */
-   public static <T> T update(T object)
+   <T> T update(T object)
    {
-      return q2Object.update(object);
+      return SqlClosure.sqlExecute(connection -> update(connection, object));
    }
 
    /**
     * @see #delete(Connection, Object)
     */
-   public static <T> int delete(T object)
+   <T> int delete(T object)
    {
-      return q2Object.delete(object);
+      return SqlClosure.sqlExecute(connection ->  delete(connection, object));
    }
 
    /**
@@ -313,9 +328,9 @@ public final class Q2Obj {
     * @param <T> The type of the object.
     * @return the number of rows affected.
     */
-   public static <T> int deleteById(Class<T> clazz, Object... args)
+   <T> int deleteById(Class<T> clazz, Object... args)
    {
-      return q2Object.deleteById(clazz, args);
+      return SqlClosure.sqlExecute(connection -> deleteById(connection, clazz, args));
    }
 
    /**
@@ -327,9 +342,9 @@ public final class Q2Obj {
     * @param <T> the type of object to query.
     * @return The result count.
     */
-   public static <T> int countFromClause(Class<T> clazz, String clause, Object... args)
+   <T> int countFromClause(Class<T> clazz, String clause, Object... args)
    {
-      return q2Object.countFromClause(clazz, clause, args);
+      return SqlClosure.sqlExecute(connection -> countFromClause(connection, clazz, clause, args));
    }
 
    /**
@@ -341,19 +356,25 @@ public final class Q2Obj {
     * @param <T> The type of object to query
     * @return The object or object graph
     */
-   public static <T> T fromSelect(Class<T> clazz, String select, Object... args) {
-      return q2Object.fromSelect(clazz, select, args);
+   <T> T fromSelect(Class<T> clazz, String select, Object... args) {
+      return SqlClosure.sqlExecute(connection -> {
+         PreparedStatement stmnt = connection.prepareStatement(select);
+         return fromStatement(stmnt, clazz, args);
+      });
    }
 
    /**
     * @see #fromSelect(Class, String, Object...)
     */
-   public static <T> T fromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
-      return q2Object.fromSelect(connection, clazz, select, args);
+   <T> T fromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
+      PreparedStatement stmnt = connection.prepareStatement(select);
+      return fromStatement(stmnt, clazz, args);
    }
 
-   public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
-      return q2Object.deleteByWhereClause(clazz, whereClause, args);
+   int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
+      return SqlClosure.sqlExecute(connection -> {
+         return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+      });
    }
 
    /**
@@ -361,8 +382,8 @@ public final class Q2Obj {
     *
     * @param whereClause withouth "where"
     */
-   public static int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
-      return q2Object.deleteByWhereClause(connection, clazz, whereClause, args);
+   int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
+      return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
    }
 
 }

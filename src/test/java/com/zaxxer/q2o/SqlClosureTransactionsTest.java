@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -24,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
 @RunWith(Parameterized.class)
-public class SqlClosureTest {
+public class SqlClosureTransactionsTest {
    @Parameterized.Parameters(name = "autocommit={0}, ut={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
@@ -85,7 +84,7 @@ public class SqlClosureTest {
          return Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "5");
       })).isInstanceOf(RuntimeException.class).hasMessage("boom!");
 
-      final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureTest::getStrings);
+      final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureTransactionsTest::getStrings);
       assertThat(insertedValues).isEmpty();
    }
 
@@ -101,7 +100,7 @@ public class SqlClosureTest {
          throw new Error("boom!"); // ie something not or type SQLException or RuntimeException
       })).isInstanceOf(Error.class).hasMessage("boom!");
 
-      final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureTest::getStrings);
+      final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureTransactionsTest::getStrings);
       if (withUserTx) {
          assertThat(insertedValues).containsOnly().as("With UserTransaction nested closures share same tx scope");
       } else {
@@ -117,4 +116,5 @@ public class SqlClosureTest {
       }
       return result;
    }
+
 }

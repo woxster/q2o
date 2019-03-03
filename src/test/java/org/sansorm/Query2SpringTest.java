@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
 
-public class Query2Test
+public class Query2SpringTest
 {
    @BeforeClass
    public static void beforeClass() throws Throwable {
-      q2o.initializeTxNone(makeH2DataSource());
+      q2o.initializeWithSpringTxSupport(makeH2DataSource());
       Q2Sql.executeUpdate(
          "CREATE TABLE TargetClass2 ("
             + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"
@@ -32,10 +32,9 @@ public class Query2Test
    }
 
    @AfterClass
-   public static void afterClass()
-   {
+   public static void afterClass() {
       Q2Sql.executeUpdate("drop table TargetClass2");
-      q2o.deinitialize();
+      q2o.deinitializeWithSpringTxSupport();
    }
 
    /**

@@ -3,6 +3,8 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.CompositeKey;
 import com.zaxxer.q2o.entities.Left;
 import org.h2.jdbcx.JdbcDataSource;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.sansorm.TestUtils;
 import org.sansorm.testutils.DummyConnection;
@@ -27,6 +29,17 @@ import static org.junit.Assert.*;
  * @since 10.04.18
  */
 public class Q2ObjTest {
+
+   @Before
+   public void setUp() throws Exception {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+   }
+
+   @After
+   public void tearDown() throws Exception {
+      q2o.deinitialize();
+   }
 
    @Test
    public void updateObjectExludeColumns() throws SQLException {
@@ -80,8 +93,6 @@ public class Q2ObjTest {
 
    @Test
    public void byIdWithTarget() {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try {
          Q2Sql.executeUpdate(
             "CREATE TABLE LEFT_TABLE ("
@@ -102,14 +113,11 @@ public class Q2ObjTest {
       }
       finally {
          Q2Sql.executeUpdate("drop table LEFT_TABLE");
-         q2o.deinitialize();
       }
    }
 
    @Test
    public void byCompositeKeyWithTarget() {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try {
          Q2Sql.executeUpdate(
             "CREATE TABLE COMPOSITEKEY ("
@@ -135,7 +143,6 @@ public class Q2ObjTest {
       }
       finally {
          Q2Sql.executeUpdate("drop table COMPOSITEKEY");
-         q2o.deinitialize();
       }
    }
 
@@ -148,8 +155,6 @@ public class Q2ObjTest {
 
    @Test
    public void updateIncludeColumns() {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try {
          Q2Sql.executeUpdate(
             "CREATE TABLE IncludeColumns ("
@@ -175,14 +180,11 @@ public class Q2ObjTest {
       }
       finally {
          Q2Sql.executeUpdate("drop table IncludeColumns");
-         q2o.deinitialize();
       }
    }
 
    @Test
    public void updateIncludeColumnsOmitted() {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try {
          Q2Sql.executeUpdate(
             "CREATE TABLE IncludeColumns ("
@@ -208,7 +210,6 @@ public class Q2ObjTest {
       }
       finally {
          Q2Sql.executeUpdate("drop table IncludeColumns");
-         q2o.deinitialize();
       }
    }
 
