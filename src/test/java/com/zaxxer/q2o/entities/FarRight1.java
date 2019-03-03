@@ -1,37 +1,27 @@
 package com.zaxxer.q2o.entities;
 
-import javax.persistence.*;
-import java.util.Collection;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
- * @since 21.05.18
+ * @since 2019-03-03
  */
 @Entity
-@Table(name = "LEFT_TABLE")
-public class LeftOneToMany {
+@Table(name = "FAR_RIGHT_TABLE")
+public class FarRight1 {
    private int id;
    private String type;
-   private Collection<Right> rights;
 
    @Id
-   @GeneratedValue
    public int getId() {
       return id;
    }
 
    public void setId(int id) {
       this.id = id;
-   }
-
-   @OneToMany
-   @JoinColumn(name = "id", table = "RIGHT_TABLE")
-   public Collection<Right> getRights() {
-      return rights;
-   }
-
-   public void setRights(Collection<Right> rights) {
-      this.rights = rights;
    }
 
    @Column(name = "type")
@@ -45,10 +35,9 @@ public class LeftOneToMany {
 
    @Override
    public String toString() {
-      return "LeftOneToMany{" +
+      return "FarRight1{" +
          "id=" + id +
          ", type='" + type + '\'' +
-         ", rights=" + rights +
          '}';
    }
 }

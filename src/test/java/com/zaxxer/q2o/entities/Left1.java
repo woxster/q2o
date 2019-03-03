@@ -1,18 +1,17 @@
 package com.zaxxer.q2o.entities;
 
 import javax.persistence.*;
-import java.util.Collection;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
- * @since 21.05.18
+ * @since 2019-03-03
  */
 @Entity
 @Table(name = "LEFT_TABLE")
-public class LeftOneToMany {
+public class Left1 {
    private int id;
    private String type;
-   private Collection<Right> rights;
+   private Middle1 middle;
 
    @Id
    @GeneratedValue
@@ -24,14 +23,14 @@ public class LeftOneToMany {
       this.id = id;
    }
 
-   @OneToMany
-   @JoinColumn(name = "id", table = "RIGHT_TABLE")
-   public Collection<Right> getRights() {
-      return rights;
+   @OneToOne
+   @JoinColumn(name = "id")
+   public Middle1 getMiddle() {
+      return middle;
    }
 
-   public void setRights(Collection<Right> rights) {
-      this.rights = rights;
+   public void setMiddle(Middle1 middle) {
+      this.middle = middle;
    }
 
    @Column(name = "type")
@@ -45,10 +44,10 @@ public class LeftOneToMany {
 
    @Override
    public String toString() {
-      return "LeftOneToMany{" +
+      return "Left1{" +
          "id=" + id +
          ", type='" + type + '\'' +
-         ", rights=" + rights +
+         ", middle=" + middle +
          '}';
    }
 }

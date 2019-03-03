@@ -56,6 +56,7 @@ public final class q2o {
       SqlClosureSpringTxAware.setDefaultDataSource(dataSource);
       Q2Obj.q2Object = new Q2ObjSpringTxAware(dataSource);
       Q2Sql.isSpringTxAware = true;
+      Q2ObjList.isSpringTxAware = true;
       return dataSource;
    }
 
@@ -69,6 +70,7 @@ public final class q2o {
       TransactionHelper.setTransactionManager(null);
       Q2Obj.q2Object = null;
       Q2Sql.isSpringTxAware = false;
+      Q2ObjList.isSpringTxAware = false;
    }
 
    public static void deinitializeWithSpringTxSupport() {

@@ -84,6 +84,18 @@ class SqlClosureSpringTxAware<T> {
    }
 
    /**
+    * To map SQLExceptions to Spring's {@link org.springframework.dao.DataAccessException} Types. Query must bring its own connection.
+    */
+   static <V> V sqlExecute(Query<V> query) {
+      return new SqlClosureSpringTxAware<V>() {
+         @Override
+         public V execute(Connection connection) throws SQLException {
+            return query.execute();
+         }
+      }.executeQuery();
+   }
+
+   /**
     * Maps SQLExceptions to some subtype of Spring's {@link org.springframework.dao.DataAccessException}
     */
    final T execute() {
@@ -95,12 +107,21 @@ class SqlClosureSpringTxAware<T> {
             : execute(connection, args);
       }
       catch (SQLException e) {
-         throw exceptionTranslator.translate("execute", null, e);
+         throw exceptionTranslator.translate("", null, e);
       }
       finally {
          if (connection != null) {
             DataSourceUtils.releaseConnection(connection, dataSource);
          }
+      }
+   }
+
+   final T executeQuery() {
+      try {
+         return execute(null);
+      }
+      catch (SQLException e) {
+         throw exceptionTranslator.translate("", null, e);
       }
    }
 

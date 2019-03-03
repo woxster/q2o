@@ -1,7 +1,5 @@
 package com.zaxxer.q2o.entities;
 
-import com.zaxxer.q2o.OneToOneTest;
-
 import javax.persistence.*;
 
 /**
@@ -13,7 +11,7 @@ import javax.persistence.*;
 public class Left {
    private int id;
    private String type;
-   private OneToOneTest.Right right;
+   private Right right;
 
    @Id
    @GeneratedValue
@@ -27,11 +25,11 @@ public class Left {
 
    @OneToOne
    @JoinColumn(name = "id")
-   public OneToOneTest.Right getRight() {
+   public Right getRight() {
       return right;
    }
 
-   public void setRight(OneToOneTest.Right right) {
+   public void setRight(Right right) {
       this.right = right;
    }
 

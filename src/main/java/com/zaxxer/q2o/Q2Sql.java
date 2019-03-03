@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Q2Sql {
-   static boolean isSpringTxAware;
+   static volatile boolean isSpringTxAware;
 
    /**
     * Get a single Number from a SQL query, useful for getting a COUNT(), SUM(), MIN/MAX(), etc.

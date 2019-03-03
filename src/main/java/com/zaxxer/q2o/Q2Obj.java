@@ -29,7 +29,7 @@ import java.util.Set;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class Q2Obj {
 
-   static Q2Object q2Object;
+   static volatile Q2Object q2Object;
 
    private Q2Obj() { }
 

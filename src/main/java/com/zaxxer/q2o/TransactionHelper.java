@@ -19,17 +19,13 @@ package com.zaxxer.q2o;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
+import javax.transaction.*;
 
 public final class TransactionHelper
 {
    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionHelper.class);
-   private static TransactionManager transactionManager;
-   private static UserTransaction userTransaction;
+   private volatile static TransactionManager transactionManager;
+   private volatile static UserTransaction userTransaction;
 
    private TransactionHelper() {
    }
@@ -39,8 +35,7 @@ public final class TransactionHelper
     *
     * @param tm a JTA TransactionManager instance
     */
-   public static void setTransactionManager(TransactionManager tm)
-   {
+   public static void setTransactionManager(TransactionManager tm) {
       transactionManager = tm;
    }
 

@@ -27,7 +27,7 @@ import java.sql.*;
  */
 public class SqlClosure<T>
 {
-   private static DataSource defaultDataSource;
+   private volatile static DataSource defaultDataSource;
    private Object[] args;
    private DataSource dataSource;
 
@@ -92,8 +92,7 @@ public class SqlClosure<T>
     * @param ds the DataSource to use by the default
     */
    // TODO temporarily public to provide some SansOrm compatibility
-   public static void setDefaultDataSource(final DataSource ds)
-   {
+   public static void setDefaultDataSource(final DataSource ds) {
       defaultDataSource = ds;
    }
 
@@ -105,12 +104,10 @@ public class SqlClosure<T>
     * @return the result specified by the lambda
     * @since 2.5
     */
-   public static <V> V sqlExecute(final SqlFunction<V> functional)
-   {
+   public static <V> V sqlExecute(final SqlFunction<V> functional) {
       return new SqlClosure<V>() {
          @Override
-         public V execute(Connection connection) throws SQLException
-         {
+         public V execute(Connection connection) throws SQLException {
             return functional.execute(connection);
          }
       }.execute();

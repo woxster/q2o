@@ -12,6 +12,8 @@ import java.util.List;
  */
 public class Q2ObjList {
 
+   static volatile boolean isSpringTxAware;
+
    /**
     * Load a list of objects using the specified where condition.  The clause "WHERE" is automatically
     * appended, so the {@code where} parameter should just be the conditional portion.
@@ -30,7 +32,16 @@ public class Q2ObjList {
     */
    public static <T> List<T> fromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return OrmReader.listFromClause(connection, clazz, clause, args);
+      return executeWith(() -> OrmReader.listFromClause(connection, clazz, clause, args));
+   }
+
+   static <T> T executeWith(Query<T> query) throws SQLException {
+      if (!isSpringTxAware) {
+         return query.execute();
+      }
+      else {
+         return SqlClosureSpringTxAware.sqlExecute(query);
+      }
    }
 
    /**
@@ -44,9 +55,8 @@ public class Q2ObjList {
     * @return a list of instance of the target class, or an empty list
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> List<T> fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
-   {
-      return OrmReader.statementToList(stmt, clazz, args);
+   public static <T> List<T> fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException {
+      return executeWith(() -> OrmReader.statementToList(stmt, clazz, args));
    }
 
    /**
@@ -64,7 +74,7 @@ public class Q2ObjList {
     */
    public static <T> List<T> fromResultSet(ResultSet resultSet, Class<T> targetClass) throws SQLException
    {
-      return OrmReader.resultSetToList(resultSet, targetClass);
+      return executeWith(() -> OrmReader.resultSetToList(resultSet, targetClass));
    }
 
    /**
@@ -76,25 +86,35 @@ public class Q2ObjList {
     * @return The list of objects.
     * @see Q2Obj#fromClause(Connection, Class, String, Object...)
     */
-   public static <T> List<T> fromClause(Class<T> clazz, String clause, Object... args)
-   {
-      return SqlClosure.sqlExecute(c -> OrmReader.listFromClause(c, clazz, clause, args));
+   public static <T> List<T> fromClause(Class<T> clazz, String clause, Object... args) {
+      return sqlExecute(c -> OrmReader.listFromClause(c, clazz, clause, args));
+   }
+
+   private static <T> T sqlExecute(SqlFunction<T> function) {
+      if (!isSpringTxAware) {
+         return SqlClosure.sqlExecute(function);
+      }
+      else {
+         return SqlClosureSpringTxAware.sqlExecute(function);
+      }
    }
 
    public static <T> List<T> fromSelect(Class<T> clazz, String select, Object... args) {
-      return SqlClosure.sqlExecute(connection -> {
+      return sqlExecute(connection -> {
          PreparedStatement stmnt = connection.prepareStatement(select);
          return fromStatement(stmnt, clazz, args);
       });
    }
 
    public static <T> List<T> fromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
-      PreparedStatement stmnt = connection.prepareStatement(select);
-      return fromStatement(stmnt, clazz, args);
+      return executeWith(() -> {
+         PreparedStatement stmnt = connection.prepareStatement(select);
+         return fromStatement(stmnt, clazz, args);
+      });
    }
 
    public static <T> void insertBatched(Iterable<T> iterable) {
-      SqlClosure.sqlExecute((SqlFunction<T>) connection -> {
+      sqlExecute((SqlFunction<T>) connection -> {
          OrmWriter.insertListBatched(connection, iterable);
          return null;
       });
@@ -108,13 +128,15 @@ public class Q2ObjList {
     * @param <T> the class template
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> void insertNotBatched(Connection connection, Iterable<T> iterable) throws SQLException
-   {
-      OrmWriter.insertListNotBatched(connection, iterable);
+   public static <T> void insertNotBatched(Connection connection, Iterable<T> iterable) throws SQLException {
+      executeWith(() -> {
+         OrmWriter.insertListNotBatched(connection, iterable);
+         return null;
+      });
    }
 
    public static <T> void insertNotBatched(Iterable<T> iterable) {
-      SqlClosure.sqlExecute(connection -> {
+      sqlExecute(connection -> {
          OrmWriter.insertListNotBatched(connection, iterable);
          return null;
       });
@@ -128,15 +150,15 @@ public class Q2ObjList {
     * @param <T> the class template
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> void insertBatched(Connection connection, Iterable<T> iterable) throws SQLException
-   {
-      OrmWriter.insertListBatched(connection, iterable);
+   public static <T> void insertBatched(Connection connection, Iterable<T> iterable) throws SQLException {
+      executeWith(() -> {
+         OrmWriter.insertListBatched(connection, iterable);
+         return null;
+      });
    }
 
    public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
-      return SqlClosure.sqlExecute(connection -> {
-         return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
-      });
+      return sqlExecute(connection -> OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args));
    }
 
    /**
@@ -144,23 +166,21 @@ public class Q2ObjList {
     * @param whereClause withouth "where" (is prepended automatically).
     */
    public static int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
-      return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+      return executeWith(() -> OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args));
    }
 
    /**
     * Deletes all objects by its id(s) in a single bulk operation.
     */
    public static <T> int delete(Connection connection, Class<T> clazz, List<T> objects) throws SQLException {
-      return OrmWriter.deleteObjects(connection, clazz, objects);
+      return executeWith(() -> OrmWriter.deleteObjects(connection, clazz, objects));
    }
 
    /**
     * @see #delete(Connection, Class, List)
     */
    public static <T> int delete(Class<T> clazz, List<T> objects) {
-      return SqlClosure.sqlExecute(connection -> {
-         return OrmWriter.deleteObjects(connection, clazz, objects);
-      });
+      return sqlExecute(connection -> OrmWriter.deleteObjects(connection, clazz, objects));
    }
 
    /**
@@ -182,7 +202,6 @@ public class Q2ObjList {
     */
    public static <T> int delete(Connection connection, List<T> objects) throws SQLException {
       T obj = objects.get(0);
-      //noinspection unchecked
-      return OrmWriter.deleteObjects(connection, (Class<T>)obj.getClass(), objects);
+      return executeWith(() -> OrmWriter.deleteObjects(connection, (Class<T>) obj.getClass(), objects));
    }
 }

@@ -44,102 +44,61 @@ class Q2ObjSpringTxAware extends Q2Object {
 
    @Override
    <T> T byId(final Connection connection, final Class<T> clazz, final Object... args) {
-      try {
-         return super.byId(connection, clazz, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("byId", null, e);
-      }
+      return execute(() -> super.byId(connection, clazz, args));
    }
 
    @Override
    <T> T byId(final Connection connection, final T target) {
-      try {
-         return super.byId(connection, target);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("byId", null, e);
-      }
+      return execute(() -> super.byId(connection, target));
    }
 
    @Override
    <T> T fromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) {
-      try {
-         return super.fromClause(connection, clazz, clause, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("fromClause", clause, e);
-      }
+      return execute(() -> super.fromClause(connection, clazz, clause, args));
    }
 
    @Override
    <T> int countFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) {
-      try {
-         return super.countFromClause(connection, clazz, clause, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("countFromClause", clause, e);
-      }
+      return execute(() -> super.countFromClause(connection, clazz, clause, args));
    }
 
    @Override
    <T> T fromStatement(final PreparedStatement stmt, final Class<T> clazz, final Object... args) {
-      try {
-         return super.fromStatement(stmt, clazz, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("fromStatement", null, e);
-      }
+      return execute(() -> super.fromStatement(stmt, clazz, args));
    }
 
    @Override
    <T> T fromResultSet(final ResultSet resultSet, final T target) {
+      return execute(() -> super.fromResultSet(resultSet, target));
+   }
+
+   private <T> T execute(Query<T> query) {
       try {
-         return super.fromResultSet(resultSet, target);
+         return query.execute();
       }
       catch (SQLException e) {
-         throw exceptionTranslator.translate("fromResultSet", null, e);
+         throw exceptionTranslator.translate("", null, e);
       }
    }
 
    @Override
    <T> T fromResultSet(final ResultSet resultSet, final T target, final Set<String> ignoredColumns) {
-      try {
-         return super.fromResultSet(resultSet, target, ignoredColumns);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("fromResultSet", null, e);
-      }
+      return execute(() -> super.fromResultSet(resultSet, target, ignoredColumns));
    }
 
    @Override
    <T> T insert(final Connection connection, final T object) {
-      try {
-         return super.insert(connection, object);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("insert", null, e);
-      }
+      return execute(() -> super.insert(connection, object));
    }
 
    @Override
    <T> T update(final Connection connection, final T object) {
-      try {
-         return super.update(connection, object);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("update", null, e);
-      }
+      return execute(() -> super.update(connection, object));
    }
 
    @Override
    <T> T updateExcludeColumns(final Connection connection, final T object, final String... excludedColumns) {
-      try {
-         return super.updateExcludeColumns(connection, object, excludedColumns);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("updateExcludeColumns", null, e);
-      }
+      return execute(() -> super.updateExcludeColumns(connection, object, excludedColumns));
    }
 
    @Override
@@ -151,12 +110,7 @@ class Q2ObjSpringTxAware extends Q2Object {
 
    @Override
    <T> T updateIncludeColumns(final Connection connection, final T object, final String... includedColumns) {
-      try {
-         return super.updateIncludeColumns(connection, object, includedColumns);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("updateIncludeColumns", null, e);
-      }
+      return execute(() -> super.updateIncludeColumns(connection, object, includedColumns));
    }
 
    @Override
@@ -166,32 +120,17 @@ class Q2ObjSpringTxAware extends Q2Object {
 
    @Override
    <T> int delete(final Connection connection, final T target) {
-      try {
-         return super.delete(connection, target);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("delete", null, e);
-      }
+      return execute(() -> super.delete(connection, target));
    }
 
    @Override
    <T> int deleteById(final Connection connection, final Class<T> clazz, final Object... args) {
-      try {
-         return super.deleteById(connection, clazz, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("deleteById", null, e);
-      }
+      return execute(() -> super.deleteById(connection, clazz, args));
    }
 
    @Override
    <T> T refresh(final Connection connection, final T target) {
-      try {
-         return super.refresh(connection, target);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("refresh", null, e);
-      }
+      return execute(() -> super.refresh(connection, target));
    }
 
    @Override
@@ -253,28 +192,17 @@ class Q2ObjSpringTxAware extends Q2Object {
 
    @Override
    <T> T fromSelect(final Connection connection, final Class<T> clazz, final String select, final Object... args) {
-      try {
-         return super.fromSelect(connection, clazz, select, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("fromSelect", null, e);
-      }
+      return execute(() -> super.fromSelect(connection, clazz, select, args));
    }
 
    @Override
    int deleteByWhereClause(final Class<?> clazz, final String whereClause, final Object... args) {
-      return SqlClosureSpringTxAware.sqlExecute(connection -> {
-         return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
-      });
+      return SqlClosureSpringTxAware.sqlExecute(connection -> OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args));
    }
 
    @Override
    int deleteByWhereClause(final Connection connection, final Class<?> clazz, final String whereClause, final Object... args) {
-      try {
-         return super.deleteByWhereClause(connection, clazz, whereClause, args);
-      }
-      catch (SQLException e) {
-         throw exceptionTranslator.translate("deleteByWhereClause", null, e);
-      }
+      return execute(() -> super.deleteByWhereClause(connection, clazz, whereClause, args));
    }
+
 }
