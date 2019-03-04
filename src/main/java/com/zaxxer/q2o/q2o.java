@@ -55,8 +55,6 @@ public final class q2o {
     * To make q2o support spring managed transactions, if available.
     */
    public static DataSource initializeWithSpringTxSupport(DataSource dataSource) {
-//      SqlClosureSpringTxAware.setDefaultDataSource(dataSource);
-//      Q2Obj.q2Object = new Q2ObjSpringTxAware(dataSource);
       Q2Obj.q2Object = new Q2Object();
       Q2Sql.isSpringTxAware = true;
       Q2ObjList.isSpringTxAware = true;
@@ -75,16 +73,13 @@ public final class q2o {
       TransactionHelper.setUserTransaction(null);
       TransactionHelper.setTransactionManager(null);
       Q2Obj.q2Object = null;
-      Q2Sql.isSpringTxAware = false;
-      Q2ObjList.isSpringTxAware = false;
-      SqlClosure.isSpringTxAware = false;
    }
 
    public static void deinitializeWithSpringTxSupport() {
       deinitialize();
-//      Q2ObjSpringTxAware.setDefaultDataSource(null);
-//      SqlClosureSpringTxAware.setDefaultDataSource(null);
-      SqlClosure.setDefaultDataSource(null);
+      Q2Sql.isSpringTxAware = false;
+      Q2ObjList.isSpringTxAware = false;
+      SqlClosure.isSpringTxAware = false;
       SqlClosure.setDefaultExceptionTranslator(null);
    }
 }

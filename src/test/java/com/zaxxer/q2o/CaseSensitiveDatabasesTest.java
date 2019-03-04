@@ -3,11 +3,13 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
 import com.zaxxer.q2o.entities.InsertObjectH2;
 import org.h2.jdbcx.JdbcDataSource;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
 import org.sansorm.testutils.*;
 
@@ -16,6 +18,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
@@ -29,17 +33,37 @@ import static org.sansorm.TestUtils.makeH2DataSource;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 24.03.18
  */
+@RunWith(Parameterized.class)
 public class CaseSensitiveDatabasesTest {
 
-
-   @BeforeClass
-   public static void beforeClass() throws Exception {
-      q2o.initializeTxNone(null);
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {
+         {false}, {true}
+      });
    }
 
-   @AfterClass
-   public static void tearDown() {
-      q2o.deinitialize();
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTxSupport;
+
+   @Before
+   public void setUp() {
+      if (!withSpringTxSupport) {
+         q2o.initializeTxNone(null);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(null);
+      }
+   }
+
+   @After
+   public void tearDown() {
+      if (!withSpringTxSupport) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitializeWithSpringTxSupport();
+      }
    }
 
    @Rule

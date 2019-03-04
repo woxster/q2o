@@ -24,6 +24,7 @@ import static org.sansorm.TestUtils.makeH2DataSource;
 
 @RunWith(Parameterized.class)
 public class SqlClosureTransactionsTest {
+
    @Parameterized.Parameters(name = "autocommit={0}, ut={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
