@@ -28,8 +28,8 @@ import java.util.Set;
 * Encapsulates object, not SQL centric database operations. For SQL centric operations use {@link Q2Sql}.
 */
 //CHECKSTYLE:OFF
-public class Q2Object
-{
+public class Q2Object {
+
    Q2Object() { }
 
    // ------------------------------------------------------------------------

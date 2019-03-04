@@ -481,7 +481,7 @@ public class OneToOneTest {
 
    }
 
-   // TODO joins per composite primary key.
+   // IMPROVE joins per composite primary key.
 
    // ######### Utility methods ######################################################
 

@@ -479,8 +479,6 @@ public class OneToOneSpringTest {
 
    }
 
-   // TODO joins per composite primary key.
-
    // ######### Utility methods ######################################################
 
    private int getParameterCount(String s) {

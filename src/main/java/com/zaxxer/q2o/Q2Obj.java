@@ -29,7 +29,8 @@ import java.util.Set;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class Q2Obj {
 
-   static volatile Q2Object q2Object;
+   // To be downwards compatible. When calling only Q2Obj methods with connection argument, initializing q2o was optional.
+   static volatile Q2Object q2Object = new Q2Object();
 
    private Q2Obj() { }
 

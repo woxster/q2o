@@ -32,7 +32,6 @@ public class Left2 {
       this.right = right;
    }
 
-   // TODO Support properties/fields with no or only @Basic annotation
    @Column(name = "type")
    public String getType() {
       return type;

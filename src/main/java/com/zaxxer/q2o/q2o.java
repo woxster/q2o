@@ -31,6 +31,7 @@ public final class q2o {
     * @return dataSource that will be used for queries
     */
    public static DataSource initializeTxSimple(DataSource dataSource) {
+      Q2Obj.q2Object = new Q2Object();
       TxTransactionManager txManager = new TxTransactionManager(dataSource);
       return initializeTxCustom(txManager.getTxDataSource(), txManager, txManager);
    }
@@ -44,6 +45,7 @@ public final class q2o {
     * @return dataSource that will be used for queries
     */
    public static DataSource initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
+      Q2Obj.q2Object = new Q2Object();
       TransactionHelper.setTransactionManager(txManager);
       TransactionHelper.setUserTransaction(userTx);
       return initializeTxNone(dataSource);
@@ -53,10 +55,14 @@ public final class q2o {
     * To make q2o support spring managed transactions, if available.
     */
    public static DataSource initializeWithSpringTxSupport(DataSource dataSource) {
-      SqlClosureSpringTxAware.setDefaultDataSource(dataSource);
-      Q2Obj.q2Object = new Q2ObjSpringTxAware(dataSource);
+//      SqlClosureSpringTxAware.setDefaultDataSource(dataSource);
+//      Q2Obj.q2Object = new Q2ObjSpringTxAware(dataSource);
+      Q2Obj.q2Object = new Q2Object();
       Q2Sql.isSpringTxAware = true;
       Q2ObjList.isSpringTxAware = true;
+      SqlClosure.isSpringTxAware = true;
+      SqlClosure.setDefaultDataSource(dataSource);
+      SqlClosure.setDefaultExceptionTranslator(dataSource);
       return dataSource;
    }
 
@@ -71,11 +77,14 @@ public final class q2o {
       Q2Obj.q2Object = null;
       Q2Sql.isSpringTxAware = false;
       Q2ObjList.isSpringTxAware = false;
+      SqlClosure.isSpringTxAware = false;
    }
 
    public static void deinitializeWithSpringTxSupport() {
       deinitialize();
-      Q2ObjSpringTxAware.setDefaultDataSource(null);
-      SqlClosureSpringTxAware.setDefaultDataSource(null);
+//      Q2ObjSpringTxAware.setDefaultDataSource(null);
+//      SqlClosureSpringTxAware.setDefaultDataSource(null);
+      SqlClosure.setDefaultDataSource(null);
+      SqlClosure.setDefaultExceptionTranslator(null);
    }
 }

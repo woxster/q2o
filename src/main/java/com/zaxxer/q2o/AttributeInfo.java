@@ -1,7 +1,10 @@
 package com.zaxxer.q2o;
 
 import javax.persistence.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
@@ -106,7 +109,7 @@ abstract class AttributeInfo
       }
    }
 
-   // TODO Is duplicate of com.zaxxer.q2o.Introspected.extractClassTableName().
+   // IMPROVE Is duplicate of com.zaxxer.q2o.Introspected.extractClassTableName().
    private void extractOwnerClassTableName() {
       Entity entity = ownerClazz.getAnnotation(Entity.class);
       if (entity != null) {
@@ -348,7 +351,7 @@ abstract class AttributeInfo
          setColumnName(joinColumnAnnotation.name());
       }
       else {
-         // TODO "If the referencedColumnName element is missing, the foreign key is assumed to refer to the primary key of the referenced table."
+         // IMPROVE "If the referencedColumnName element is missing, the foreign key is assumed to refer to the primary key of the referenced table."
          String refColName = joinColumnAnnotation.referencedColumnName();
          setColumnName(refColName);
       }

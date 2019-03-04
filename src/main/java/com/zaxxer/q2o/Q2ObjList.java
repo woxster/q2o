@@ -40,7 +40,7 @@ public class Q2ObjList {
          return query.execute();
       }
       else {
-         return SqlClosureSpringTxAware.sqlExecute(query);
+         return SqlClosure.sqlExecute(query);
       }
    }
 
@@ -95,7 +95,7 @@ public class Q2ObjList {
          return SqlClosure.sqlExecute(function);
       }
       else {
-         return SqlClosureSpringTxAware.sqlExecute(function);
+         return SqlClosure.sqlExecute(function);
       }
    }
 

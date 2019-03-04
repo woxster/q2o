@@ -18,15 +18,27 @@ public class Q2Sql {
     */
    public static Number numberFromSql(String sql, Object... args)
    {
-      return sqlExecute(c -> numberFromSql(c, sql, args));
+      return sqlExecuteSpringTxAware(connection -> numberFromSql(connection, sql, args));
    }
 
-   private static <T> T sqlExecute(SqlFunction<T> function) {
+   private static <T> T sqlExecuteSpringTxAware(SqlFunction<T> function) {
       if (!isSpringTxAware) {
          return SqlClosure.sqlExecute(function);
       }
       else {
-         return SqlClosureSpringTxAware.sqlExecute(function);
+//         return SqlClosureSpringTxAware.sqlExecute(function);
+         return SqlClosure.sqlExecute(function);
+      }
+   }
+
+   private static <T> T sqlExecuteSpringTxAware(Query<T> function) throws SQLException {
+      if (!isSpringTxAware) {
+         // TODO Use SqlClosure to unify thrown Exceptions? Whatever q2o method is called it should return either SQLExceptions or map them to RuntimeExceptions.
+         return function.execute();
+      }
+      else {
+//         return SqlClosureSpringTxAware.sqlExecute(function);
+         return SqlClosure.sqlExecute(function);
       }
    }
 
@@ -37,7 +49,7 @@ public class Q2Sql {
     * @return the number of rows updated
     */
    public static int executeUpdate(final String sql, final Object... args) {
-      return sqlExecute(c -> executeUpdate(c, sql, args));
+      return sqlExecuteSpringTxAware(c -> executeUpdate(c, sql, args));
    }
 
    /**
@@ -96,7 +108,7 @@ public class Q2Sql {
     */
    public static Number numberFromSql(Connection connection, String sql, Object... args) throws SQLException
    {
-      return OrmReader.numberFromSql(connection, sql, args);
+      return sqlExecuteSpringTxAware(() -> OrmReader.numberFromSql(connection, sql, args));
    }
 
    /**
@@ -110,16 +122,16 @@ public class Q2Sql {
     */
    public static ResultSet executeQuery(Connection connection, String sql, Object... args) throws SQLException
    {
-      return OrmReader.statementToResultSet(connection.prepareStatement(sql), args);
+      return sqlExecuteSpringTxAware(() -> OrmReader.statementToResultSet(connection.prepareStatement(sql), args));
    }
 
    public static ResultSet executeQuery(String sql, Object... args) {
-      return SqlClosure.sqlExecute((connection, args1) -> executeQuery(connection, sql, args1));
+      return SqlClosure.sqlExecute((connection) -> executeQuery(connection, sql, args));
    }
 
    public static int executeUpdate(Connection connection, String sql, Object... args) throws SQLException
    {
-      return OrmWriter.executeUpdate(connection, sql, args);
+      return sqlExecuteSpringTxAware(() -> OrmWriter.executeUpdate(connection, sql, args));
    }
 
    /**

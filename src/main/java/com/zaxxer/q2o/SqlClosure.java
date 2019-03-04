@@ -16,6 +16,8 @@
 
 package com.zaxxer.q2o;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
+
 import javax.sql.DataSource;
 import java.sql.*;
 
@@ -25,32 +27,35 @@ import java.sql.*;
  *
  * @param <T> the templated return type of the closure
  */
-public class SqlClosure<T>
-{
-   private volatile static DataSource defaultDataSource;
-   private Object[] args;
+// TODO Auch SqlClosure muss automatisch umschalten auf DataSourceUtils. com.zaxxer.q2o.SqlClosureSpringTxAware ist dann vielleicht gar nicht mehr erforderlich.
+public class SqlClosure<T> {
+
+   // TODO Ensure all static variables in all involved classes are volatile
+   static volatile boolean isSpringTxAware;
+   private static volatile DataSource defaultDataSource;
+   private static volatile SQLExceptionTranslator defaultExceptionTranslator;
    private DataSource dataSource;
+   private SQLExceptionTranslator exceptionTranslator;
+   private Object[] args;
 
    /**
-    * Default constructor using the default DataSource, set with one of the methods in {@link q2o}. A RuntimeException is thrown if the default
-    * DataSource has not been set.
+    * Default constructor using the default DataSource, set with one of the methods in {@link q2o}.
     */
    public SqlClosure() {
-      dataSource = defaultDataSource;
-      if (dataSource == null) {
-         throw new RuntimeException("No default DataSource has been set");
-      }
+      initialize(null);
    }
 
    /**
     * A constructor taking arguments to be passed to the {@code execute(Connection connection, Object...args)}
     * method when the closure is executed.  Subclasses using this method must call {@code super(args)}.
-    * A RuntimeException is thrown if the default DataSource has not been set.
+    * <p>
+    * You must have initialized q2o with one of the methods in {@link q2o}. Do not rely on {@link #setDefaultDataSource(DataSource)}.
     *
     * @param args arguments to be passed to the execute method
     */
    public SqlClosure(final Object... args) {
       this.args = args;
+      initialize(null);
    }
 
    /**
@@ -59,7 +64,7 @@ public class SqlClosure<T>
     * @param ds the DataSource
     */
    public SqlClosure(final DataSource ds) {
-      dataSource = ds;
+      initialize(ds);
    }
 
    /**
@@ -71,29 +76,67 @@ public class SqlClosure<T>
     * @see SqlClosure(Object...args)
     */
    public SqlClosure(final DataSource ds, final Object... args) {
-      this.dataSource = ds;
       this.args = args;
+      initialize(ds);
+   }
+
+   private void initialize(final DataSource dataSource) {
+      if (defaultDataSource == null && dataSource == null) {
+         throw new RuntimeException("You must have initialized q2o with one of the methods in com.zaxxer.q2o.q2o.");
+      }
+      else if (dataSource == null) {
+         this.dataSource = defaultDataSource;
+         if (isSpringTxAware) {
+            this.exceptionTranslator = defaultExceptionTranslator;
+         }
+      }
+      else {
+         this.dataSource = dataSource;
+         if (isSpringTxAware) {
+            exceptionTranslator = newExceptionTranslator(dataSource);
+         }
+      }
+   }
+
+   private static SQLExceptionTranslator newExceptionTranslator(final DataSource dataSource) {
+      return new SQLExceptionTranslatorSpring(dataSource);
    }
 
    /**
     * Construct a SqlClosure with the same DataSource as the closure passed in.
     *
-    * @param copyClosure the SqlClosure to share a common DataSource with
+    * @param closure the SqlClosure to share a common DataSource with
     */
-   public SqlClosure(final SqlClosure copyClosure)
-   {
-      this.dataSource = copyClosure.dataSource;
+   public SqlClosure(final SqlClosure closure) {
+      initialize(closure.dataSource);
    }
 
    /**
     * Set the default DataSource used by the SqlClosure when the default constructor
-    * is used.
+    * is used. Do not use. It is only public to provide some SansOrm compatibility. When internally used {@link #isSpringTxAware} must be set previously.
     *
-    * @param ds the DataSource to use by the default
+    * @param ds the DataSource to use by the default. Called with null from {@link q2o#deinitialize()}.
+    * @deprecated
     */
-   // TODO temporarily public to provide some SansOrm compatibility
+   // IMPROVE temporarily public to provide some SansOrm compatibility
    public static void setDefaultDataSource(final DataSource ds) {
       defaultDataSource = ds;
+   }
+
+   public static void setDefaultExceptionTranslator(DataSource dataSource) {
+      defaultExceptionTranslator = dataSource != null ? newExceptionTranslator(dataSource) : null;
+   }
+
+   /**
+    * To map SQLExceptions to Spring's {@link org.springframework.dao.DataAccessException} Types. Query must bring its own connection.
+    */
+   static <V> V sqlExecute(Query<V> query) {
+      return new SqlClosure<V>() {
+         @Override
+         public V execute(Connection connection) throws SQLException {
+            return query.execute();
+         }
+      }.executeQuery();
    }
 
    /**
@@ -179,8 +222,34 @@ public class SqlClosure<T>
     *
     * @return the template return type of the closure
     */
-   public final T execute()
-   {
+   public final T execute() {
+      if (!isSpringTxAware) {
+         return executeWithoutSpringSupport();
+      }
+      else {
+         return executeWithSpringSupport();
+      }
+   }
+
+   private T executeWithSpringSupport() {
+      Connection connection = null;
+      try {
+         connection = DataSourceUtils.getConnection(dataSource);
+         return (args == null)
+            ? execute(connection)
+            : execute(connection, args);
+      }
+      catch (SQLException e) {
+         throw exceptionTranslator.translate("", null, e);
+      }
+      finally {
+         if (connection != null) {
+            DataSourceUtils.releaseConnection(connection, dataSource);
+         }
+      }
+   }
+
+   private T executeWithoutSpringSupport() {
       boolean isTxOwner = !TransactionHelper.hasTransactionManager() || TransactionHelper.beginOrJoinTransaction();
       Connection connection = null;
       try {
@@ -338,5 +407,14 @@ public class SqlClosure<T>
 
    public static ResultSet statementToResultSet(PreparedStatement stmnt, Object... args) throws SQLException {
       return OrmReader.statementToResultSet(stmnt, args);
+   }
+
+   final T executeQuery() {
+      try {
+         return execute(null);
+      }
+      catch (SQLException e) {
+         throw exceptionTranslator.translate("", null, e);
+      }
    }
 }
