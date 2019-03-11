@@ -1,31 +1,64 @@
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.Introspected;
-import com.zaxxer.q2o.Q2Obj;
-import com.zaxxer.q2o.q2o;
-import com.zaxxer.q2o.Q2Sql;
-import org.h2.jdbcx.JdbcDataSource;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
 
-import static com.zaxxer.q2o.Q2Obj.*;
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static org.junit.Assert.*;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 22.04.18
  */
+@RunWith(Parameterized.class)
 public class CompositeKeyTest {
+
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+   	return Arrays.asList(new Object[][] {
+   		{false}, {true}
+   	});
+   }
+
+   @Parameterized.Parameter(0)
+   public boolean withSpringTx;
+   private DataSource ds;
+
+   @Before
+   public void setUp() throws Exception {
+      ds = TestUtils.makeH2DataSource();
+      if (!withSpringTx) {
+         q2o.initializeTxNone(ds);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(ds);
+      }
+   }
+
+   @After
+   public void tearDown() throws Exception {
+      if (!withSpringTx) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
+   }
 
    @Rule
    public ExpectedException thrown = ExpectedException.none();
@@ -59,11 +92,8 @@ public class CompositeKeyTest {
 
    @Test
    public void insertObjectCompositeKeyH2() throws SQLException {
-
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -75,32 +105,29 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = insert(new TestClass2());
+         TestClass2 obj = Q2Obj.insert(new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = byId(TestClass2.class, obj.id1, obj.id2);
+         obj = Q2Obj.byId(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
 
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "update TestClass2 set field = 'changed'");
 
-         TestClass2 obj2 = refresh(con, obj);
-         assertTrue(obj == obj2);
+         TestClass2 obj2 = Q2Obj.refresh(con, obj);
+         assertSame(obj, obj2);
          assertEquals("changed", obj.field);
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE TestClass2");
       }
    }
 
    @Test
    public void updateObjectCompositeKeyH2() throws SQLException {
-
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -112,31 +139,28 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = insert(new TestClass2());
+         TestClass2 obj = Q2Obj.insert(new TestClass2());
 
-         obj = byId(obj.getClass(), obj.id1, obj.id2);
+         obj = Q2Obj.byId(obj.getClass(), obj.id1, obj.id2);
          assertNotNull(obj);
-         assertEquals(null, obj.field);
+         assertNull(obj.field);
 
          obj.field = "changed";
-         update(con, obj);
-         obj = byId(con, obj.getClass(), obj.id1, obj.id2);
+         Q2Obj.update(con, obj);
+         obj = Q2Obj.byId(con, obj.getClass(), obj.id1, obj.id2);
          assertEquals("changed", obj.field);
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE TestClass2");
       }
    }
 
    @Test
    public void deleteObjectCompositeKeyH2() throws SQLException {
-
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -148,16 +172,16 @@ public class CompositeKeyTest {
          String id2 = "id2";
          String field = "field";
 
-         TestClass2 obj = insert(new TestClass2());
-         int rowCount = countFromClause(con, obj.getClass(), "field is null");
+         TestClass2 obj = Q2Obj.insert(new TestClass2());
+         int rowCount = Q2Obj.countFromClause(con, obj.getClass(), "field is null");
          assertEquals(1, rowCount);
 
-         delete(con, obj);
-         rowCount = countFromClause(con, obj.getClass(), "field is null");
+         Q2Obj.delete(con, obj);
+         rowCount = Q2Obj.countFromClause(con, obj.getClass(), "field is null");
          assertEquals(0, 0);
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE TestClass2");
       }
    }

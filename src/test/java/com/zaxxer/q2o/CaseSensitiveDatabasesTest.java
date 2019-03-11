@@ -62,7 +62,7 @@ public class CaseSensitiveDatabasesTest {
          q2o.deinitialize();
       }
       else {
-         q2o.deinitializeWithSpringTxSupport();
+         q2o.deinitialize();
       }
    }
 

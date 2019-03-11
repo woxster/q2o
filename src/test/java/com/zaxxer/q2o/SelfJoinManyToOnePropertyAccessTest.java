@@ -10,9 +10,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.zaxxer.q2o.OrmWriter.insertObject;
-import static com.zaxxer.q2o.Q2Obj.*;
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static java.lang.System.out;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -25,7 +22,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -37,24 +34,24 @@ public class SelfJoinManyToOnePropertyAccessTest {
          // store parent
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
          parent.setType("parent");
-         insert(parent);
+         Q2Obj.insert(parent);
          assertTrue(parent.getId() > 0);
 
          // SansOrm does not persist child when parent is persisted
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
          child.setType("child");
          child.setParentId(parent);
-         update(parent);
+         Q2Obj.update(parent);
          assertEquals(0, child.getId());
 
          // persist child explicitely. parentId from parent is also stored.
-         insertObject(con, child);
+         OrmWriter.insertObject(con, child);
          assertTrue(child.getId() > 0);
-         int count = countFromClause(PropertyAccessedSelfJoin.class, null);
+         int count = Q2Obj.countFromClause(PropertyAccessedSelfJoin.class, null);
          assertEquals(2, count);
 
          // Load child together with parent instance. Only parent id is restored on parent instance, no further attributes.
-         PropertyAccessedSelfJoin childFromDb = fromClause
+         PropertyAccessedSelfJoin childFromDb = Q2Obj.fromClause
             (PropertyAccessedSelfJoin.class, "id=2");
 //         PropertyAccessedOneToOneSelfJoin childFromDb = Q2Obj.objectById(con, PropertyAccessedOneToOneSelfJoin.class, 2);
          assertNotNull(childFromDb.getParentId());
@@ -62,11 +59,11 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
          // To add remaining attributes to parent reload
          assertEquals(null, childFromDb.getParentId().getType());
-         refresh(con, childFromDb.getParentId());
+         Q2Obj.refresh(con, childFromDb.getParentId());
          assertEquals("parent", childFromDb.getParentId().getType());
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE JOINTEST");
       }
    }
@@ -77,7 +74,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -88,19 +85,19 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
          parent.setType("parent");
-         insert(parent);
+         Q2Obj.insert(parent);
 
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
          child.setType("child");
          child.setParentId(parent);
-         insertObject(con, child);
+         OrmWriter.insertObject(con, child);
 
          List<PropertyAccessedSelfJoin> objs = Q2ObjList.fromClause(PropertyAccessedSelfJoin.class, "id=2");
          objs.forEach(out::println);
          assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE JOINTEST");
       }
    }
@@ -111,7 +108,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -122,12 +119,12 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
          parent.setType("parent");
-         insert(parent);
+         Q2Obj.insert(parent);
 
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
          child.setType("child");
          child.setParentId(parent);
-         insertObject(con, child);
+         OrmWriter.insertObject(con, child);
 
          List<PropertyAccessedSelfJoin> objs = Q2ObjList.fromClause(PropertyAccessedSelfJoin.class, "type like '%'");
          objs.forEach(out::println);
@@ -175,7 +172,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -186,11 +183,11 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
          PropertyAccessedSelfJoin parent = new PropertyAccessedSelfJoin();
          parent.setType("parent");
-         insert(parent);
+         Q2Obj.insert(parent);
 
          PropertyAccessedSelfJoin parent2 = new PropertyAccessedSelfJoin();
          parent2.setType("parent");
-         insert(parent2);
+         Q2Obj.insert(parent2);
 
          PropertyAccessedSelfJoin child = new PropertyAccessedSelfJoin();
          child.setType("child");
@@ -208,7 +205,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE JOINTEST");
       }
    }

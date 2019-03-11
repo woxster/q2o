@@ -34,7 +34,7 @@ public class Query2SpringTest
    @AfterClass
    public static void afterClass() {
       Q2Sql.executeUpdate("drop table TargetClass2");
-      q2o.deinitializeWithSpringTxSupport();
+      q2o.deinitialize();
    }
 
    /**

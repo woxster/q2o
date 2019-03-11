@@ -1,33 +1,55 @@
 package com.zaxxer.q2o;
 
 import org.h2.jdbcx.JdbcDataSource;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
 
 import javax.persistence.Id;
-import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.Collection;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 25.05.18
  */
+@RunWith(Parameterized.class)
 public class Q2ObjListTest {
 
-
-   private static DataSource dataSource;
-
-   @BeforeClass
-   public static void beforeClass() throws Exception {
-      dataSource = q2o.initializeTxNone(TestUtils.makeH2DataSource());
+   @Parameterized.Parameters(name = "withSpringTxSupport={0}")
+   public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {
+         {false}, {true}
+      });
    }
 
-   @AfterClass
-   public static void afterClass() throws Exception {
-      q2o.deinitialize();
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTx;
+
+   @Before
+   public void setUp() throws Exception {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      if (!withSpringTx) {
+         q2o.initializeTxNone(ds);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(ds);
+      }
+   }
+
+   @After
+   public void tearDown() throws Exception {
+      if (!withSpringTx) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    public static class MyTest {

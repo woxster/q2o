@@ -73,13 +73,10 @@ public final class q2o {
       TransactionHelper.setUserTransaction(null);
       TransactionHelper.setTransactionManager(null);
       Q2Obj.q2Object = null;
-   }
-
-   public static void deinitializeWithSpringTxSupport() {
-      deinitialize();
       Q2Sql.isSpringTxAware = false;
       Q2ObjList.isSpringTxAware = false;
       SqlClosure.isSpringTxAware = false;
       SqlClosure.setDefaultExceptionTranslator(null);
    }
+
 }

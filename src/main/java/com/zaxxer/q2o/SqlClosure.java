@@ -27,7 +27,6 @@ import java.sql.*;
  *
  * @param <T> the templated return type of the closure
  */
-// TODO Auch SqlClosure muss automatisch umschalten auf DataSourceUtils. com.zaxxer.q2o.SqlClosureSpringTxAware ist dann vielleicht gar nicht mehr erforderlich.
 public class SqlClosure<T> {
 
    // TODO Ensure all static variables in all involved classes are volatile

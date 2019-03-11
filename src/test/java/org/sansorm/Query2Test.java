@@ -4,11 +4,13 @@ import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2ObjList;
 import com.zaxxer.q2o.Q2Sql;
 import com.zaxxer.q2o.q2o;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.h2.jdbcx.JdbcDataSource;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -18,8 +20,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
 
-public class Query2Test
-{
+@RunWith(Parameterized.class)
+public class Query2Test {
+
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+   	return Arrays.asList(new Object[][] {
+   		{false}, {true},
+   	});
+   }
+
+   @Parameterized.Parameter(0)
+   public boolean withSpringTx;
+
    @BeforeClass
    public static void beforeClass() throws Throwable {
       q2o.initializeTxNone(makeH2DataSource());
@@ -29,13 +42,39 @@ public class Query2Test
             + " string VARCHAR(128),"
             + " someDate TIMESTAMP," // H2 is case-insensitive to column case, ResultSet::getMetaData will return it as SOMEDATE
             + " )");
+      q2o.deinitialize();
+   }
+
+   @Before
+   public void setUp() throws Exception {
+      JdbcDataSource dataSource = makeH2DataSource();
+      if (!withSpringTx) {
+         q2o.initializeTxNone(dataSource);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(dataSource);
+      }
+   }
+
+   @After
+   public void tearDown() throws Exception {
+      if (!withSpringTx) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    @AfterClass
-   public static void afterClass()
-   {
-      Q2Sql.executeUpdate("drop table TargetClass2");
-      q2o.deinitialize();
+   public static void afterClass() {
+      q2o.initializeTxNone(makeH2DataSource());
+      try {
+         Q2Sql.executeUpdate("drop table TargetClass2");
+      }
+      finally {
+         q2o.deinitialize();
+      }
    }
 
    /**

@@ -2,30 +2,44 @@ package org.sansorm.sqlite;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.q2o.*;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.zaxxer.q2o.Q2Sql.executeUpdate;
-import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeSQLiteDataSource;
 
+@RunWith(Parameterized.class)
 public class SQLiteQueryTest {
+
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+   	return Arrays.asList(new Object[][] {
+   		{false}, {true}
+   	});
+   }
+
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTx;
 
    public static Closeable prepareSQLiteDatasource(File db) {
       HikariDataSource hds = makeSQLiteDataSource(db);
-      initializeTxNone(hds);
+      if (!withSpringTx) {
+         q2o.initializeTxNone(hds);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(hds);
+      }
       executeUpdate(
          "CREATE TABLE IF NOT EXISTS TargetClassSQL ("
             + "id integer PRIMARY KEY AUTOINCREMENT,"
@@ -35,10 +49,14 @@ public class SQLiteQueryTest {
       return hds; // to close it properly
    }
 
-   @AfterClass
-   public static void tearDown()
-   {
-      q2o.deinitialize();
+   @After
+   public void tearDown() throws Exception {
+      if (!withSpringTx) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    @Test

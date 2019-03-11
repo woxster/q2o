@@ -6,7 +6,8 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sansorm.testutils.DummyConnection;
 import org.sansorm.testutils.DummyParameterMetaData;
 import org.sansorm.testutils.DummyStatement;
@@ -19,26 +20,50 @@ import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 10.04.18
  */
+@RunWith(Parameterized.class)
 public class Q2ObjTest {
+
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {
+         {false},{true}
+      });
+   }
+
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTxSupport;
 
    @Before
    public void setUp() throws Exception {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
+      JdbcDataSource dataSource = makeH2DataSource();
+      if (!withSpringTxSupport) {
+         q2o.initializeTxNone(dataSource);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(dataSource);
+      }
    }
 
    @After
-   public void tearDown() throws Exception {
-      q2o.deinitialize();
+   public void tearDown() {
+      if (!withSpringTxSupport) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    @Test

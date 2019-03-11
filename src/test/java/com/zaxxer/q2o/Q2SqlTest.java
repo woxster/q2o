@@ -2,21 +2,53 @@ package com.zaxxer.q2o;
 
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 23.10.18
  */
+@RunWith(Parameterized.class)
 public class Q2SqlTest {
+
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {
+         {false}, {true}
+      });
+   }
+
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTxSupport;
+
+   @Before
+   public void setUp() {
+      if (!withSpringTxSupport) {
+         q2o.initializeTxNone(null);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(null);
+      }
+   }
+
    @After
-   public void tearDown() throws Exception {
-      q2o.deinitialize();
+   public void tearDown() {
+      if (!withSpringTxSupport) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    @Test
@@ -35,6 +67,7 @@ public class Q2SqlTest {
 
 
          ResultSet rs = Q2Sql.executeQuery(con,"SELECT * FROM MY_TABLE where id > ?", 0);
+         // TODO assertion missed
          while (rs.next()) {
             System.out.println(rs.getString("type"));
          }

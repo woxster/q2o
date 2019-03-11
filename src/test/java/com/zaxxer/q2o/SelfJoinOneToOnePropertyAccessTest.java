@@ -12,7 +12,6 @@ import java.util.List;
 
 import static com.zaxxer.q2o.OrmWriter.insertObject;
 import static com.zaxxer.q2o.Q2Obj.*;
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static java.lang.System.out;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -26,7 +25,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -67,7 +66,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
          assertEquals("parent", childFromDb.getParentId().getType());
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE JOINTEST");
       }
    }
@@ -78,7 +77,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -101,7 +100,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
          assertThat(objs).filteredOn(obj -> obj.getParentId() != null && obj.getParentId().getId() == 1).size().isEqualTo(1);
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE JOINTEST");
       }
    }
@@ -112,7 +111,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE JOINTEST (" +
                " "
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -145,7 +144,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE JOINTEST");
       }
    }

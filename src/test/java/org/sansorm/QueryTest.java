@@ -1,44 +1,83 @@
 package org.sansorm;
 
 import com.zaxxer.q2o.*;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.h2.jdbcx.JdbcDataSource;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static com.zaxxer.q2o.Q2Obj.insert;
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
-import static com.zaxxer.q2o.q2o.initializeTxNone;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
-public class QueryTest
-{
+@RunWith(Parameterized.class)
+public class QueryTest {
+
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+   	return Arrays.asList(new Object[][] {
+   		{false},{true}
+   	});
+   }
+
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTxSupport;
+
    @BeforeClass
-   public static void setup() {
-      initializeTxNone(makeH2DataSource());
-      executeUpdate(
-         "CREATE TABLE target_class1 ("
-            + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-            + "timestamp TIMESTAMP, "
-            + "string VARCHAR(128), "
-            + "string_from_number NUMERIC "
-            + ")");
+   public static void beforeClass() {
+      q2o.initializeTxNone(makeH2DataSource());
+      try {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE target_class1 ("
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
+               + "timestamp TIMESTAMP, "
+               + "string VARCHAR(128), "
+               + "string_from_number NUMERIC "
+               + ")");
+      }
+      finally {
+         q2o.deinitialize();
+      }
+   }
+
+   @Before
+   public void setUp() throws Exception {
+      JdbcDataSource dataSource = makeH2DataSource();
+      if (!withSpringTxSupport) {
+         q2o.initializeTxNone(dataSource);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(dataSource);
+      }
+   }
+
+   @After
+   public void tearDown() {
+      if (!withSpringTxSupport) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    @AfterClass
-   public static void tearDown()
-   {
-      q2o.deinitialize();
+   public static void afterClass() throws Exception {
+      q2o.initializeTxNone(makeH2DataSource());
+      try {
+         Q2Sql.executeUpdate(
+            "DROP TABLE target_class1");
+      }
+      finally {
+         q2o.deinitialize();
+      }
    }
 
    @Test

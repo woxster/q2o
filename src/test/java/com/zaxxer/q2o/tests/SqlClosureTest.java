@@ -2,25 +2,39 @@ package com.zaxxer.q2o.tests;
 
 import com.zaxxer.q2o.*;
 import org.h2.jdbcx.JdbcDataSource;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 24.10.18
  */
+@RunWith(Parameterized.class)
 public class SqlClosureTest {
 
+   @Parameterized.Parameters(name = "springTxSupport={0}")
+   public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {
+         {false},{true}
+      });
+   }
+
+   @Parameterized.Parameter(0)
+   public static boolean withSpringTxSupport;
+
    @BeforeClass
-   public static void setUp() throws Exception {
+   public static void beforeClass() throws Exception {
       JdbcDataSource ds = TestUtils.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
@@ -36,11 +50,42 @@ public class SqlClosureTest {
       catch (Exception e) {
          throw e;
       }
+      finally {
+         q2o.deinitialize();
+      }
+   }
+
+   @Before
+   public void setUp() throws Exception {
+      JdbcDataSource dataSource = makeH2DataSource();
+      if (!withSpringTxSupport) {
+         q2o.initializeTxNone(dataSource);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(dataSource);
+      }
+   }
+
+   @After
+   public void tearDown() {
+      if (!withSpringTxSupport) {
+         q2o.deinitialize();
+      }
+      else {
+         q2o.deinitialize();
+      }
    }
 
    @AfterClass
-   public static void tearDown() {
-      q2o.deinitialize();
+   public static void afterClass() throws Exception {
+      q2o.initializeTxNone(makeH2DataSource());
+      try {
+         Q2Sql.executeUpdate(
+            "DROP TABLE USERS");
+      }
+      finally {
+         q2o.deinitialize();
+      }
    }
 
    /**

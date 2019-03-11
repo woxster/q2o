@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNotNull;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 04.05.18
  */
+// TODO Rename to OneToOneTest
 @RunWith(Parameterized.class)
 public class OneToOneSpringTest {
 
@@ -60,7 +61,7 @@ public class OneToOneSpringTest {
          q2o.deinitialize();
       }
       else {
-         q2o.deinitializeWithSpringTxSupport();
+         q2o.deinitialize();
       }
    }
 
