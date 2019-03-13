@@ -156,7 +156,7 @@
                   <exclude>TomcatTestSuite.java</exclude>
                   <exclude>UserTransactionTest.java</exclude>
                </excludes>
-               <testFailureIgnore>true</testFailureIgnore>
+               <!--<testFailureIgnore>true</testFailureIgnore>-->
             </configuration>
          </plugin>
          <plugin>
