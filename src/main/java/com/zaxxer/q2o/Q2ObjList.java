@@ -7,14 +7,12 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Note the difference between methods taking a connection, PreparedStatement or ResultSet and those that do not. See {@link Q2Obj}.
+ * Note the differences between methods taking a connection, PreparedStatement or ResultSet and those that do not. See {@link Q2Obj}.
  *
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 21.05.18
  */
 public class Q2ObjList {
-
-   static volatile boolean isSpringTxAware;
 
    /**
     * Load a list of objects using the specified where condition.  The clause "WHERE" is automatically
@@ -80,20 +78,11 @@ public class Q2ObjList {
     * @see Q2Obj#fromClause(Connection, Class, String, Object...)
     */
    public static <T> List<T> fromClause(Class<T> clazz, String clause, Object... args) {
-      return sqlExecute(c -> OrmReader.listFromClause(c, clazz, clause, args));
-   }
-
-   private static <T> T sqlExecute(SqlFunction<T> function) {
-      if (!isSpringTxAware) {
-         return SqlClosure.sqlExecute(function);
-      }
-      else {
-         return SqlClosure.sqlExecute(function);
-      }
+      return SqlClosure.sqlExecute(c -> OrmReader.listFromClause(c, clazz, clause, args));
    }
 
    public static <T> List<T> fromSelect(Class<T> clazz, String select, Object... args) {
-      return sqlExecute(connection -> {
+      return SqlClosure.sqlExecute(connection -> {
          PreparedStatement stmnt = connection.prepareStatement(select);
          return fromStatement(stmnt, clazz, args);
       });
@@ -105,7 +94,7 @@ public class Q2ObjList {
    }
 
    public static <T> void insertBatched(Iterable<T> iterable) {
-      sqlExecute((SqlFunction<T>) connection -> {
+      SqlClosure.sqlExecute((SqlFunction<T>) connection -> {
          OrmWriter.insertListBatched(connection, iterable);
          return null;
       });
@@ -124,7 +113,7 @@ public class Q2ObjList {
    }
 
    public static <T> void insertNotBatched(Iterable<T> iterable) {
-      sqlExecute(connection -> {
+      SqlClosure.sqlExecute(connection -> {
          OrmWriter.insertListNotBatched(connection, iterable);
          return null;
       });
@@ -143,7 +132,7 @@ public class Q2ObjList {
    }
 
    public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
-      return sqlExecute(connection -> OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args));
+      return SqlClosure.sqlExecute(connection -> OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args));
    }
 
    /**
@@ -165,7 +154,7 @@ public class Q2ObjList {
     * @see #delete(Connection, Class, List)
     */
    public static <T> int delete(Class<T> clazz, List<T> objects) {
-      return sqlExecute(connection -> OrmWriter.deleteObjects(connection, clazz, objects));
+      return SqlClosure.sqlExecute(connection -> OrmWriter.deleteObjects(connection, clazz, objects));
    }
 
    /**
