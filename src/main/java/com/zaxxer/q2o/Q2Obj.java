@@ -31,8 +31,7 @@ import java.util.Set;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class Q2Obj {
 
-   // To be downwards compatible. When calling only Q2Obj methods with connection argument, initializing q2o was optional.
-   static volatile Q2Object q2Object = new Q2Object();
+   static volatile Q2Object q2Object;
 
    private Q2Obj() { }
 
@@ -86,7 +85,7 @@ public final class Q2Obj {
     */
    public static <T> T fromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return q2Object.fromClause(connection, clazz, clause, args);
+      return OrmReader.objectFromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -161,7 +160,7 @@ public final class Q2Obj {
     */
    public static <T> T insert(Connection connection, T object) throws SQLException
    {
-      return q2Object.insert(connection, object);
+      return OrmWriter.insertObject(connection, object);
    }
 
    /**
@@ -176,12 +175,12 @@ public final class Q2Obj {
     */
    public static <T> T update(Connection connection, T object) throws SQLException
    {
-      return q2Object.update(connection, object);
+      return OrmWriter.updateObject(connection, object);
    }
 
    public static <T> T updateExcludeColumns(Connection connection, T object, String... excludedColumns) throws SQLException
    {
-      return q2Object.updateExcludeColumns(connection, object, excludedColumns);
+      return new Q2Object().updateExcludeColumns(connection, object, excludedColumns);
    }
 
    public static <T> T updateExcludeColumns(T object, String... excludedColumns) {
@@ -196,7 +195,7 @@ public final class Q2Obj {
     */
    public static <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
    {
-      return q2Object.updateIncludeColumns(connection, object, includedColumns);
+      return new Q2Object().updateIncludeColumns(connection, object, includedColumns);
    }
 
    /**
@@ -244,7 +243,7 @@ public final class Q2Obj {
     * @param <T> the type of the target object
     */
    public static <T> T refresh(Connection connection, T target) throws SQLException {
-      return q2Object.refresh(connection, target);
+      return OrmReader.refresh(connection, target);
    }
 
    public static <T> T refresh(T target) {
@@ -352,7 +351,8 @@ public final class Q2Obj {
     * @see #fromSelect(Class, String, Object...)
     */
    public static <T> T fromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
-      return q2Object.fromSelect(connection, clazz, select, args);
+      PreparedStatement stmnt = connection.prepareStatement(select);
+      return fromStatement(stmnt, clazz, args);
    }
 
    public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
