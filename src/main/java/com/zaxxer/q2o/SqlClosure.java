@@ -29,7 +29,6 @@ import java.sql.*;
  */
 public class SqlClosure<T> {
 
-   // TODO Ensure all static variables in all involved classes are volatile
    static volatile boolean isSpringTxAware;
    private static volatile DataSource defaultDataSource;
    private static volatile SQLExceptionTranslator defaultExceptionTranslator;

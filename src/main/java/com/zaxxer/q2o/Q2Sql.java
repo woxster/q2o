@@ -33,11 +33,10 @@ public class Q2Sql {
 
    private static <T> T sqlExecuteSpringTxAware(Query<T> function) throws SQLException {
       if (!isSpringTxAware) {
-         // TODO Use SqlClosure to unify thrown Exceptions? Whatever q2o method is called it should return either SQLExceptions or map them to RuntimeExceptions.
+         // IMPROVE Use SqlClosure to unify thrown Exceptions? Whatever q2o method is called it should return either SQLExceptions or map them to RuntimeExceptions.
          return function.execute();
       }
       else {
-//         return SqlClosureSpringTxAware.sqlExecute(function);
          return SqlClosure.sqlExecute(function);
       }
    }

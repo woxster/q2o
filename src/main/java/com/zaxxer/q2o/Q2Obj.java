@@ -23,7 +23,9 @@ import java.sql.SQLException;
 import java.util.Set;
 
 /**
- * Encapsulates object-, not SQL-centric database operations. For SQL -centric operations use {@link Q2Sql}.
+ * Encapsulates object-, not SQL-centric database operations. For SQL-centric operations use {@link Q2Sql}.
+ * <p>
+ * Methods with connection argument or those taking a ResultSet or PreparedStatement do work without q2o having been initialized. No exception translation is performed. So you have to deal with SQLExceptions on your own.
  */
 //CHECKSTYLE:OFF
 @SuppressWarnings({"WeakerAccess", "unused"})
@@ -51,7 +53,7 @@ public final class Q2Obj {
     */
    public static <T> T byId(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
-      return q2Object.byId(connection, clazz, args);
+      return OrmReader.objectById(connection, clazz, args);
    }
 
    /**
@@ -62,7 +64,7 @@ public final class Q2Obj {
     */
    public static <T> T byId(Connection connection, T target) throws SQLException
    {
-      return q2Object.byId(connection, target);
+      return OrmReader.objectById(connection, target);
    }
 
    /**
@@ -100,7 +102,7 @@ public final class Q2Obj {
     */
    public static <T> int countFromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
-      return q2Object.countFromClause(connection, clazz, clause, args);
+      return OrmReader.countObjectsFromClause(connection, clazz, clause, args);
    }
 
    /**
@@ -117,7 +119,7 @@ public final class Q2Obj {
     */
    public static <T> T fromStatement(PreparedStatement stmt, Class<T> clazz, Object... args) throws SQLException
    {
-      return q2Object.fromStatement(stmt, clazz, args);
+      return OrmReader.statementToObject(stmt, clazz, args);
    }
 
    /**
@@ -125,7 +127,7 @@ public final class Q2Obj {
     */
    public static <T> T fromResultSet(ResultSet resultSet, T target) throws SQLException
    {
-      return q2Object.fromResultSet(resultSet, target);
+      return OrmReader.resultSetToObject(resultSet, target);
    }
 
    /**
@@ -141,7 +143,7 @@ public final class Q2Obj {
     */
    public static <T> T fromResultSet(ResultSet resultSet, T target, Set<String> ignoredColumns) throws SQLException
    {
-      return q2Object.fromResultSet(resultSet, target, ignoredColumns);
+      return OrmReader.resultSetToObject(resultSet, target, ignoredColumns);
    }
 
    // ------------------------------------------------------------------------
@@ -216,7 +218,7 @@ public final class Q2Obj {
     */
    public static <T> int delete(Connection connection, T target) throws SQLException
    {
-      return q2Object.delete(connection, target);
+      return OrmWriter.deleteObject(connection, target);
    }
 
    /**
@@ -224,7 +226,7 @@ public final class Q2Obj {
     */
    public static <T> int deleteById(Connection connection, Class<T> clazz, Object... args) throws SQLException
    {
-      return q2Object.deleteById(connection, clazz, args);
+      return OrmWriter.deleteObjectById(connection, clazz, args);
    }
 
    // ------------------------------------------------------------------------
@@ -245,7 +247,7 @@ public final class Q2Obj {
       return q2Object.refresh(connection, target);
    }
 
-   public static <T> T refresh(T target) throws SQLException {
+   public static <T> T refresh(T target) {
       return q2Object.refresh(target);
    }
 
@@ -363,7 +365,7 @@ public final class Q2Obj {
     * @param whereClause withouth "where"
     */
    public static int deleteByWhereClause(final Connection connection, Class<?> clazz, String whereClause, Object... args) throws SQLException {
-      return q2Object.deleteByWhereClause(connection, clazz, whereClause, args);
+      return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
    }
 
 }
