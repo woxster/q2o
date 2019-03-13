@@ -20,6 +20,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,8 +32,6 @@ import java.util.Set;
 //CHECKSTYLE:OFF
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class Q2Obj {
-
-   static volatile Q2Object q2Object;
 
    private Q2Obj() { }
 
@@ -180,11 +180,15 @@ public final class Q2Obj {
 
    public static <T> T updateExcludeColumns(Connection connection, T object, String... excludedColumns) throws SQLException
    {
-      return new Q2Object().updateExcludeColumns(connection, object, excludedColumns);
+      HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
+      excludedCols.addAll(Arrays.asList(excludedColumns));
+      return OrmWriter.updateObject(connection, object, excludedCols);
    }
 
    public static <T> T updateExcludeColumns(T object, String... excludedColumns) {
-      return q2Object.updateExcludeColumns(object, excludedColumns);
+      HashSet<String> excludedCols = new HashSet<>(excludedColumns.length);
+      excludedCols.addAll(Arrays.asList(excludedColumns));
+      return SqlClosure.sqlExecute(connection -> OrmWriter.updateObject(connection, object, excludedCols));
    }
 
    /**
@@ -195,14 +199,24 @@ public final class Q2Obj {
     */
    public static <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
    {
-      return new Q2Object().updateIncludeColumns(connection, object, includedColumns);
+      Introspected introspected = Introspector.getIntrospected(object.getClass());
+      String[] updatableColumns = introspected.getUpdatableColumns();
+      HashSet<String> excludedCols = new HashSet<>();
+      for (int i = 0; i < updatableColumns.length; i++) {
+         for (int j = 0; j < includedColumns.length; j++) {
+            if (!updatableColumns[i].equalsIgnoreCase(includedColumns[j])) {
+               excludedCols.add(updatableColumns[i]);
+            }
+         }
+      }
+      return OrmWriter.updateObject(connection, object, excludedCols);
    }
 
    /**
     * @see #updateIncludeColumns(Connection, Object, String...)
     */
    public static <T> T updateIncludeColumns(T object, String... includedColumns) {
-      return q2Object.updateIncludeColumns(object, includedColumns);
+      return SqlClosure.sqlExecute(connection -> updateIncludeColumns(connection, object, includedColumns));
    }
 
    /**
@@ -247,21 +261,21 @@ public final class Q2Obj {
    }
 
    public static <T> T refresh(T target) {
-      return q2Object.refresh(target);
+      return SqlClosure.sqlExecute(connection -> refresh(connection, target));
    }
 
    /**
     * @see #byId(Connection, Class, Object...)
     */
    public static <T> T byId(Class<T> type, Object... ids) {
-      return q2Object.byId(type, ids);
+      return SqlClosure.sqlExecute(connection -> byId(connection, type, ids));
    }
 
    /**
     * @see #byId(Connection, Object)
     */
    public static <T> T byId(T target) {
-      return q2Object.byId(target);
+      return SqlClosure.sqlExecute(connection -> OrmReader.objectById(connection, target));
    }
 
    /**
@@ -275,7 +289,7 @@ public final class Q2Obj {
     */
    public static <T> T fromClause(Class<T> type, String clause, Object... args)
    {
-      return q2Object.fromClause(type, clause, args);
+      return SqlClosure.sqlExecute(connection -> fromClause(connection, type, clause, args));
    }
 
    /**
@@ -286,7 +300,7 @@ public final class Q2Obj {
     */
    public static <T> T insert(T object)
    {
-      return q2Object.insert(object);
+      return SqlClosure.sqlExecute(connection -> insert(connection, object));
    }
 
    /**
@@ -297,7 +311,7 @@ public final class Q2Obj {
     */
    public static <T> T update(T object)
    {
-      return q2Object.update(object);
+      return SqlClosure.sqlExecute(connection -> update(connection, object));
    }
 
    /**
@@ -305,7 +319,7 @@ public final class Q2Obj {
     */
    public static <T> int delete(T object)
    {
-      return q2Object.delete(object);
+      return SqlClosure.sqlExecute(connection ->  delete(connection, object));
    }
 
    /**
@@ -317,7 +331,7 @@ public final class Q2Obj {
     */
    public static <T> int deleteById(Class<T> clazz, Object... args)
    {
-      return q2Object.deleteById(clazz, args);
+      return SqlClosure.sqlExecute(connection -> deleteById(connection, clazz, args));
    }
 
    /**
@@ -331,7 +345,7 @@ public final class Q2Obj {
     */
    public static <T> int countFromClause(Class<T> clazz, String clause, Object... args)
    {
-      return q2Object.countFromClause(clazz, clause, args);
+      return SqlClosure.sqlExecute(connection -> countFromClause(connection, clazz, clause, args));
    }
 
    /**
@@ -344,7 +358,10 @@ public final class Q2Obj {
     * @return The object or object graph
     */
    public static <T> T fromSelect(Class<T> clazz, String select, Object... args) {
-      return q2Object.fromSelect(clazz, select, args);
+      return SqlClosure.sqlExecute(connection -> {
+         PreparedStatement stmnt = connection.prepareStatement(select);
+         return fromStatement(stmnt, clazz, args);
+      });
    }
 
    /**
@@ -356,7 +373,9 @@ public final class Q2Obj {
    }
 
    public static int deleteByWhereClause(Class<?> clazz, String whereClause, Object... args) {
-      return q2Object.deleteByWhereClause(clazz, whereClause, args);
+      return SqlClosure.sqlExecute(connection -> {
+         return OrmWriter.deleteByWhereClause(connection, clazz, whereClause, args);
+      });
    }
 
    /**
