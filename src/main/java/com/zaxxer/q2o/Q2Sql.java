@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Note the differences between methods taking a connection, PreparedStatement or ResultSet and those that do not. See {@link Q2Obj}.
+ */
 public class Q2Sql {
 
    /**
