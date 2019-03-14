@@ -176,5 +176,3 @@ or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thuro
    
 [Javadocs]:http://javadoc.io/doc/com.github.h-thurow/q2o
 [Javadocs img]:http://javadoc.io/badge/com.github.h-thurow/q2o.svg
-
-
