@@ -114,15 +114,6 @@ Q2Obj.fromSelect(Customer.class, "select id, last_name from customer where id = 
 ```
 As long as your object has the id set, you can refresh its values with ```refresh(customer)``` or change its values and update it with ```updateObject(customer)```.
 
-q2o is helpful even when you depend on Spring JDBC:
-```
-List<Customer> customers = jdbcTemplate.query("...", new RowMapper<Customer>() {
-    @Override
-    public Customer mapRow(final ResultSet rs, final int rowNum) throws SQLException {
-        return Q2Obj.fromResultSet(rs, Customer.class);
-    }
-});
-```
 There are much more useful methods like:
 
 * ```Q2Obj.byId(Class<T> type, Object... ids)```
@@ -132,6 +123,23 @@ There are much more useful methods like:
 * ```Q2Obj.countFromClause(Class<T> clazz, String clause, Object... args)```
 
 Many of these methods can also work with lists of objects. [See Javadoc.](http://javadoc.io/page/com.github.h-thurow/q2o/latest/com/zaxxer/q2o/Q2ObjList.html)
+
+### q2o and Spring
+
+q2o is helpful even when you depend on Spring JDBC:
+```
+List<Customer> customers = jdbcTemplate.query("...", new RowMapper<Customer>() {
+    @Override
+    public Customer mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+        return Q2Obj.fromResultSet(rs, Customer.class);
+    }
+});
+```
+All q2o methods taking a Connection, PreparedStatement or ResultSet are throwing SQLExceptions, so Spring can translate them into some subtype of its DataAccessException. These methods can even be called without initialization of q2o.
+
+Starting with V 3.12 you can initialize q2o with Spring Transaction support too.
+
+
 
 ### Supported Annotations
 
