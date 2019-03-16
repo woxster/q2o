@@ -42,10 +42,11 @@ q2o.initializeTxSimple(ds);
 TransactionManager tm = ...;
 UserTransaction ut = ...;
 q2o.initializeTxCustom(ds, tm, ut);
-```
-We strongly recommend using the embedded ``TransactionManager`` via the the second initializer above.  If you have an existing external ``TransactionManager``, of course you can use that.
 
-The embedded ``TransactionManager`` conserves database Connections when nested methods are called, alleviating the need to pass ``Connection`` instances around manually. The ``TransactionManager`` uses a ``ThreadLocal`` variable to "flow" the transaction across nested calls, allowing all work to be committed as a single unit of work.
+// Starting with V 3.12 you can make q2o Spring transaction aware
+q2o.initializeWithSpringTxSupport(ds);
+```
+Even without initialization there is support for some q2o methods. This means all methods taking a Connection, PreparedStatement or ResultSet as an argument can be called without q2o having been initialized.
 
 ### Object Mapping
 
