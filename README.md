@@ -26,9 +26,9 @@ Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
 Spring Transaction Support.
 
-API clean-up **(still subject of change!)**. 
+More convenient methods.
 
-More convenient methods. There is a SansOrm 3.7 compatibility layer.
+API clean-up **(still subject of change!)**. There is a SansOrm 3.7 compatibility layer.
 
 Numerous tests added to stabilize further development.
 
