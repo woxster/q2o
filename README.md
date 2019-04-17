@@ -13,8 +13,7 @@ q2o is a JPA based Java object mapper which helps you with many of the tedious S
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
 **Note:** *q2o does not currently support MySQL because the MySQL JDBC driver does not return proper metadata
-which is required by q2o for mapping.  In the future, q2o may support a purely 100% annotation-based type
-mapping but this would merely be a concession to MySQL and in no way desirable.*
+which is required by q2o for mapping.*
 
 ## Intention of this fork
 
