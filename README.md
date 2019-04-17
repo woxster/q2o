@@ -26,6 +26,8 @@ Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
 Spring Transaction Support.
 
+MySQL Support (coming next with 3.13)
+
 More convenient methods.
 
 API clean-up **(still subject of change!)**. There is a SansOrm 3.7 compatibility layer.
