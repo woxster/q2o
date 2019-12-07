@@ -110,7 +110,7 @@ class PropertyInfo extends AttributeInfo {
                propertyDescriptor.getWriteMethod().invoke(target, value);
             }
             catch (Exception e) {
-               throw new RuntimeException("target=" + target + " value=" + value + "\nPropertyInfo=" + this.toString(), e);
+               throw new RuntimeException("getWriteMethod().invoke() failed: target=" + target + " value=" + value + "\nPropertyInfo=" + this.toString(), e);
             }
 //            if (!this.field.getClass().isPrimitive() || value != null) {
 //            }

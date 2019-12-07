@@ -394,11 +394,7 @@ class OrmReader extends OrmBase
             }
          }
          else {
-//            AttributeInfo fcInfo = introspected.getFieldColumnInfo(columnName);
-            AttributeInfo fcInfo = introspected.getFieldColumnInfo(tableName, columnName);
-            if (fcInfo != null && (!fcInfo.isIdField || !fcInfo.getType().isPrimitive() || columnValue != null)) {
-               processColumnOfJoinedTable(columnName, columnValue, tableName);
-            }
+            processColumnOfJoinedTable(columnName, columnValue, tableName);
          }
       }
 
@@ -411,10 +407,10 @@ class OrmReader extends OrmBase
          final String tableName)
       {
          isNewEntity = new AtomicBoolean(false);
-         currentEntity = tableNameToEntitiesInCurrentRow.computeIfAbsent(tableName.toUpperCase(), tblName -> {
+         currentEntity = tableNameToEntitiesInCurrentRow.computeIfAbsent(tableName.toUpperCase(), tableNameUpperCased -> {
             try {
                isNewEntity.set(true);
-               return introspected.getTableTarget(tblName);
+               return introspected.getTableTarget(tableNameUpperCased);
             }
             catch (IllegalAccessException | InstantiationException e) {
                throw new RuntimeException(e);
@@ -426,27 +422,28 @@ class OrmReader extends OrmBase
          Class<?> currentTargetClass = currentEntity.getClass();
          AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
          // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-         // TODO Set columnTypeName
-         introspected.set(currentEntity, currentTargetInfo, columnValue, null);
-
-         // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
-         parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
-         if (parentInfo != null) {
-            currentParent = tableNameToEntitiesInCurrentRow.computeIfAbsent(parentInfo.getOwnerClassTableName().toUpperCase(), tbln -> {
-               try {
-                  return parentInfo.getOwnerClazz().newInstance();
+         if (currentTargetInfo != null && (!currentTargetInfo.isIdField || !currentTargetInfo.getType().isPrimitive() || columnValue != null)) {
+            // TODO Set columnTypeName
+            introspected.set(currentEntity, currentTargetInfo, columnValue, null);
+            // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
+            parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
+            if (parentInfo != null) {
+               currentParent = tableNameToEntitiesInCurrentRow.computeIfAbsent(parentInfo.getOwnerClassTableName().toUpperCase(), tbln -> {
+                  try {
+                     return parentInfo.getOwnerClazz().newInstance();
+                  }
+                  catch (InstantiationException | IllegalAccessException e) {
+                     throw new RuntimeException(e);
+                  }
+               });
+               // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
+               if (!parentInfo.isOneToManyAnnotated) {
+                  // TODO Set columnTypeName
+                  introspected.set(currentParent, parentInfo, currentEntity, null);
                }
-               catch (InstantiationException | IllegalAccessException e) {
-                  throw new RuntimeException(e);
+               else if (parentInfo.getType() == Collection.class){
+                  setManyToOneField();
                }
-            });
-            // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-            if (!parentInfo.isOneToManyAnnotated) {
-               // TODO Set columnTypeName
-               introspected.set(currentParent, parentInfo, currentEntity, null);
-            }
-            else if (parentInfo.getType() == Collection.class){
-               setManyToOneField();
             }
          }
       }
