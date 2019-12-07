@@ -8,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -25,44 +26,14 @@ import static org.junit.Assert.*;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 22.04.18
  */
-@RunWith(Parameterized.class)
-public class CompositeKeyTest {
-
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-   	return Arrays.asList(new Object[][] {
-   		{false}, {true}
-   	});
-   }
-
-   @Parameterized.Parameter(0)
-   public boolean withSpringTx;
-   private DataSource ds;
-
-   @Before
-   public void setUp() throws Exception {
-      ds = TestUtils.makeH2DataSource();
-      if (!withSpringTx) {
-         q2o.initializeTxNone(ds);
-      }
-      else {
-         q2o.initializeWithSpringTxSupport(ds);
-      }
-   }
-
-   @After
-   public void tearDown() throws Exception {
-      if (!withSpringTx) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
+public class CompositeKeyTest extends GeneralTestConfigurator {
 
    @Rule
    public ExpectedException thrown = ExpectedException.none();
 
+   /**
+    * Composite key must not contain a {@literal @GeneratedValue}
+    */
    @Test
    public void invalidCompositePrimaryKey() {
       class TestClass {
@@ -89,10 +60,9 @@ public class CompositeKeyTest {
       String field;
    }
 
-
    @Test
-   public void insertObjectCompositeKeyH2() throws SQLException {
-      try (Connection con = ds.getConnection()) {
+   public void insertObjectCompositeKey() throws SQLException {
+      try (Connection con = dataSource.getConnection()) {
          Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
@@ -125,8 +95,8 @@ public class CompositeKeyTest {
    }
 
    @Test
-   public void updateObjectCompositeKeyH2() throws SQLException {
-      try (Connection con = ds.getConnection()) {
+   public void updateObjectCompositeKey() throws SQLException {
+      try (Connection con = dataSource.getConnection()) {
          Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
@@ -158,8 +128,8 @@ public class CompositeKeyTest {
    }
 
    @Test
-   public void deleteObjectCompositeKeyH2() throws SQLException {
-      try (Connection con = ds.getConnection()) {
+   public void deleteObjectCompositeKey() throws SQLException {
+      try (Connection con = dataSource.getConnection()) {
          Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "

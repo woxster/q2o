@@ -1,5 +1,7 @@
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -129,23 +131,23 @@ abstract class AttributeInfo
 
    protected abstract void extractFieldName(final Field field);
 
+   /**
+    * CLARIFY How does it relate to {@link Introspected#set(Object, AttributeInfo, Object, String)}
+    */
    private void adjustType(final Class<?> type) {
       if (type == null) {
          throw new IllegalArgumentException("AccessibleObject has to be of type Field or Method.");
       }
-      // remap safe conversions
-      if (type == Date.class) {
-         this.type = Timestamp.class;
-      }
-      else if (type == int.class) {
-         this.type = Integer.class;
-      }
-      else if (type == long.class) {
-         this.type = Long.class;
-      }
-      else {
-         this.type = type;
-      }
+//      if (type == int.class) {
+//         this.type = Integer.class;
+//      }
+//      else if (type == long.class) {
+//         this.type = Long.class;
+//      }
+//      else {
+//         this.type = type;
+//      }
+      this.type = type;
    }
 
    private void processFieldAnnotations()
@@ -504,7 +506,7 @@ abstract class AttributeInfo
       return idValueToParentEntity(clazz.newInstance(), value);
    }
 
-   protected Object idValueToParentEntity(final Object target, final Object value) throws InstantiationException, IllegalAccessException {
+   protected Object idValueToParentEntity(final Object target, @NotNull final Object value) throws InstantiationException, IllegalAccessException {
       final Object obj = target.getClass().newInstance();
       final Introspected introspected = Introspector.getIntrospected(obj.getClass());
       final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
@@ -531,6 +533,10 @@ abstract class AttributeInfo
       return delimitedTableName;
    }
 
+   /**
+    *
+    * @return Declared field type
+    */
    Class<?> getActualType() {
       return actualType;
    }

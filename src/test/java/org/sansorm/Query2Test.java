@@ -8,7 +8,12 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
+import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -20,55 +25,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
 
-@RunWith(Parameterized.class)
-public class Query2Test {
-
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-   	return Arrays.asList(new Object[][] {
-   		{false}, {true},
-   	});
-   }
-
-   @Parameterized.Parameter(0)
-   public boolean withSpringTx;
-
-   @BeforeClass
-   public static void beforeClass() throws Throwable {
-      q2o.initializeTxNone(makeH2DataSource());
-      Q2Sql.executeUpdate(
-         "CREATE TABLE TargetClass2 ("
-            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"
-            + " string VARCHAR(128),"
-            + " someDate TIMESTAMP," // H2 is case-insensitive to column case, ResultSet::getMetaData will return it as SOMEDATE
-            + " )");
-      q2o.deinitialize();
-   }
+public class Query2Test extends GeneralTestConfigurator {
 
    @Before
    public void setUp() throws Exception {
-      JdbcDataSource dataSource = makeH2DataSource();
-      if (!withSpringTx) {
-         q2o.initializeTxNone(dataSource);
+
+      super.setUp();
+
+      if (database == Database.h2) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE TargetClass2 ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"
+               + " string VARCHAR(128),"
+               + " someDate TIMESTAMP" // H2 is case-insensitive to column case, ResultSet::getMetaData will return it as SOMEDATE
+               + " )");
       }
-      else {
-         q2o.initializeWithSpringTxSupport(dataSource);
+      else if (database == Database.mysql) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE TargetClass2 ("
+               // Without AUTO_INCREMENT: org.springframework.dao.DataIntegrityViolationException: ; Field 'id' doesn't have a default value; nested exception is java.sql.SQLException: Field 'id' doesn't have a default value
+               + " id INTEGER PRIMARY KEY AUTO_INCREMENT,"
+               + " string VARCHAR(128),"
+               + " someDate TIMESTAMP"
+               + " )");
+      }
+      else if (database == Database.sqlite) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE TargetClass2 ("
+               + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
+               + " string VARCHAR(128),"
+               + " someDate TIMESTAMP"
+               + " )");
       }
    }
 
    @After
-   public void tearDown() throws Exception {
-      if (!withSpringTx) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
-
-   @AfterClass
-   public static void afterClass() {
-      q2o.initializeTxNone(makeH2DataSource());
+   public void tearDown() {
       try {
          Q2Sql.executeUpdate("drop table TargetClass2");
       }
@@ -78,25 +70,22 @@ public class Query2Test {
    }
 
    /**
-    * Tests @Temporal annotation.
+    * IMPROVE Tests @Temporal annotation.
     */
    @Test @Ignore
    public void testObjectFromClause()
    {
-      // given
-      long timestamp = 42L;
+      long timestamp = Timestamp.valueOf("1970-01-01 10:00:00.0").getTime();
       String string = "Hi";
       TargetClass2 original = new TargetClass2(new Date(timestamp), string);
       Q2Obj.insert(original);
 
-      // when
       TargetClass2 target = Q2Obj.fromClause(TargetClass2.class, "someDate = ?", timestamp);
-      TargetClass2 targetAgain = Q2Obj.byId(TargetClass2.class, target.getId());
-
-      // then
-      assertThat(targetAgain.getId()).isEqualTo(target.getId());
       assertThat(target.getString()).isEqualTo(string);
       assertThat(target.getSomeDate().getTime()).isEqualTo(timestamp);
+
+      TargetClass2 targetAgain = Q2Obj.byId(TargetClass2.class, target.getId());
+      assertThat(targetAgain.getId()).isEqualTo(target.getId());
       assertThat(targetAgain.getString()).isEqualTo(string);
       assertThat(targetAgain.getSomeDate().getTime()).isEqualTo(timestamp);
    }
@@ -104,18 +93,14 @@ public class Query2Test {
    @Test
    public void testListFromClause()
    {
-      // given
-      long timestamp = 43L;
+      long ms = Timestamp.valueOf("1970-01-01 10:00:00.0").getTime();
       String string = "Ho";
-      TargetClass2 original = new TargetClass2(new Date(timestamp), string);
+      TargetClass2 original = new TargetClass2(new Date(ms), string);
       Q2Obj.insert(original);
 
-      // when
       List<TargetClass2> target = Q2ObjList.fromClause(TargetClass2.class, "string = ?", string);
-
-      // then
       assertThat(target.get(0).getString()).isEqualTo(string);
-      assertThat(target.get(0).getSomeDate().getTime()).isEqualTo(timestamp);
+      assertThat(target.get(0).getSomeDate().getTime()).isEqualTo(ms);
    }
 
    @Test
@@ -131,14 +116,16 @@ public class Query2Test {
    }
 
    @Test
-   public void testDate()
-   {
-      Date date = new Date();
+   public void testDate() throws ParseException {
+      SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+      Date date = format.parse("2019-04-13 18:33:25.123");
 
       TargetClass2 target = Q2Obj.insert(new TargetClass2(date, "Date"));
       target = Q2Obj.byId(TargetClass2.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Date");
-      assertThat(target.getSomeDate().getTime()).isEqualTo(date.getTime());
+      // Concerning MySQL see JavaDoc org.sansorm.MySQLDataTypesTest.timestampToTIMESTAMP()
+      String expected = database == Database.mysql ? "2019-04-13 18:33:25.000" : "2019-04-13 18:33:25.123";
+      Assert.assertEquals(expected, format.format(target.getSomeDate()));
    }
 }

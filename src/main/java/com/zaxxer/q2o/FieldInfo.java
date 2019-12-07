@@ -77,7 +77,8 @@ class FieldInfo extends AttributeInfo {
             field.set(target, value);
          }
          else {
-            final Object obj = idValueToParentEntity(target, value);
+            final Object obj = value != null ? idValueToParentEntity(target, value)
+                                             : value;
             field.set(target, obj);
          }
       }

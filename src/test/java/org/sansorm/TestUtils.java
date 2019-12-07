@@ -1,13 +1,15 @@
 package org.sansorm;
 
+import com.mysql.cj.jdbc.MysqlDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.h2.jdbcx.JdbcDataSource;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 
+import javax.sql.DataSource;
 import java.io.File;
-
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 
 public final class TestUtils {
    private TestUtils() {
@@ -23,30 +25,28 @@ public final class TestUtils {
       return dataSource;
    }
 
-   public static HikariDataSource makeSQLiteDataSource() {
-      return makeSQLiteDataSource(null, true);
+   public static DataSource makeMySqlDataSource(String dbName, String user, String password) {
+      MysqlDataSource dataSource = new MysqlDataSource();
+      dataSource.setUrl(String.format("jdbc:mysql://localhost/%s?user=%s&password=%s&generateSimpleParameterMetadata=true&serverTimezone=UTC", dbName, user, password)); //
+      return dataSource;
    }
 
-   public static HikariDataSource makeSQLiteDataSource(File db) {
-      return makeSQLiteDataSource(null, true);
-   }
-
-   public static HikariDataSource makeSQLiteDataSource(boolean autoCommit) {
-      return makeSQLiteDataSource(null, autoCommit);
-   }
-
-   public static HikariDataSource makeSQLiteDataSource(File db, boolean autoCommit) {
-      final SQLiteConfig sconfig = new SQLiteConfig();
-      sconfig.setJournalMode(SQLiteConfig.JournalMode.MEMORY);
-      SQLiteDataSource sds = new SQLiteDataSource(sconfig);
-      sds.setUrl(db == null
+   public static DataSource getSqLiteDataSource(final File db) {
+      String url = db == null
          ? "jdbc:sqlite::memory:"
-         : "jdbc:sqlite:" + db.getAbsolutePath()
-      );
+         : "jdbc:sqlite:" + db.getAbsolutePath();
+//      final SQLiteConfig sconfig = new SQLiteConfig();
+//      sconfig.setJournalMode(SQLiteConfig.JournalMode.MEMORY);
+//      SQLiteDataSource sds = new SQLiteDataSource(sconfig);
+//      sds.setUrl(url);
+//      return sds;
+      return new SingleConnectionDataSource(url, true);
+   }
 
+   public static HikariDataSource getHikariDataSource(final boolean autoCommit, final DataSource ds) {
       HikariConfig hconfig = new HikariConfig();
       hconfig.setAutoCommit(autoCommit);
-      hconfig.setDataSource(sds);
+      hconfig.setDataSource(ds);
       hconfig.setMaximumPoolSize(1);
       return new HikariDataSource(hconfig);
    }

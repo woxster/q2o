@@ -1,5 +1,6 @@
 package com.zaxxer.q2o;
 
+import com.zaxxer.sansorm.SansOrm;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Before;
@@ -18,8 +19,6 @@ import java.util.Set;
 
 import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static com.zaxxer.sansorm.SansOrm.deinitialize;
-import static com.zaxxer.sansorm.SansOrm.initializeTxNone;
-import static com.zaxxer.sansorm.SansOrm.initializeTxSimple;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.sansorm.TestUtils.makeH2DataSource;
@@ -27,7 +26,7 @@ import static org.sansorm.TestUtils.makeH2DataSource;
 @RunWith(Parameterized.class)
 public class SqlClosureSansOrmCompatibilityTest {
 
-   @Parameterized.Parameters(name = "autocommit={0}, ut={1}")
+   @Parameterized.Parameters(name = "autocommit={0}, userTx={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
          { true, true }, { true, false }, { false, true }, { false, false }
@@ -44,10 +43,10 @@ public class SqlClosureSansOrmCompatibilityTest {
    public void setUp() throws IOException {
       final JdbcDataSource dataSource = makeH2DataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
-         initializeTxSimple(dataSource);
+         SansOrm.initializeTxSimple(dataSource);
       }
       else {
-         initializeTxNone(dataSource);
+         SansOrm.initializeTxNone(dataSource);
       }
       executeUpdate(
          "CREATE TABLE tx_test (string VARCHAR(128))");

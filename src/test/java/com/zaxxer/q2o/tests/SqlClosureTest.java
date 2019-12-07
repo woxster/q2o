@@ -6,6 +6,7 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -20,72 +21,46 @@ import static org.sansorm.TestUtils.makeH2DataSource;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 24.10.18
  */
-@RunWith(Parameterized.class)
-public class SqlClosureTest {
+public class SqlClosureTest extends GeneralTestConfigurator {
 
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {
-         {false},{true}
-      });
-   }
-
-   @Parameterized.Parameter(0)
-   public static boolean withSpringTxSupport;
-
-   @BeforeClass
-   public static void beforeClass() throws Exception {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
+   @Before
+   public void setUp() throws Exception {
+      super.setUp();
+      if (database == Database.h2) {
          Q2Sql.executeUpdate(
             "CREATE TABLE USERS ("
                + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
                + ", firstName VARCHAR(128)"
                + ")");
+      }
+      else if (database == Database.mysql) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE USERS ("
+               + " id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT"
+               + ", firstName VARCHAR(128)"
+               + ")");
+      }
+      else if (database == Database.sqlite) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE USERS ("
+               + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+               + ", firstName VARCHAR(128)"
+               + ")");
+      }
 
-         Q2Sql.executeUpdate("insert into USERS (firstName) values('one')");
-         Q2Sql.executeUpdate("insert into USERS (firstName) values('two')");
-      }
-      catch (Exception e) {
-         throw e;
-      }
-      finally {
-         q2o.deinitialize();
-      }
-   }
-
-   @Before
-   public void setUp() throws Exception {
-      JdbcDataSource dataSource = makeH2DataSource();
-      if (!withSpringTxSupport) {
-         q2o.initializeTxNone(dataSource);
-      }
-      else {
-         q2o.initializeWithSpringTxSupport(dataSource);
-      }
+      Q2Sql.executeUpdate("insert into USERS (firstName) values('one')");
+      Q2Sql.executeUpdate("insert into USERS (firstName) values('two')");
    }
 
    @After
-   public void tearDown() {
-      if (!withSpringTxSupport) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
-
-   @AfterClass
-   public static void afterClass() throws Exception {
-      q2o.initializeTxNone(makeH2DataSource());
+   public void tearDown() throws Exception {
       try {
-         Q2Sql.executeUpdate(
-            "DROP TABLE USERS");
+         Q2Sql.executeUpdate("DROP TABLE USERS");
       }
       finally {
-         q2o.deinitialize();
+         super.tearDown();
       }
+
    }
 
    /**

@@ -19,17 +19,13 @@ public class TargetClass1 extends BaseClass
    @Convert(converter = TestConverter.class)
    private String stringFromNumber;
 
-   public TargetClass1()
-   {
-   }
+   public TargetClass1() { }
 
-   public TargetClass1(Date timestamp, String string)
-   {
+   public TargetClass1(Date timestamp, String string) {
       this(timestamp, string, null);
    }
 
-   public TargetClass1(Date timestamp, String string, String stringFromNumber)
-   {
+   public TargetClass1(Date timestamp, String string, String stringFromNumber) {
       this.timestamp = timestamp;
       this.string = string;
       this.stringFromNumber = stringFromNumber;

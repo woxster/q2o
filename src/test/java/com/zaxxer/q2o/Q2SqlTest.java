@@ -1,81 +1,51 @@
 package com.zaxxer.q2o;
 
-import org.h2.jdbcx.JdbcDataSource;
-import org.junit.After;
-import org.junit.Before;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 23.10.18
  */
-@RunWith(Parameterized.class)
-public class Q2SqlTest {
-
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {
-         {false}, {true}
-      });
-   }
-
-   @Parameterized.Parameter(0)
-   public static boolean withSpringTxSupport;
-
-   @Before
-   public void setUp() {
-      if (!withSpringTxSupport) {
-         q2o.initializeTxNone(null);
-      }
-      else {
-         q2o.initializeWithSpringTxSupport(null);
-      }
-   }
-
-   @After
-   public void tearDown() {
-      if (!withSpringTxSupport) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
+public class Q2SqlTest extends GeneralTestConfigurator {
 
    @Test
    public void executeQuery() throws SQLException {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
-      q2o.initializeTxNone(ds);
-      try (Connection con = ds.getConnection()){
-         Q2Sql.executeUpdate(
-            "CREATE TABLE MY_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
-
+      switch (database) {
+         case h2:
+         case sqlite:
+            Q2Sql.executeUpdate(
+               "CREATE TABLE MY_TABLE ("
+                  + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+                  + ", type VARCHAR(128)"
+                  + ")");
+            break;
+         case mysql:
+            Q2Sql.executeUpdate(
+               "CREATE TABLE MY_TABLE ("
+                  + " id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT"
+                  + ", type VARCHAR(128)"
+                  + ")");
+            break;
+      }
+      try {
          Q2Sql.executeUpdate("insert into MY_TABLE (type) values('one')");
          Q2Sql.executeUpdate("insert into MY_TABLE (type) values('two')");
 
-
-         ResultSet rs = Q2Sql.executeQuery(con,"SELECT * FROM MY_TABLE where id > ?", 0);
-         // TODO assertion missed
+         String[] expected = {"one", "two"};
+         String[] got = new String[2];
+         ResultSet rs = Q2Sql.executeQuery(dataSource.getConnection(),"SELECT * FROM MY_TABLE where id > ?", 0);
+         int i = 0;
          while (rs.next()) {
-            System.out.println(rs.getString("type"));
+            got[i++] = rs.getString("type");
          }
-
-      }
-      catch (Exception e) {
-         e.printStackTrace();
-         throw e;
+         rs.close();
+         Assertions.assertThat(expected).containsAll(Arrays.asList(got));
       }
       finally {
          Q2Sql.executeUpdate("DROP TABLE MY_TABLE");

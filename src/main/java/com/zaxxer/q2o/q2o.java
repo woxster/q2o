@@ -9,6 +9,8 @@ import javax.transaction.UserTransaction;
 /** Single point of q2o configuration */
 public final class q2o {
 
+   private static volatile boolean mySqlMode;
+
    private q2o() {
    }
 
@@ -76,6 +78,14 @@ public final class q2o {
       SqlClosure.setDefaultDataSource(null);
       SqlClosure.isSpringTxAware = false;
       SqlClosure.setDefaultExceptionTranslator(null);
+      setMySqlMode(false);
    }
 
+   static boolean isMySqlMode() {
+      return mySqlMode;
+   }
+
+   public static void setMySqlMode(boolean mySqlMode) {
+      q2o.mySqlMode = mySqlMode;
+   }
 }
