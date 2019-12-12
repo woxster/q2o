@@ -262,6 +262,7 @@ class OrmReader extends OrmBase
       private Object currentParent;
       /** the per row created targets in a multi row result */
       private List<T> targets;
+      private int colIdx;
 
       /**
        *
@@ -289,7 +290,7 @@ class OrmReader extends OrmBase
                tableNameToEntities = tableNameToEntitiesInCurrentRow;
                tableNameToEntitiesInCurrentRow = new HashMap<>();
             }
-            for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+            for (colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
                processColumn(colIdx);
             }
 
@@ -324,7 +325,7 @@ class OrmReader extends OrmBase
          tableNameToEntitiesInCurrentRow.putIfAbsent(introspected.getTableName().toUpperCase(), target);
          tableNameToEntities = new HashMap<>();
 
-         for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+         for (colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
             processColumn(colIdx);
          }
 
@@ -347,7 +348,7 @@ class OrmReader extends OrmBase
                throw new RuntimeException(e);
             }
 
-            for (int colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
+            for (colIdx = metaData.getColumnCount(); colIdx > 0; colIdx--) {
                processColumn(colIdx);
             }
 
@@ -367,10 +368,6 @@ class OrmReader extends OrmBase
          }
 
          final Object columnValue = resultSet.getObject(colIdx);
-         // TODO auskommentiert, weil refresh() sonst Felder nicht aktualisiert, die auf null geändert wurden.
-//         if (columnValue == null) {
-//            return;
-//         }
          String tableName = Optional.ofNullable(metaData.getTableName(colIdx)).orElse("");
          // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
          if (tableName.isEmpty() || tableName.equalsIgnoreCase(introspected.getTableName())) {
@@ -389,7 +386,6 @@ class OrmReader extends OrmBase
             if (fcInfo != null
                && (!fcInfo.isIdField || !fcInfo.getType().isPrimitive() || columnValue != null)) {
                // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-               // TODO Set columnTypeName
                introspected.set(parent, fcInfo, columnValue, metaData.getColumnTypeName(colIdx));
             }
          }
@@ -404,8 +400,7 @@ class OrmReader extends OrmBase
       private void processColumnOfJoinedTable(
          final String columnName,
          final Object columnValue,
-         final String tableName)
-      {
+         final String tableName) throws SQLException {
          isNewEntity = new AtomicBoolean(false);
          currentEntity = tableNameToEntitiesInCurrentRow.computeIfAbsent(tableName.toUpperCase(), tableNameUpperCased -> {
             try {
@@ -423,8 +418,7 @@ class OrmReader extends OrmBase
          AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
          // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
          if (currentTargetInfo != null && (!currentTargetInfo.isIdField || !currentTargetInfo.getType().isPrimitive() || columnValue != null)) {
-            // TODO Set columnTypeName
-            introspected.set(currentEntity, currentTargetInfo, columnValue, null);
+            introspected.set(currentEntity, currentTargetInfo, columnValue, metaData.getColumnTypeName(colIdx));
             // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
             parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
             if (parentInfo != null) {
@@ -438,8 +432,7 @@ class OrmReader extends OrmBase
                });
                // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
                if (!parentInfo.isOneToManyAnnotated) {
-                  // TODO Set columnTypeName
-                  introspected.set(currentParent, parentInfo, currentEntity, null);
+                  introspected.set(currentParent, parentInfo, currentEntity, metaData.getColumnTypeName(colIdx));
                }
                else if (parentInfo.getType() == Collection.class){
                   setManyToOneField();
@@ -454,8 +447,7 @@ class OrmReader extends OrmBase
             if (value == null) {
                Collection collection = new ArrayList();
                collection.add(currentEntity);
-               // TODO Set columnTypeName
-               introspected.set(currentParent, parentInfo, collection, null);
+               introspected.set(currentParent, parentInfo, collection, metaData.getColumnTypeName(colIdx));
 
                String parentTableName = parentInfo.getOwnerClassTableName().toUpperCase();
                Object parentEntity = tableNameToEntities.get(parentTableName);
@@ -465,7 +457,7 @@ class OrmReader extends OrmBase
                }
             }
          }
-         catch (IllegalAccessException | InvocationTargetException e) {
+         catch (IllegalAccessException | InvocationTargetException | SQLException e) {
             throw new RuntimeException(e);
          }
       }
