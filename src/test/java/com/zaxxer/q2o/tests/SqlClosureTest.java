@@ -1,21 +1,19 @@
 package com.zaxxer.q2o.tests;
 
-import com.zaxxer.q2o.*;
-import org.h2.jdbcx.JdbcDataSource;
-import org.junit.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
+import com.zaxxer.q2o.Q2Sql;
+import com.zaxxer.q2o.SqlClosure;
+import com.zaxxer.q2o.SqlFunction;
+import com.zaxxer.q2o.SqlVarArgsFunction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -102,10 +100,10 @@ public class SqlClosureTest extends GeneralTestConfigurator {
             ResultSet rs = stmnt.executeQuery("select * from USERS");
             ArrayList<User> users = new ArrayList<>();
             while (rs.next()) {
-               User type = new User();
-               type.setId(rs.getInt("id"));
-               type.setFirstName(rs.getString("firstName"));
-               users.add(type);
+               User user = new User();
+               user.setId(rs.getInt("id"));
+               user.setFirstName(rs.getString("firstName"));
+               users.add(user);
             }
             return users;
          }
@@ -123,12 +121,16 @@ public class SqlClosureTest extends GeneralTestConfigurator {
             User type = new User();
             type.setId(rs.getInt("id"));
             type.setFirstName(rs.getString("firstName"));
+            // We must close() or SQLite throws
+            //    org.springframework.jdbc.UncategorizedSQLException: ; uncategorized SQLException; SQL state [null]; error code [6]; [SQLITE_LOCKED]  A table in the database is locked (database table is locked); nested exception is org.sqlite.SQLiteException: [SQLITE_LOCKED]  A table in the database is locked (database table is locked)
+            // when "DROP TABLE USERS" is executed in tearDown() and Spring TX support is activated.
+            ps.close();
             return type;
          }
       };
 
-      User type = (User) sqlClosure.exec(userByIdProvider, 1);
-      assertEquals("Type{id=1, firstName='one'}", type.toString());
+      User user = (User) sqlClosure.exec(userByIdProvider, 1);
+      assertEquals("Type{id=1, firstName='one'}", user.toString());
    }
 
    /**
@@ -142,16 +144,20 @@ public class SqlClosureTest extends GeneralTestConfigurator {
             PreparedStatement ps = connection.prepareStatement("select * from USERS where id = ?");
             ResultSet rs = SqlClosure.statementToResultSet(ps, args);
             rs.next();
-            User type = new User();
-            type.setId(rs.getInt("id"));
-            type.setFirstName(rs.getString("firstName"));
-            return type;
+            User user = new User();
+            user.setId(rs.getInt("id"));
+            user.setFirstName(rs.getString("firstName"));
+            // We must close() or SQLite throws
+            //    org.springframework.jdbc.UncategorizedSQLException: ; uncategorized SQLException; SQL state [null]; error code [6]; [SQLITE_LOCKED]  A table in the database is locked (database table is locked); nested exception is org.sqlite.SQLiteException: [SQLITE_LOCKED]  A table in the database is locked (database table is locked)
+            // when "DROP TABLE USERS" is executed in tearDown() and Spring TX support is activated.
+            ps.close();
+            return user;
          }
       };
-      User type = userByIdProvider.executeWith(1);
-      assertEquals("Type{id=1, firstName='one'}", type.toString());
-      User type2 = userByIdProvider.executeWith(2);
-      assertEquals("Type{id=2, firstName='two'}", type2.toString());
+      User user = userByIdProvider.executeWith(1);
+      assertEquals("Type{id=1, firstName='one'}", user.toString());
+      User user2 = userByIdProvider.executeWith(2);
+      assertEquals("Type{id=2, firstName='two'}", user2.toString());
    }
 
    class User {
