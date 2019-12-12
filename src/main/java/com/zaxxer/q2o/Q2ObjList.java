@@ -81,6 +81,9 @@ public class Q2ObjList {
       return SqlClosure.sqlExecute(c -> OrmReader.listFromClause(c, clazz, clause, args));
    }
 
+   /**
+    * @see Q2Obj#fromSelect(Class, String, Object...)
+    */
    public static <T> List<T> fromSelect(Class<T> clazz, String select, Object... args) {
       return SqlClosure.sqlExecute(connection -> {
          PreparedStatement stmnt = connection.prepareStatement(select);
@@ -88,6 +91,9 @@ public class Q2ObjList {
       });
    }
 
+   /**
+    * @see Q2Obj#fromSelect(Class, String, Object...)
+    */
    public static <T> List<T> fromSelect(Connection connection, Class<T> clazz, String select, Object... args) throws SQLException {
       PreparedStatement stmnt = connection.prepareStatement(select);
       return fromStatement(stmnt, clazz, args);
