@@ -363,8 +363,7 @@ class OrmWriter extends OrmBase
       }
       try (final ResultSet generatedKeys = stmt.getGeneratedKeys()) {
          if (generatedKeys.next()) {
-            // TODO Set columnTypeName
-            introspected.set(target, fcInfo, generatedKeys.getObject(1), null);
+            introspected.set(target, fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData().getColumnTypeName(1));
          }
       }
    }

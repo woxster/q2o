@@ -665,7 +665,7 @@ final class Introspected {
       Object columnValue = null;
       try {
          Object[] values = (Object[]) fieldType.getMethod("values").invoke(null);
-         // TODO NULL und 0 behandeln.
+         // CLARIFY Deal with NULL and 0?
          if (ordinal != null) {
             if (q2o.isMySqlMode()) {
                // "Values from the list of permissible elements in the column specification are numbered beginning with 1." (MySQL 5.5 Reference Manual, 10.4.4. The ENUM Type).
@@ -769,7 +769,7 @@ final class Introspected {
    }
 
    private Object convertSqlDate(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      // TODO Nur wenn MySQL?
+      // CLARIFY Just in case of MySQL?
       if ("YEAR".equals(columnTypeName)) {
          if (fieldType == String.class) {
             // MySQL 5.5 Reference Manual: "A year in two-digit or four-digit format. The default is four-digit format. In four-digit format, the permissible values are 1901 to 2155, and 0000. In two-digit format, the permissible values are 70 to 69, representing years from 1970 to 2069. MySQL displays YEAR values in YYYY format".
@@ -800,7 +800,6 @@ final class Introspected {
          columnValue = new String(v);
       }
       else if (fieldType == Byte.class || fieldType == byte.class) {
-         // TODO Cast null?
          columnValue = v[0];
       }
       else if (fieldType == Short.class || fieldType == short.class) {

@@ -124,7 +124,7 @@ class OrmBase
          }
       }
       else {
-         // TODO Encalsulate in converter class and provide pattern to compose OrmBase with it.
+         // IMPROVE Encalsulate in converter class and provide pattern to compose OrmBase with it.
 //         if (sqlType == Types.VARCHAR) {
 //            if (object instanceof Timestamp) {
 ////               DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn");
