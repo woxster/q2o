@@ -10,10 +10,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
-import org.sansorm.testutils.DummyConnection;
-import org.sansorm.testutils.DummyParameterMetaData;
-import org.sansorm.testutils.DummyResultSet;
-import org.sansorm.testutils.DummyStatement;
+import org.sansorm.testutils.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -120,6 +117,16 @@ public class OneToOneTest {
                      public Object getObject(int columnIndex) {
                         return 123;
                      }
+
+                     @Override
+                     public DummyResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData(){
+                           @Override
+                           public String getColumnTypeName(final int column) throws SQLException {
+                              return "BIGINT";
+                           }
+                        };
+                     }
                   };
                }
 
@@ -162,7 +169,6 @@ public class OneToOneTest {
 
          Left left = Q2Obj.fromSelect(Left.class, "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?", 1);
 
-         System.out.println(left);
          assertNotNull(left.getRight());
          assertEquals(1, left.getRight().getId());
       }
@@ -275,7 +281,6 @@ public class OneToOneTest {
 
          Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM LEFT_TABLE, MIDDLE_TABLE, RIGHT_TABLE where LEFT_TABLE.id = MIDDLE_TABLE.id and MIDDLE_TABLE.RIGHTID = RIGHT_TABLE.ID and LEFT_TABLE.id = ?", 1);
 
-         System.out.println(left);
          assertNotNull(left.getMiddle());
          assertNotNull(left.getMiddle().getRight());
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left.toString());
@@ -319,7 +324,6 @@ public class OneToOneTest {
          Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
          Q2Sql.executeUpdate("insert into RIGHT_TABLE (id, type) values(1, 'type: right')");
 
-         // TODO Hier weiter
          Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT_TABLE, LEFT_TABLE, MIDDLE_TABLE where LEFT_TABLE.id = MIDDLE_TABLE.id and MIDDLE_TABLE.RIGHTID = RIGHT_TABLE.ID and LEFT_TABLE.id = ?", 1);
 
          System.out.println(left);
@@ -336,6 +340,58 @@ public class OneToOneTest {
          Q2Sql.executeUpdate("DROP TABLE MIDDLE_TABLE");
          Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
       }
+   }
+
+   // TODO Q2ObjList.fromSelect() throws java.lang.RuntimeException: java.lang.RuntimeException: getWriteMethod().invoke() failed: target=Middle1{id=0, type='null', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}} value=null
+   //PropertyInfo=PropertyInfo{propertyDescriptor=java.beans.PropertyDescriptor[name=rightId; propertyType=int; readMethod=public int com.zaxxer.q2o.entities.Middle1.getRightId(); writeMethod=public void com.zaxxer.q2o.entities.Middle1.setRightId(int)], toBeConsidered=true, readMethod=public int com.zaxxer.q2o.entities.Middle1.getRightId(), ownerClazz=class com.zaxxer.q2o.entities.Middle1, name='rightId', field=private int com.zaxxer.q2o.entities.Middle1.rightId, type=int, isDelimited=false, updatable=true, insertable=true, columnName='rightid', delimitedTableName='MIDDLE_TABLE', enumType=null, enumConstants=null, converter=null, caseSensitiveColumnName='rightId', isGeneratedId=false, isIdField=false, isJoinColumn=false, isTransient=false, isEnumerated=false, isColumnAnnotated=true, delimitedName='rightId', fullyQualifiedDelimitedName='MIDDLE_TABLE.rightId'}
+   // 	at com.zaxxer.q2o.Introspected.set(Introspected.java:631)
+   //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.processColumnOfJoinedTable(OrmReader.java:421)
+   //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.processColumn(OrmReader.java:393)
+   //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.process(OrmReader.java:352)
+   @Test
+   public void leftJoin3Tables() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE LEFT_TABLE ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", type VARCHAR(128)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE MIDDLE_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", type VARCHAR(128)"
+               + ", rightId INTEGER UNIQUE"
+               + ", CONSTRAINT MIDDLE_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE RIGHT_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", type VARCHAR(128)"
+               + ", CONSTRAINT RIGHT_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE_TABLE (rightId)"
+               + ")");
+
+         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('type: left')");
+         Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type) values(1, 'type: middle')");
+         // No Right entity available.
+
+         Left1 left1 = Q2ObjList.fromSelect(
+            Left1.class,
+            "select * from LEFT_TABLE" +
+               " left join MIDDLE_TABLE on LEFT_TABLE.id = MIDDLE_TABLE.id" +
+               " left join RIGHT_TABLE on MIDDLE_TABLE.rightId = RIGHT_TABLE.id" +
+               " where LEFT_TABLE.id = 1").get(0);
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=null}}", left1.toString());
+      }
+      finally {
+         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE MIDDLE_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
+      }
+
    }
 
    @Test
