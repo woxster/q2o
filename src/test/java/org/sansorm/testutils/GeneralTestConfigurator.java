@@ -8,7 +8,6 @@ import org.junit.runners.Parameterized;
 import org.sansorm.TestUtils;
 
 import javax.sql.DataSource;
-
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -26,10 +25,10 @@ public class GeneralTestConfigurator {
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-//         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
-         {false, Database.mysql}
+         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
+//         {false, Database.mysql}
 //         {false, Database.h2}
-//         {false, Database.sqlite}
+//         {true, Database.sqlite}
       });
    }
 

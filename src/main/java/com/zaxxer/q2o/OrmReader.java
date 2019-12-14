@@ -398,9 +398,10 @@ class OrmReader extends OrmBase
        * Called for every table of a joined table.
        */
       private void processColumnOfJoinedTable(
-         final String columnName,
-         final Object columnValue,
-         final String tableName) throws SQLException {
+               final String columnName,
+               final Object columnValue,
+               final String tableName) throws SQLException {
+
          isNewEntity = new AtomicBoolean(false);
          currentEntity = tableNameToEntitiesInCurrentRow.computeIfAbsent(tableName.toUpperCase(), tableNameUpperCased -> {
             try {
@@ -417,8 +418,14 @@ class OrmReader extends OrmBase
          Class<?> currentTargetClass = currentEntity.getClass();
          AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
          // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-         if (currentTargetInfo != null && (!currentTargetInfo.isIdField || !currentTargetInfo.getType().isPrimitive() || columnValue != null)) {
-            introspected.set(currentEntity, currentTargetInfo, columnValue, metaData.getColumnTypeName(colIdx));
+         if (currentTargetInfo != null && (
+               !currentTargetInfo.isIdField
+                  || !currentTargetInfo.getType().isPrimitive()
+                  || columnValue != null)
+         ) {
+            if (!(currentTargetInfo.getType().isPrimitive() && columnValue == null)) {
+               introspected.set(currentEntity, currentTargetInfo, columnValue, metaData.getColumnTypeName(colIdx));
+            }
             // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
             parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
             if (parentInfo != null) {
@@ -434,7 +441,7 @@ class OrmReader extends OrmBase
                if (!parentInfo.isOneToManyAnnotated) {
                   introspected.set(currentParent, parentInfo, currentEntity, metaData.getColumnTypeName(colIdx));
                }
-               else if (parentInfo.getType() == Collection.class){
+               else if (parentInfo.getType() == Collection.class) {
                   setManyToOneField();
                }
             }

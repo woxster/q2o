@@ -14,7 +14,7 @@ public class Left {
    private Right right;
 
    @Id
-   @GeneratedValue
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
       return id;
    }

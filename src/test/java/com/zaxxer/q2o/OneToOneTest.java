@@ -177,8 +177,8 @@ public class OneToOneTest {
          throw e;
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
          Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
       }
    }
 
@@ -384,7 +384,7 @@ public class OneToOneTest {
                " left join MIDDLE_TABLE on LEFT_TABLE.id = MIDDLE_TABLE.id" +
                " left join RIGHT_TABLE on MIDDLE_TABLE.rightId = RIGHT_TABLE.id" +
                " where LEFT_TABLE.id = 1").get(0);
-         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=null}}", left1.toString());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left1.toString());
       }
       finally {
          Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");

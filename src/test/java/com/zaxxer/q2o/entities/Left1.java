@@ -14,7 +14,7 @@ public class Left1 {
    private Middle1 middle;
 
    @Id
-   @GeneratedValue
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
       return id;
    }

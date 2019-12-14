@@ -3,15 +3,12 @@ package org.sansorm;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2Sql;
+import com.zaxxer.q2o.entities.DataTypes;
 import com.zaxxer.q2o.q2o;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.sql.DataSource;
 import java.math.BigInteger;
 import java.sql.SQLException;
@@ -54,6 +51,8 @@ public class MySQLDataTypesTest {
       dataSource = TestUtils.makeMySqlDataSource("q2o", "root", "yxcvbnm");
       q2o.initializeTxNone(dataSource);
       q2o.setMySqlMode(true);
+
+      Q2Sql.executeUpdate("drop table if exists DataTypes");
 
       Q2Sql.executeUpdate(
          "CREATE TABLE DataTypes ("
@@ -138,7 +137,7 @@ public class MySQLDataTypesTest {
    @AfterClass
    public static void afterClass() throws SQLException {
       try {
-         Q2Sql.executeUpdate("drop table DataTypes");
+         Q2Sql.executeUpdate("drop table if exists DataTypes");
       }
       finally {
          q2o.deinitialize();
@@ -150,89 +149,7 @@ public class MySQLDataTypesTest {
       Q2Sql.executeUpdate("delete from DataTypes");
    }
 
-   public static class DataTypes {
-      @Id @GeneratedValue
-      int id;
-
-      int myInteger;
-
-      Date dateToDate;
-      java.sql.Date sqlDateToDate;
-      Timestamp timestampToDate;
-
-      Date dateToDateTime;
-      java.sql.Date sqlDateToDateTime;
-      Time timeToDateTime;
-      Timestamp timestampToDateTime;
-
-      Date dateToTimestamp;
-      Timestamp timestampToTimestamp;
-      java.sql.Date sqlDateToTimestamp;
-
-      Integer intToYear;
-      java.sql.Date sqlDateToYear;
-      String stringToYear;
-
-      // YEAR(2): No longer supported by MySQL 8
-//      Integer intToYear2;
-//      java.sql.Date sqlDateToYear2;
-//      String stringToYear2;
-
-      int intToTime;
-      String stringToTime;
-      Time timeToTime;
-      Timestamp timestampToTime;
-
-      String stringToChar4;
-      String stringToVarChar4;
-      String stringToBinary;
-      String stringToVarBinary;
-      byte[] byteArrayToBinary;
-      byte[] byteArrayToVarBinary;
-      int intToVarChar4;
-
-      byte byteToBit8;
-      short shortToBit16;
-      int intToBit32;
-      long longToBit64;
-      String stringToBit8;
-      byte[] byteArrayToBit64;
-
-      byte byteToTinyint;
-      short shortToTinyint;
-      int intToTinyint;
-      long longToTinyint;
-
-      byte byteToSmallint;
-      short shortToSmallint;
-      int intToSmallint;
-      long longToSmallint;
-
-      int intToBigint;
-      long longToBigint;
-      BigInteger bigintToBigint;
-
-      int intToInt;
-      Integer integerToInt;
-      int intToMediumint;
-      long longToUnsignedInt;
-
-      // CLARIFY Mimic Hibernate? "Hibernate Annotations support out of the box enum type mapping ... the persistence representation, defaulted to ordinal" (Mapping with JPA (Java Persistence Annotations).pdf, "2.2.2.1. Declaring basic property mappings")
-      @Enumerated(EnumType.STRING)
-      CaseMatched enumToEnumTypeString;
-
-      @Enumerated(EnumType.ORDINAL)
-      CaseMatched enumToEnumTypeOrdinal;
-
-      @Enumerated(EnumType.ORDINAL)
-      CaseMatched enumToInt;
-
-      public enum CaseMatched {
-         one, two, three
-      }
-   }
-
-//   public static class DataTypes {
+   //   public static class DataTypes {
 //      @Id @GeneratedValue
 //      int id;
 //
@@ -317,10 +234,10 @@ public class MySQLDataTypesTest {
    @Test
    public void insertInteger() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.myInteger = 1;
+      dataTypes.setMyInteger(1);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.myInteger, dataTypes1.myInteger);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getMyInteger(), dataTypes1.getMyInteger());
    }
 
    /**
@@ -337,11 +254,11 @@ public class MySQLDataTypesTest {
    public void dateToDATE() throws ParseException {
 
       DataTypes dataTypes = new DataTypes();
-      dataTypes.dateToDate = formatter.parse("2019-04-01 23:59:59.999");
+      dataTypes.setDateToDate(formatter.parse("2019-04-01 23:59:59.999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-04-01 02:00:00.000", formatter.format(dataTypes1.dateToDate));
-      assertEquals(dataTypes.dateToDate.getClass(), dataTypes1.dateToDate.getClass());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019-04-01 02:00:00.000", formatter.format(dataTypes1.getDateToDate()));
+      assertEquals(dataTypes.getDateToDate().getClass(), dataTypes1.getDateToDate().getClass());
    }
 
    /**
@@ -359,13 +276,13 @@ public class MySQLDataTypesTest {
       DataTypes dataTypes = new DataTypes();
 
       String dateFormatted = "2019-04-01 23:30:30.555";
-      dataTypes.dateToDateTime = formatter.parse(dateFormatted); // local time
+      dataTypes.setDateToDateTime(formatter.parse(dateFormatted)); // local time
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
 
-      assertEquals("2019-04-01 23:30:31.000", formatter.format(dataTypes1.dateToDateTime));
-      assertEquals(dataTypes.dateToDateTime.getClass(), dataTypes1.dateToDateTime.getClass());
+      assertEquals("2019-04-01 23:30:31.000", formatter.format(dataTypes1.getDateToDateTime()));
+      assertEquals(dataTypes.getDateToDateTime().getClass(), dataTypes1.getDateToDateTime().getClass());
 
    }
 
@@ -383,13 +300,13 @@ public class MySQLDataTypesTest {
 
       DataTypes dataTypes = new DataTypes();
 
-      dataTypes.timestampToDateTime = Timestamp.valueOf("1970-01-01 00:00:00.999999999");
+      dataTypes.setTimestampToDateTime(Timestamp.valueOf("1970-01-01 00:00:00.999999999"));
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
 
-      assertEquals("1970-01-01 00:00:01.0", dataTypes1.timestampToDateTime.toString());
-      assertEquals(dataTypes.timestampToDateTime.getClass(), dataTypes1.timestampToDateTime.getClass());
+      assertEquals("1970-01-01 00:00:01.0", dataTypes1.getTimestampToDateTime().toString());
+      assertEquals(dataTypes.getTimestampToDateTime().getClass(), dataTypes1.getTimestampToDateTime().getClass());
 
    }
 
@@ -410,13 +327,13 @@ public class MySQLDataTypesTest {
 
       DataTypes dataTypes = new DataTypes();
 
-      dataTypes.timeToDateTime = Time.valueOf("11:10:11");
+      dataTypes.setTimeToDateTime(Time.valueOf("11:10:11"));
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
 
-      assertEquals("02:00:00", dataTypes1.timeToDateTime.toString());
-      assertEquals(dataTypes.timeToDateTime.getClass(), dataTypes1.timeToDateTime.getClass());
+      assertEquals("02:00:00", dataTypes1.getTimeToDateTime().toString());
+      assertEquals(dataTypes.getTimeToDateTime().getClass(), dataTypes1.getTimeToDateTime().getClass());
 
    }
 
@@ -433,12 +350,12 @@ public class MySQLDataTypesTest {
    @Test
    public void dateToTIMESTAMP() throws ParseException {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.dateToTimestamp = formatter.parse("2019-04-01 21:59:59.999");
+      dataTypes.setDateToTimestamp(formatter.parse("2019-04-01 21:59:59.999"));
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-04-01 22:00:00.000", formatter.format(dataTypes1.dateToTimestamp));
-      assertEquals(dataTypes.dateToTimestamp.getClass(), dataTypes1.dateToTimestamp.getClass());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019-04-01 22:00:00.000", formatter.format(dataTypes1.getDateToTimestamp()));
+      assertEquals(dataTypes.getDateToTimestamp().getClass(), dataTypes1.getDateToTimestamp().getClass());
    }
 
    /**
@@ -457,11 +374,11 @@ public class MySQLDataTypesTest {
    @Test
    public void timestampToTIMESTAMP() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.timestampToTimestamp = Timestamp.valueOf("2019-04-01 21:50:59.999");
+      dataTypes.setTimestampToTimestamp(Timestamp.valueOf("2019-04-01 21:50:59.999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-04-01 21:51:00.0", dataTypes1.timestampToTimestamp.toString());
-      assertEquals(dataTypes.timestampToTimestamp.getClass(), dataTypes1.timestampToTimestamp.getClass());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019-04-01 21:51:00.0", dataTypes1.getTimestampToTimestamp().toString());
+      assertEquals(dataTypes.getTimestampToTimestamp().getClass(), dataTypes1.getTimestampToTimestamp().getClass());
    }
 
    /**
@@ -477,12 +394,12 @@ public class MySQLDataTypesTest {
    @Test
    public void sqlDateToDATE() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToDate = java.sql.Date.valueOf("2019-04-01");
-      assertEquals("2019-04-01 00:00:00.000", formatter.format(dataTypes.sqlDateToDate));
+      dataTypes.setSqlDateToDate(java.sql.Date.valueOf("2019-04-01"));
+      assertEquals("2019-04-01 00:00:00.000", formatter.format(dataTypes.getSqlDateToDate()));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.sqlDateToDate));
-      assertEquals(dataTypes.sqlDateToDate.getClass(), dataTypes1.sqlDateToDate.getClass());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.getSqlDateToDate()));
+      assertEquals(dataTypes.getSqlDateToDate().getClass(), dataTypes1.getSqlDateToDate().getClass());
    }
 
    /**
@@ -497,11 +414,11 @@ public class MySQLDataTypesTest {
    @Test
    public void sqlDateToDATETIME() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToDateTime = java.sql.Date.valueOf("2019-04-01");
+      dataTypes.setSqlDateToDateTime(java.sql.Date.valueOf("2019-04-01"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.sqlDateToDateTime));
-      assertEquals(dataTypes.sqlDateToDateTime.getClass(), dataTypes1.sqlDateToDateTime.getClass());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.getSqlDateToDateTime()));
+      assertEquals(dataTypes.getSqlDateToDateTime().getClass(), dataTypes1.getSqlDateToDateTime().getClass());
    }
 
    /**
@@ -516,11 +433,11 @@ public class MySQLDataTypesTest {
    @Test
    public void sqlDateToTIMESTAMP() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToTimestamp = java.sql.Date.valueOf("2019-04-01");
+      dataTypes.setSqlDateToTimestamp(java.sql.Date.valueOf("2019-04-01"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.sqlDateToTimestamp));
-      assertEquals(dataTypes.sqlDateToTimestamp.getClass(), dataTypes1.sqlDateToTimestamp.getClass());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.getSqlDateToTimestamp()));
+      assertEquals(dataTypes.getSqlDateToTimestamp().getClass(), dataTypes1.getSqlDateToTimestamp().getClass());
    }
 
    /**
@@ -535,10 +452,10 @@ public class MySQLDataTypesTest {
    @Test
    public void intToYEAR() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToYear = 2019;
+      dataTypes.setIntToYear(2019);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(2019, Optional.ofNullable(dataTypes1.intToYear).orElse(0).intValue());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(2019, Optional.ofNullable(dataTypes1.getIntToYear()).orElse(0).intValue());
    }
 
 //   @Test
@@ -564,8 +481,8 @@ public class MySQLDataTypesTest {
    public void intToYEARNotSet() {
       DataTypes dataTypes = new DataTypes();
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertNull(dataTypes1.intToYear);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertNull(dataTypes1.getIntToYear());
    }
 
    /**
@@ -574,7 +491,7 @@ public class MySQLDataTypesTest {
    @Test @Ignore
    public void sqlDateToYEAR() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToYear = java.sql.Date.valueOf("2019-04-01");
+      dataTypes.setSqlDateToYear(java.sql.Date.valueOf("2019-04-01"));
       thrown.expectMessage("SQLException: Data truncated for column 'sqlDateToYear'");
       Q2Obj.insert(dataTypes);
    }
@@ -582,10 +499,10 @@ public class MySQLDataTypesTest {
    @Test
    public void stringToYEAR4Digits() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToYear = "2019";
+      dataTypes.setStringToYear("2019");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019", dataTypes1.stringToYear);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019", dataTypes1.getStringToYear());
    }
 
    /**
@@ -600,10 +517,10 @@ public class MySQLDataTypesTest {
    @Test
    public void stringToYEAR2Digits() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToYear = "19";
+      dataTypes.setStringToYear("19");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019", dataTypes1.stringToYear);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("2019", dataTypes1.getStringToYear());
    }
 
    // com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Incorrect time value: '36000000' for column 'intToTime'
@@ -611,10 +528,10 @@ public class MySQLDataTypesTest {
    @Test @Ignore
    public void intToTIME() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToTime = 10 * 60 * 60;
+      dataTypes.setIntToTime(10 * 60 * 60);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToTime, dataTypes1.intToTime);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToTime(), dataTypes1.getIntToTime());
    }
 
    /**
@@ -629,12 +546,12 @@ public class MySQLDataTypesTest {
    @Test
    public void stringToTIME() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToTime = "10:59:59";
+      dataTypes.setStringToTime("10:59:59");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       // CLARIFY
-      assertEquals("11:59:59", dataTypes1.stringToTime);
-      assertEquals(0, dataTypes1.intToTime);
+      assertEquals("11:59:59", dataTypes1.getStringToTime());
+      assertEquals(0, dataTypes1.getIntToTime());
    }
 
    /**
@@ -650,21 +567,21 @@ public class MySQLDataTypesTest {
    @Test
    public void stringToTIME2() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToTime = "105959";
+      dataTypes.setStringToTime("105959");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       // CLARIFY
-      assertEquals("11:59:59", dataTypes1.stringToTime);
-      assertEquals(0, dataTypes1.intToTime);
+      assertEquals("11:59:59", dataTypes1.getStringToTime());
+      assertEquals(0, dataTypes1.getIntToTime());
    }
 
    @Test
    public void timeToTIME() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.timeToTime = Time.valueOf("11:48:22");
+      dataTypes.setTimeToTime(Time.valueOf("11:48:22"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.timeToTime.getTime(), dataTypes1.timeToTime.getTime());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getTimeToTime().getTime(), dataTypes1.getTimeToTime().getTime());
    }
 
    /**
@@ -680,10 +597,10 @@ public class MySQLDataTypesTest {
    public void timestampToTIME() {
       DataTypes dataTypes = new DataTypes();
 //      dataTypes.timestampToTime = new Timestamp(1555138024405L);
-      dataTypes.timestampToTime = Timestamp.valueOf("1970-1-1 21:59:59.999999999");
+      dataTypes.setTimestampToTime(Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("1970-01-01 22:00:00.0", dataTypes1.timestampToTime.toString());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("1970-01-01 22:00:00.0", dataTypes1.getTimestampToTime().toString());
    }
 
    /**
@@ -699,88 +616,88 @@ public class MySQLDataTypesTest {
    public void timestampToDATE() {
       DataTypes dataTypes = new DataTypes();
 //      dataTypes.timestampToTime = new Timestamp(1555138024405L);
-      dataTypes.timestampToDate = Timestamp.valueOf("1970-1-1 21:59:59.999999999");
+      dataTypes.setTimestampToDate(Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("1970-01-01 01:00:00.0", dataTypes1.timestampToDate.toString());
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals("1970-01-01 01:00:00.0", dataTypes1.getTimestampToDate().toString());
    }
 
    @Test
    public void stringToCHAR4() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToChar4 = "1234";
+      dataTypes.setStringToChar4("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToChar4, dataTypes1.stringToChar4);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getStringToChar4(), dataTypes1.getStringToChar4());
    }
 
    @Test
    public void stringToVARCHAR4() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToVarChar4 = "1234";
+      dataTypes.setStringToVarChar4("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToVarChar4, dataTypes1.stringToVarChar4);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getStringToVarChar4(), dataTypes1.getStringToVarChar4());
    }
 
    @Test
    public void stringToBINARY() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToBinary = "1234";
+      dataTypes.setStringToBinary("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToBinary, dataTypes1.stringToBinary);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getStringToBinary(), dataTypes1.getStringToBinary());
    }
 
    @Test
    public void stringToVARBINARY() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToVarBinary = "1234";
+      dataTypes.setStringToVarBinary("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToVarBinary, dataTypes1.stringToVarBinary);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getStringToVarBinary(), dataTypes1.getStringToVarBinary());
    }
 
    @Test
    public void byteArrayToVARBINARY() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteArrayToVarBinary = "1234".getBytes();
+      dataTypes.setByteArrayToVarBinary("1234".getBytes());
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertArrayEquals(dataTypes.byteArrayToVarBinary, dataTypes1.byteArrayToVarBinary);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertArrayEquals(dataTypes.getByteArrayToVarBinary(), dataTypes1.getByteArrayToVarBinary());
    }
 
    @Test
    public void byteArrayToBINARY() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteArrayToBinary = "1".getBytes();
+      dataTypes.setByteArrayToBinary("1".getBytes());
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertArrayEquals(dataTypes.byteArrayToBinary, dataTypes1.byteArrayToBinary);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertArrayEquals(dataTypes.getByteArrayToBinary(), dataTypes1.getByteArrayToBinary());
    }
 
    @Test
    public void intToVARCHAR4() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToVarChar4 = 123;
+      dataTypes.setIntToVarChar4(123);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToVarChar4, dataTypes1.intToVarChar4);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToVarChar4(), dataTypes1.getIntToVarChar4());
    }
 
    @Test
    public void byteToBIT8() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToBit8 = 0b00001000;
+      dataTypes.setByteToBit8((byte) 0b00001000);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.byteToBit8, dataTypes1.byteToBit8);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getByteToBit8(), dataTypes1.getByteToBit8());
    }
 
    @Test @Ignore
    public void byteToBIT8Negative() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToBit8 = -1;
+      dataTypes.setByteToBit8((byte) -1);
       thrown.expectMessage("MysqlDataTruncation: Data truncation: Data too long for column 'byteToBit8'");
       Q2Obj.insert(dataTypes);
    }
@@ -793,11 +710,11 @@ public class MySQLDataTypesTest {
    @Test
    public void byteArrayToBIT64() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteArrayToBit64 = new byte[]{
+      dataTypes.setByteArrayToBit64(new byte[]{
          (byte)1, (byte)2, (byte)3, (byte)4,
-      };
+      });
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       byte[] expected = new byte[]{
             (byte)0,
             (byte)0,
@@ -808,13 +725,13 @@ public class MySQLDataTypesTest {
             (byte)3,
             (byte)4
          };
-      Assertions.assertThat(dataTypes1.byteArrayToBit64).containsExactly(expected);
+      Assertions.assertThat(dataTypes1.getByteArrayToBit64()).containsExactly(expected);
    }
 
    @Test @Ignore
    public void stringToBIT8() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToBit8 = "b'11'";
+      dataTypes.setStringToBit8("b'11'");
       thrown.expectMessage("MysqlDataTruncation: Data truncation: Data too long for column 'stringToBit8'");
       Q2Obj.insert(dataTypes);
    }
@@ -822,189 +739,189 @@ public class MySQLDataTypesTest {
    @Test
    public void shortToBIT16() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.shortToBit16 = Short.MAX_VALUE;
+      dataTypes.setShortToBit16(Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.shortToBit16, dataTypes1.shortToBit16);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getShortToBit16(), dataTypes1.getShortToBit16());
    }
 
    @Test
    public void intToBIT32() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToBit32 = Integer.MAX_VALUE;
+      dataTypes.setIntToBit32(Integer.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToBit32, dataTypes1.intToBit32);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToBit32(), dataTypes1.getIntToBit32());
    }
 
    @Test
    public void longToBIT64() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.longToBit64 = Long.MAX_VALUE;
+      dataTypes.setLongToBit64(Long.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToBit64, dataTypes1.longToBit64);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToBit64(), dataTypes1.getLongToBit64());
    }
 
    @Test
    public void byteToTINYINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToTinyint = Byte.MIN_VALUE;
+      dataTypes.setByteToTinyint(Byte.MIN_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.byteToTinyint, dataTypes1.byteToTinyint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getByteToTinyint(), dataTypes1.getByteToTinyint());
    }
 
    @Test
    public void shortToTINYINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.shortToTinyint = 127;
+      dataTypes.setShortToTinyint((short) 127);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.shortToTinyint, dataTypes1.shortToTinyint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getShortToTinyint(), dataTypes1.getShortToTinyint());
    }
 
    @Test
    public void intToTINYINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToTinyint = 127;
+      dataTypes.setIntToTinyint(127);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToTinyint, dataTypes1.intToTinyint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToTinyint(), dataTypes1.getIntToTinyint());
    }
 
    @Test
    public void longToTINYINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.longToTinyint = 127;
+      dataTypes.setLongToTinyint(127);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToTinyint, dataTypes1.longToTinyint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToTinyint(), dataTypes1.getLongToTinyint());
    }
 
    @Test
    public void byteToSMALLINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToSmallint = Byte.MIN_VALUE;
+      dataTypes.setByteToSmallint(Byte.MIN_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.byteToSmallint, dataTypes1.byteToSmallint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getByteToSmallint(), dataTypes1.getByteToSmallint());
    }
 
    @Test
    public void shortToSMALLINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.shortToSmallint = Short.MAX_VALUE;
+      dataTypes.setShortToSmallint(Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.shortToSmallint, dataTypes1.shortToSmallint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getShortToSmallint(), dataTypes1.getShortToSmallint());
    }
 
    @Test
    public void intToSMALLINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToSmallint = Short.MAX_VALUE;
+      dataTypes.setIntToSmallint(Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToSmallint, dataTypes1.intToSmallint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToSmallint(), dataTypes1.getIntToSmallint());
    }
 
    @Test
    public void longToSMALLINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.longToSmallint = Short.MAX_VALUE;
+      dataTypes.setLongToSmallint(Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToSmallint, dataTypes1.longToSmallint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToSmallint(), dataTypes1.getLongToSmallint());
    }
 
    @Test
    public void bigintToBIGINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.bigintToBigint = BigInteger.valueOf(Long.MAX_VALUE);
+      dataTypes.setBigintToBigint(BigInteger.valueOf(Long.MAX_VALUE));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.bigintToBigint, dataTypes1.bigintToBigint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getBigintToBigint(), dataTypes1.getBigintToBigint());
    }
 
    @Test
    public void longToBIGINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.longToBigint = Long.MAX_VALUE;
+      dataTypes.setLongToBigint(Long.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToBigint, dataTypes1.longToBigint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToBigint(), dataTypes1.getLongToBigint());
    }
 
    @Test
    public void intToBIGINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToBigint = Integer.MAX_VALUE;
+      dataTypes.setIntToBigint(Integer.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToBigint, dataTypes1.intToBigint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToBigint(), dataTypes1.getIntToBigint());
    }
 
    @Test
    public void intToINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToInt = Integer.MAX_VALUE;
+      dataTypes.setIntToInt(Integer.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToInt, dataTypes1.intToInt);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToInt(), dataTypes1.getIntToInt());
    }
 
    @Test
    public void integerToINTNull() {
       DataTypes dataTypes = new DataTypes();
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.integerToInt, dataTypes1.integerToInt);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntegerToInt(), dataTypes1.getIntegerToInt());
    }
 
    @Test
    public void intToMEDIUMINT() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.intToMediumint = -8388608;
+      dataTypes.setIntToMediumint(-8388608);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToMediumint, dataTypes1.intToMediumint);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToMediumint(), dataTypes1.getIntToMediumint());
    }
 
    @Test
    public void longToINT_UNSIGNED() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.longToUnsignedInt = ((long)Integer.MAX_VALUE * 2) + 1;
+      dataTypes.setLongToUnsignedInt(((long)Integer.MAX_VALUE * 2) + 1);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToUnsignedInt, dataTypes1.longToUnsignedInt);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToUnsignedInt(), dataTypes1.getLongToUnsignedInt());
    }
 
    @Test
    public void enumToEnumTypeString() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.enumToEnumTypeString = DataTypes.CaseMatched.one;
+      dataTypes.setEnumToEnumTypeString(DataTypes.CaseMatched.one);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.enumToEnumTypeString, dataTypes1.enumToEnumTypeString);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToEnumTypeString(), dataTypes1.getEnumToEnumTypeString());
    }
 
    @Test
    public void enumToEnumTypeOrdinal() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.enumToEnumTypeOrdinal = DataTypes.CaseMatched.one;
+      dataTypes.setEnumToEnumTypeOrdinal(DataTypes.CaseMatched.one);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.enumToEnumTypeOrdinal, dataTypes1.enumToEnumTypeOrdinal);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToEnumTypeOrdinal(), dataTypes1.getEnumToEnumTypeOrdinal());
    }
 
    @Test
    public void enumToInt() {
       DataTypes dataTypes = new DataTypes();
-      dataTypes.enumToInt = DataTypes.CaseMatched.one;
+      dataTypes.setEnumToInt(DataTypes.CaseMatched.one);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.enumToInt, dataTypes1.enumToInt);
+      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToInt(), dataTypes1.getEnumToInt());
    }
 
    /*

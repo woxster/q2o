@@ -1,6 +1,7 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
+import com.zaxxer.q2o.entities.Left1;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.TestUtils;
@@ -12,7 +13,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.*;
 
-import static com.zaxxer.q2o.Q2Obj.byId;
 import static com.zaxxer.q2o.Q2Obj.insert;
 import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static org.junit.Assert.*;
@@ -191,7 +191,7 @@ public class RefreshTest {
 
          TestClass obj = insert(new TestClass());
          assertEquals(1, obj.Id);
-         obj = byId(TestClass.class, obj.Id);
+         obj = Q2Obj.byId(TestClass.class, obj.Id);
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
@@ -224,7 +224,7 @@ public class RefreshTest {
 
          TestClass obj = insert(new TestClass());
          assertEquals(1, obj.Id);
-         obj = byId(TestClass.class, obj.Id);
+         obj = Q2Obj.byId(TestClass.class, obj.Id);
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
@@ -278,15 +278,15 @@ public class RefreshTest {
 
          TestClass2 obj = insert(con, new TestClass2());
          assertEquals(id1, obj.id1);
-         obj = byId(TestClass2.class, obj.id1, obj.id2);
+         obj = Q2Obj.byId(TestClass2.class, obj.id1, obj.id2);
          assertNotNull(obj);
-         assertEquals(null, obj.field);
+         assertNull(obj.field);
 
          executeUpdate(
             "update TestClass2 set field = 'changed' where id1 = " + id1 + " and id2 = " + id2);
 
          TestClass2 obj2 = Q2Obj.refresh(con, obj);
-         assertTrue(obj == obj2);
+         assertSame(obj, obj2);
          assertEquals("changed", obj.field);
 
       }
@@ -297,6 +297,76 @@ public class RefreshTest {
    }
 
    // TODO Set field of joined table to null after it was loaded and refresh the entity, to ensure it is updated.
+
+   /**
+    * Works on Left1, Middle1, Right1
+    */
+   @Test
+   public void refreshObjectLeftJoinedTables() throws SQLException {
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()) {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE LEFT_TABLE ("
+               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+               + ", type VARCHAR(128)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE MIDDLE_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", type VARCHAR(128)"
+               + ", rightId INTEGER UNIQUE"
+               + ", CONSTRAINT MIDDLE_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ")");
+
+         Q2Sql.executeUpdate(
+            " CREATE TABLE RIGHT_TABLE ("
+               + " id INTEGER UNIQUE"
+               + ", type VARCHAR(128)"
+               + ", CONSTRAINT RIGHT_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE_TABLE (rightId)"
+               + ")");
+
+         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('type: left')");
+         Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
+         Q2Sql.executeUpdate("insert into RIGHT_TABLE (id, type) values(1, 'type: right')");
+
+         // Load Left1
+         Left1 left1 = Q2ObjList.fromSelect(
+            Left1.class,
+            "select * from LEFT_TABLE, MIDDLE_TABLE, RIGHT_TABLE" +
+               " where LEFT_TABLE.id = MIDDLE_TABLE.id" +
+               " and MIDDLE_TABLE.rightId = RIGHT_TABLE.id" +
+               " and LEFT_TABLE.id = 1").get(0);
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left1.toString());
+
+         // Delete Right entity
+         Q2Obj.delete(left1.getMiddle().getRight());
+         Q2Sql.executeUpdate("update MIDDLE_TABLE set rightId = 0 where id = 1");
+
+         // Reload Left1 to ensure reference on Right has gone
+         Left1 left2 = Q2ObjList.fromSelect(
+            Left1.class,
+            "select * from LEFT_TABLE" +
+               " left join MIDDLE_TABLE on LEFT_TABLE.id = MIDDLE_TABLE.id" +
+               " left join RIGHT_TABLE on MIDDLE_TABLE.rightId = RIGHT_TABLE.id" +
+               " where LEFT_TABLE.id = 1").get(0);
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left2.toString());
+
+         // Check refresh method
+         Q2Obj.refresh(left1);
+         System.out.println(left1);
+
+
+      }
+      finally {
+         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE MIDDLE_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
+      }
+
+   }
+
 
    // ######### Utility methods ######################################################
 
