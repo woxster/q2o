@@ -582,10 +582,12 @@ final class Introspected {
                else if (BigInteger.class == columnType) {
                   typeCorrectedValue = convertBigInteger(columnTypeName, fieldType, value);
                }
-               else if (BigDecimal.class == columnType) {
+               // // With Sybase ASE it is SybBigDecimal
+               else if (BigDecimal.class.isAssignableFrom(columnType)) {
                   typeCorrectedValue = convertBigDecimal(columnTypeName, fieldType, value);
                }
-               else if (Timestamp.class == columnType) {
+               // With Sybase ASE it is SybTimestamp
+               else if (Timestamp.class.isAssignableFrom(columnType)) {
                   typeCorrectedValue = convertTimestamp(columnTypeName, fieldType, value);
                }
                else if (Time.class == columnType) {
@@ -593,6 +595,9 @@ final class Introspected {
                }
                else if (java.sql.Date.class == columnType) {
                   typeCorrectedValue = convertSqlDate(columnTypeName, fieldType, value);
+               }
+               else if (Boolean.class == columnType) {
+                  typeCorrectedValue = value;
                }
                else if (byte[].class == columnType) {
                   typeCorrectedValue = convertByteArray(columnTypeName, fieldType, value);

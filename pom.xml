@@ -3,7 +3,7 @@
 
    <groupId>com.github.h-thurow</groupId>
    <artifactId>q2o</artifactId>
-   <version>3.13-SNAPSHOT</version>
+   <version>3.14-SNAPSHOT</version>
    <!--<packaging>bundle</packaging>-->
 
    <name>q2o</name>
@@ -32,6 +32,10 @@
       <developer>
          <name>Leo Bayer</name>
          <email>lfbayer@gmail.com</email>
+      </developer>
+      <developer>
+         <name>Holger Thurow</name>
+         <email>thurow.h@gmail.com</email>
       </developer>
    </developers>
 
