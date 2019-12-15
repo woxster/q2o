@@ -142,7 +142,7 @@ List<Customer> customers = jdbcTemplate.query("...", new RowMapper<Customer>() {
 ```
 All q2o methods taking a Connection, PreparedStatement or ResultSet are throwing SQLExceptions, so Spring can translate them into some subtype of its DataAccessException. These methods can even be called without initialization of q2o.
 
-Starting with V 3.12 you can initialize q2o with Spring Transaction support too.
+Starting with V 3.12 you can initialize q2o with Spring Transaction support too. See [Initialization](#initialization) above.
 
 
 
