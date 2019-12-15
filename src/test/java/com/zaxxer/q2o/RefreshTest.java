@@ -307,50 +307,50 @@ public class RefreshTest {
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT_TABLE ("
+            "CREATE TABLE LEFT1_TABLE ("
                + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
                + ", type VARCHAR(128)"
                + ")");
 
          Q2Sql.executeUpdate(
-            " CREATE TABLE MIDDLE_TABLE ("
+            " CREATE TABLE MIDDLE1_TABLE ("
                + " id INTEGER UNIQUE"
                + ", type VARCHAR(128)"
                + ", rightId INTEGER UNIQUE"
-               + ", CONSTRAINT MIDDLE_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT_TABLE (id)"
+               + ", CONSTRAINT MIDDLE1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT1_TABLE (id)"
                + ")");
 
          Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT_TABLE ("
+            " CREATE TABLE RIGHT1_TABLE ("
                + " id INTEGER UNIQUE"
                + ", type VARCHAR(128)"
-               + ", CONSTRAINT RIGHT_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE_TABLE (rightId)"
+               + ", CONSTRAINT RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE1_TABLE (rightId)"
                + ")");
 
-         Q2Sql.executeUpdate("insert into LEFT_TABLE (type) values('type: left')");
-         Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
-         Q2Sql.executeUpdate("insert into RIGHT_TABLE (id, type) values(1, 'type: right')");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type) values('type: left')");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
+         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (id, type) values(1, 'type: right')");
 
          // Load Left1
          Left1 left1 = Q2ObjList.fromSelect(
             Left1.class,
-            "select * from LEFT_TABLE, MIDDLE_TABLE, RIGHT_TABLE" +
-               " where LEFT_TABLE.id = MIDDLE_TABLE.id" +
-               " and MIDDLE_TABLE.rightId = RIGHT_TABLE.id" +
-               " and LEFT_TABLE.id = 1").get(0);
+            "select * from LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE" +
+               " where LEFT1_TABLE.id = MIDDLE1_TABLE.id" +
+               " and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
+               " and LEFT1_TABLE.id = 1").get(0);
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left1.toString());
 
          // Delete Right entity
          Q2Obj.delete(left1.getMiddle().getRight());
-         Q2Sql.executeUpdate("update MIDDLE_TABLE set rightId = 0 where id = 1");
+         Q2Sql.executeUpdate("update MIDDLE1_TABLE set rightId = 0 where id = 1");
 
          // Reload Left1 to ensure reference on Right has gone
          Left1 left2 = Q2ObjList.fromSelect(
             Left1.class,
-            "select * from LEFT_TABLE" +
-               " left join MIDDLE_TABLE on LEFT_TABLE.id = MIDDLE_TABLE.id" +
-               " left join RIGHT_TABLE on MIDDLE_TABLE.rightId = RIGHT_TABLE.id" +
-               " where LEFT_TABLE.id = 1").get(0);
+            "select * from LEFT1_TABLE" +
+               " left join MIDDLE1_TABLE on LEFT1_TABLE.id = MIDDLE1_TABLE.id" +
+               " left join RIGHT1_TABLE on MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
+               " where LEFT1_TABLE.id = 1").get(0);
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left2.toString());
 
          // Check refresh method
@@ -360,9 +360,9 @@ public class RefreshTest {
 
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE MIDDLE_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE LEFT1_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE MIDDLE1_TABLE");
+         Q2Sql.executeUpdate("DROP TABLE RIGHT1_TABLE");
       }
 
    }

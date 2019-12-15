@@ -95,12 +95,17 @@ class PropertyInfo extends AttributeInfo {
       return readMethod.getDeclaredAnnotation(Column.class);
    }
 
+   /**
+    * @return With non-JoinColumn field its value, else the value of its associated object's primary key.
+    */
    Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException {
       if (!isJoinColumn) {
          return readMethod.invoke(target);
       }
-      Object obj = readMethod.invoke(target);
-      return idValueFromParentEntity(obj);
+      else {
+         Object obj = readMethod.invoke(target);
+         return idValueFromEntity(obj);
+      }
    }
 
    public void setValue(final Object target, final Object value) throws IllegalAccessException {

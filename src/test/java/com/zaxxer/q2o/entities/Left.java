@@ -24,7 +24,7 @@ public class Left {
    }
 
    @OneToOne
-   @JoinColumn(name = "id")
+   @JoinColumn(name = "rightId")
    public Right getRight() {
       return right;
    }

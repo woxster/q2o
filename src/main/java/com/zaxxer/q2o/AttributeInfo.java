@@ -7,9 +7,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.sql.Timestamp;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -485,7 +483,7 @@ abstract class AttributeInfo
    abstract Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException;
 
 
-   protected Object idValueFromParentEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
+   protected Object idValueFromEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
       if (obj != null) {
          final Introspected introspected = Introspector.getIntrospected(obj.getClass());
          final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();

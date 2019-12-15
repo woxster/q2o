@@ -2,12 +2,7 @@ package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CompositeKey;
 import com.zaxxer.q2o.entities.Left;
-import org.h2.jdbcx.JdbcDataSource;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.sansorm.testutils.DummyConnection;
 import org.sansorm.testutils.DummyParameterMetaData;
 import org.sansorm.testutils.DummyStatement;
@@ -18,13 +13,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
