@@ -25,7 +25,7 @@ Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
 Spring Transaction Support.
 
-MySQL Support (coming next with 3.13)
+MySQL Support (New in 3.13)
 
 More convenient methods.
 
@@ -50,6 +50,10 @@ q2o.initializeTxCustom(ds, tm, ut);
 
 // Starting with V 3.12 you can make q2o Spring transaction aware
 q2o.initializeWithSpringTxSupport(ds);
+
+// From V 3.13 on you can enable MySQL support. Configure MySQL with generateSimpleParameterMetadata=true, call 
+// one of the q2o.initialize* methods and activate MySQL mode:
+q2o.setMySqlMode(true);
 ```
 Even without initialization there is support for some q2o methods. This means all methods taking a Connection, PreparedStatement or ResultSet as an argument can be called without q2o having been initialized.
 
