@@ -68,7 +68,7 @@ Let's imagine a Java class that reflects the table in a straight-forward way, an
 ```Java
 @Table(name = "customer")
 public class Customer {
-   @Id @GeneratedValue
+   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    private int id;
 
    @Column(name = "last_name")
