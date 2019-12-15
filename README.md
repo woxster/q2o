@@ -67,6 +67,7 @@ CREATE TABLE customer (
 ```
 Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations. These annotations will instruct q2o how to map objects to SQL and ResultSets to Objects:
 ```Java
+@Entity
 @Table(name = "customer")
 public class Customer {
    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
