@@ -12,10 +12,7 @@ q2o is a JPA based Java object mapper which helps you with many of the tedious S
 [ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
 [Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
 
-**Note:** *q2o does not currently support MySQL because the MySQL JDBC driver does not return proper metadata
-which is required by q2o for mapping.*
-
-## Intention of this fork
+### Intention of this fork
 
 Support not only field access but property access to. With property access the class's getters and setters are called to read or write values. With field access the fields are read and written to directly. So if you need more control over the process of reading or writing set access type explicitely with `@Access` annotation or annotate getters, not fields (do not mix the style within one class). If there is no @Access annotation found the place of the annotations decide upon the access type. With support for property access you can also let IntelliJ generate your entity classes (IntelliJ defaults to annotating getters, not fields) and use them without reworking.
 
