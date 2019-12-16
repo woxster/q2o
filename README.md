@@ -4,7 +4,7 @@
 
 # q2o
 
-q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It also offers limited support for resolving object relations on demand.
+q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It offers limited support for resolving object relations on demand, but it does not intend to be an ORM.
 
 ### Intention of this fork
 
