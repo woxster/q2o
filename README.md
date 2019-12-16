@@ -4,13 +4,7 @@
 
 # q2o
 
-q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It also offers limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
-
-[How Hibernate Almost Ruined My Career](https://www.toptal.com/java/how-hibernate-ruined-my-career)<br>
-[OrmHate (by Martin Fowler)](https://martinfowler.com/bliki/OrmHate.html)<br>
-[ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
-[ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
-[Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
+q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It also offers limited support for resolving object relations on demand.
 
 ### Intention of this fork
 
