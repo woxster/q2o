@@ -106,11 +106,18 @@ class PropertyInfo extends AttributeInfo {
    public void setValue(final Object target, final Object value) throws IllegalAccessException {
       try {
          if (!isJoinColumn) {
-            propertyDescriptor.getWriteMethod().invoke(target, value);
+            try {
+               propertyDescriptor.getWriteMethod().invoke(target, value);
+            }
+            catch (Exception e) {
+               throw new RuntimeException("target=" + target + " value=" + value + "\nPropertyInfo=" + this.toString(), e);
+            }
+//            if (!this.field.getClass().isPrimitive() || value != null) {
+//            }
          }
          else {
             final Object obj;
-            if (value.getClass() != getActualType() && !isOneToManyAnnotated) {
+            if (value != null && value.getClass() != getActualType() && !isOneToManyAnnotated) {
                obj = idValueToParentEntity(getType(), value);
             }
             else {

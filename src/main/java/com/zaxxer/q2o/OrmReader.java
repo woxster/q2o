@@ -367,15 +367,13 @@ class OrmReader extends OrmBase
          }
 
          final Object columnValue = resultSet.getObject(colIdx);
-         if (columnValue == null) {
-            return;
-         }
-         String tableName = metaData.getTableName(colIdx);
+         // TODO auskommentiert, weil refresh() sonst Felder nicht aktualisiert, die auf null geändert wurden.
+//         if (columnValue == null) {
+//            return;
+//         }
+         String tableName = Optional.ofNullable(metaData.getTableName(colIdx)).orElse("");
          // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
-         if (!tableName.isEmpty() && !tableName.equalsIgnoreCase(introspected.getTableName())) {
-            processColumnOfJoinedTable(columnName, columnValue, tableName);
-         }
-         else {
+         if (tableName.isEmpty() || tableName.equalsIgnoreCase(introspected.getTableName())) {
             final AttributeInfo fcInfo = !tableName.isEmpty()
                ? introspected.getFieldColumnInfo(tableName, columnName)
                : introspected.getFieldColumnInfo(columnName);
@@ -388,9 +386,18 @@ class OrmReader extends OrmBase
                }
             });
             // If objectFromSelect() does more fields retrieve as are defined on the entity then fcInfo is null.
-            if (fcInfo != null) {
+            if (fcInfo != null
+               && (!fcInfo.isIdField || !fcInfo.getType().isPrimitive() || columnValue != null)) {
                // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-               introspected.set(parent, fcInfo, columnValue);
+               // TODO Set columnTypeName
+               introspected.set(parent, fcInfo, columnValue, metaData.getColumnTypeName(colIdx));
+            }
+         }
+         else {
+//            AttributeInfo fcInfo = introspected.getFieldColumnInfo(columnName);
+            AttributeInfo fcInfo = introspected.getFieldColumnInfo(tableName, columnName);
+            if (fcInfo != null && (!fcInfo.isIdField || !fcInfo.getType().isPrimitive() || columnValue != null)) {
+               processColumnOfJoinedTable(columnName, columnValue, tableName);
             }
          }
       }
@@ -419,7 +426,8 @@ class OrmReader extends OrmBase
          Class<?> currentTargetClass = currentEntity.getClass();
          AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
          // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
-         introspected.set(currentEntity, currentTargetInfo, columnValue);
+         // TODO Set columnTypeName
+         introspected.set(currentEntity, currentTargetInfo, columnValue, null);
 
          // parentInfo is null if target does not correspond with an actual table. See com.zaxxer.q2o.internal.JoinOneToOneSeveralTablesTest.flattenedTableJoin().
          parentInfo = introspected.getFieldColumnInfo(currentTargetClass);
@@ -434,7 +442,8 @@ class OrmReader extends OrmBase
             });
             // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
             if (!parentInfo.isOneToManyAnnotated) {
-               introspected.set(currentParent, parentInfo, currentEntity);
+               // TODO Set columnTypeName
+               introspected.set(currentParent, parentInfo, currentEntity, null);
             }
             else if (parentInfo.getType() == Collection.class){
                setManyToOneField();
@@ -448,7 +457,8 @@ class OrmReader extends OrmBase
             if (value == null) {
                Collection collection = new ArrayList();
                collection.add(currentEntity);
-               introspected.set(currentParent, parentInfo, collection);
+               // TODO Set columnTypeName
+               introspected.set(currentParent, parentInfo, collection, null);
 
                String parentTableName = parentInfo.getOwnerClassTableName().toUpperCase();
                Object parentEntity = tableNameToEntities.get(parentTableName);

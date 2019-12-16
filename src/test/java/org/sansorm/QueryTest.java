@@ -1,14 +1,17 @@
 package org.sansorm;
 
 import com.zaxxer.q2o.*;
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
+import javax.sql.DataSource;
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -17,23 +20,15 @@ import static com.zaxxer.q2o.Q2Obj.insert;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sansorm.TestUtils.makeH2DataSource;
 
-@RunWith(Parameterized.class)
-public class QueryTest {
+public class QueryTest extends GeneralTestConfigurator {
 
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-   	return Arrays.asList(new Object[][] {
-   		{false},{true}
-   	});
-   }
+   @SuppressWarnings("SqlNoDataSourceInspection")
+   @Before
+   public void setUp() throws Exception {
 
-   @Parameterized.Parameter(0)
-   public static boolean withSpringTxSupport;
+      super.setUp();
 
-   @BeforeClass
-   public static void beforeClass() {
-      q2o.initializeTxNone(makeH2DataSource());
-      try {
+      if (database == Database.h2) {
          Q2Sql.executeUpdate(
             "CREATE TABLE target_class1 ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
@@ -42,35 +37,29 @@ public class QueryTest {
                + "string_from_number NUMERIC "
                + ")");
       }
-      finally {
-         q2o.deinitialize();
+      else if (database == Database.mysql) {
+//      else {
+         Q2Sql.executeUpdate(
+            "CREATE TABLE target_class1 ("
+               + "id INTEGER PRIMARY KEY AUTO_INCREMENT, "
+               + "timestamp TIMESTAMP, "
+               + "string VARCHAR(128), "
+               + "string_from_number NUMERIC "
+               + ")");
       }
-   }
-
-   @Before
-   public void setUp() throws Exception {
-      JdbcDataSource dataSource = makeH2DataSource();
-      if (!withSpringTxSupport) {
-         q2o.initializeTxNone(dataSource);
-      }
-      else {
-         q2o.initializeWithSpringTxSupport(dataSource);
+      else if (database == Database.sqlite) {
+         String ddl = "CREATE TABLE target_class1 ("
+            + "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+            + ", timestamp TIMESTAMP"
+            + ", string VARCHAR(128)"
+            + ", string_from_number NUMERIC"
+            + ")";
+         Q2Sql.executeUpdate(ddl);
       }
    }
 
    @After
    public void tearDown() {
-      if (!withSpringTxSupport) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
-
-   @AfterClass
-   public static void afterClass() throws Exception {
-      q2o.initializeTxNone(makeH2DataSource());
       try {
          Q2Sql.executeUpdate(
             "DROP TABLE target_class1");
@@ -83,13 +72,14 @@ public class QueryTest {
    @Test
    public void shouldPerformCRUD()
    {
-      TargetClass1 original = new TargetClass1(new Date(0), "Hi");
+      long ms = Timestamp.valueOf("1970-01-01 12:00:00.0").getTime();
+      TargetClass1 original = new TargetClass1(new Date(ms), "Hi");
       assertThat(original.getId()).isEqualTo(0);
 
       TargetClass1 inserted = Q2Obj.insert(original);
       assertThat(inserted).isSameAs(original).as("insertOject() only set generated id");
       int idAfterInsert = inserted.getId();
-      assertThat(idAfterInsert).isNotEqualTo(0);
+      assertThat(idAfterInsert).isEqualTo(1);
 
       List<TargetClass1> selectedAll = Q2ObjList.fromClause(TargetClass1.class, null);
       assertThat(selectedAll).isNotEmpty();
@@ -97,7 +87,7 @@ public class QueryTest {
       TargetClass1 selected = Q2Obj.fromClause(TargetClass1.class, "string = ?", "Hi");
       assertThat(selected.getId()).isEqualTo(idAfterInsert);
       assertThat(selected.getString()).isEqualTo("Hi");
-      assertThat(selected.getTimestamp().getTime()).isEqualTo(0L);
+      assertThat(selected.getTimestamp().getTime()).isEqualTo(ms);
 
       selected.setString("Hi edited");
       TargetClass1 updated = Q2Obj.update(selected);
@@ -118,30 +108,36 @@ public class QueryTest {
    }
 
    @Test
-   public void testDate()
-   {
-      Date date = new Date();
+   public void testDate() throws ParseException {
+      SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+      Date date = format.parse("2019-04-13 18:33:25.123");
 
       TargetClass1 target = Q2Obj.insert(new TargetClass1(date, "Date"));
       target = Q2Obj.byId(TargetClass1.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Date");
-      assertThat(target.getTimestamp().getTime()).isEqualTo(date.getTime()); // Timestamp <-> Date equality is assymetrical
+
+      // Concerning MySQL see JavaDoc org.sansorm.MySQLDataTypesTest.timestampToTIMESTAMP()
+      String expected =
+         database == Database.mysql ? "2019-04-13 18:33:25.000"
+                                  : "2019-04-13 18:33:25.123";
+      Assert.assertEquals(expected, format.format(target.getTimestamp()));
    }
 
    @Test
    public void testTimestamp()
    {
-      Timestamp tstamp = new Timestamp(System.currentTimeMillis());
-      tstamp.setNanos(200);
+      Timestamp tstamp = Timestamp.valueOf("2019-04-14 07:11:21.0000002");
 
       TargetTimestampClass1 target = Q2Obj.insert(new TargetTimestampClass1(tstamp, "Timestamp"));
       target = Q2Obj.byId(TargetTimestampClass1.class, target.getId());
 
       assertThat(target.getString()).isEqualTo("Timestamp");
       assertThat(target.getTimestamp().getClass()).isEqualTo(Timestamp.class);
-      assertThat(target.getTimestamp()).isEqualTo(tstamp);
-      assertThat(target.getTimestamp().getNanos()).isEqualTo(200);
+      assertThat(target.getTimestamp().toString()).isEqualTo(
+         database == Database.mysql
+            || database == Database.sqlite ? "2019-04-14 07:11:21.0"
+                                           : "2019-04-14 07:11:21.0000002");
    }
 
    @Test
@@ -173,13 +169,15 @@ public class QueryTest {
       assertThat(target.getStringFromNumber()).isNull();
    }
 
-
    @Test
-   public void testInsertListNotBatched2() {
+   public void insertListNotBatched2() {
       // given
       int count = 5;
       Set<TargetClass1> toInsert = IntStream.range(0, count).boxed()
-         .map(i -> new TargetClass1(new Date(i), String.valueOf(i)))
+         .map(i -> {
+            Date date = new Date(Timestamp.valueOf("2019-04-14 07:11:21").getTime());
+            return new TargetClass1(date, String.valueOf(i));
+         })
          .collect(Collectors.toSet());
 
       // when
@@ -195,25 +193,36 @@ public class QueryTest {
    }
 
    @Test
-   public void testInsertListBatched() {
-      // given
-      int count = 5;
-      String u = UUID.randomUUID().toString();
+   public void insertListBatched() {
+
+      // Create objects
+
+      int count = 1;
+      String uuid = UUID.randomUUID().toString();
       Set<TargetClass1> toInsert = IntStream.range(0, count).boxed()
-         .map(i -> new TargetClass1(new Date(i), u + String.valueOf(i)))
+         .map(i -> {
+            Date date = new Date(Timestamp.valueOf("2019-04-14 07:11:21").getTime());
+            return new TargetClass1(date, uuid + i);
+         })
          .collect(Collectors.toSet());
 
-      // when
+      // INSERT objects
+
       SqlClosure.sqlExecute(c -> {
          Q2ObjList.insertBatched(c, toInsert);
          return null;
       });
 
-      // then
+      // SELECT objects
+
+      Object[] inParams = IntStream.range(0, count).boxed().map(i -> uuid + i).collect(Collectors.toList()).toArray(new Object[]{});
       List<TargetClass1> inserted = Q2ObjList.fromClause(
          TargetClass1.class,
          "string in " + Q2Sql.getInClausePlaceholdersForCount(count),
-         IntStream.range(0, count).boxed().map(i -> u + String.valueOf(i)).collect(Collectors.toList()).toArray(new Object[]{}));
+         inParams);
+
+      // Verify objects
+
       Set<Integer> generatedIds = inserted.stream().map(BaseClass::getId).collect(Collectors.toSet());
       assertThat(generatedIds).doesNotContain(0).as("Generated ids should be filled for passed objects");
       assertThat(generatedIds).hasSize(count).as("Generated ids should be unique");

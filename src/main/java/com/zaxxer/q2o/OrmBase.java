@@ -78,7 +78,7 @@ class OrmBase
    }
 
    /**
-    * @param excludeColumns Case as in name element or property name. In case of delimited column names provide name without delimiters.
+    * @param excludeColumns Case as in name element or property name. In case of delimited column names (e. g. column names with spaces in quotation marks) provide name without delimiters.
     * @return Selectable columns. Comma separated. In case of delimited column names the column names are surrounded by delimiters.
     */
    protected static <T> String getColumnsCsvExclude(final Class<T> clazz, final String... excludeColumns)
@@ -99,29 +99,46 @@ class OrmBase
 
    protected static Object mapSqlType(final Object object, final int sqlType)
    {
-      switch (sqlType) {
-      case Types.TIMESTAMP:
-         if (object instanceof Timestamp) {
-            return object;
+      if (!q2o.isMySqlMode()) {
+         switch (sqlType) {
+         case Types.TIMESTAMP:
+            if (object instanceof Timestamp) {
+               return object;
+            }
+            if (object instanceof java.util.Date) {
+               return new Timestamp(((java.util.Date) object).getTime());
+            }
+            break;
+         case Types.DECIMAL:
+            if (object instanceof BigInteger) {
+               return new BigDecimal(((BigInteger) object));
+            }
+            break;
+         case Types.SMALLINT:
+            if (object instanceof Boolean) {
+               return (((Boolean) object) ? (short) 1 : (short) 0);
+            }
+            break;
+         default:
+            break;
          }
-         if (object instanceof java.util.Date) {
-            return new Timestamp(((java.util.Date) object).getTime());
-         }
-         break;
-      case Types.DECIMAL:
-         if (object instanceof BigInteger) {
-            return new BigDecimal(((BigInteger) object));
-         }
-         break;
-      case Types.SMALLINT:
-         if (object instanceof Boolean) {
-            return (((Boolean) object) ? (short) 1 : (short) 0);
-         }
-         break;
-      default:
-         break;
       }
-
+      else {
+         // TODO Encalsulate in converter class and provide pattern to compose OrmBase with it.
+//         if (sqlType == Types.VARCHAR) {
+//            if (object instanceof Timestamp) {
+////               DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn");
+//               DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+//               LocalDateTime localDateTime = LocalDateTime.now();
+//               return localDateTime.format(dateTimeFormatter);
+//            }
+//            else if (object instanceof Date) {
+//               SimpleDateFormat dateFormat = new SimpleDateFormat();
+//               dateFormat.applyPattern("yyyy-MM-dd");
+//               return dateFormat.format(object);
+//            }
+//         }
+      }
       return object;
    }
 

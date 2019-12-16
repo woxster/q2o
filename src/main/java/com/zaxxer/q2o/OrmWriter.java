@@ -289,7 +289,8 @@ class OrmWriter extends OrmBase
                                             final AttributeInfo[] fcInfos,
                                             final PreparedStatement stmt,
                                             final boolean checkExistingId,
-                                            final Set<String> excludedColumns) throws SQLException
+                                            final Set<String> excludedColumns)
+      throws SQLException
    {
       final int[] parameterTypes = getParameterTypes(stmt);
       int parameterIndex = setStatementParameters(target, introspected, fcInfos, /*hasSelfJoinColumn*/ stmt, parameterTypes, excludedColumns);
@@ -318,7 +319,10 @@ class OrmWriter extends OrmBase
          if (excludedColumns == null || !isIgnoredColumn(excludedColumns, fcInfo.getColumnName())) {
             final int parameterType = parameterTypes[parameterIndex - 1];
             final Object object = mapSqlType(introspected.get(item, fcInfo), parameterType);
-            if (object != null) {
+            if (q2o.isMySqlMode()) {
+               stmt.setObject(parameterIndex, object);
+            }
+            else if (object != null) {
                if (!fcInfo.isSelfJoinField()) {
                   stmt.setObject(parameterIndex, object, parameterType);
                }
@@ -359,7 +363,8 @@ class OrmWriter extends OrmBase
       }
       try (final ResultSet generatedKeys = stmt.getGeneratedKeys()) {
          if (generatedKeys.next()) {
-            introspected.set(target, fcInfo, generatedKeys.getObject(1));
+            // TODO Set columnTypeName
+            introspected.set(target, fcInfo, generatedKeys.getObject(1), null);
          }
       }
    }

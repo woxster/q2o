@@ -11,15 +11,13 @@ import org.junit.runners.Parameterized;
 import org.sansorm.testutils.DummyConnection;
 import org.sansorm.testutils.DummyParameterMetaData;
 import org.sansorm.testutils.DummyStatement;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,42 +30,11 @@ import static org.sansorm.TestUtils.makeH2DataSource;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 10.04.18
  */
-@RunWith(Parameterized.class)
-public class Q2ObjTest {
-
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {
-         {false},{true}
-      });
-   }
-
-   @Parameterized.Parameter(0)
-   public static boolean withSpringTxSupport;
-
-   @Before
-   public void setUp() throws Exception {
-      JdbcDataSource dataSource = makeH2DataSource();
-      if (!withSpringTxSupport) {
-         q2o.initializeTxNone(dataSource);
-      }
-      else {
-         q2o.initializeWithSpringTxSupport(dataSource);
-      }
-   }
-
-   @After
-   public void tearDown() {
-      if (!withSpringTxSupport) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
+public class Q2ObjTest extends GeneralTestConfigurator {
 
    @Test
    public void updateObjectExludeColumns() throws SQLException {
+
       @Table(name = "Test_Class")
       class TestClass {
          @Id @GeneratedValue
@@ -81,8 +48,10 @@ public class Q2ObjTest {
          @Column
          String field4 = "field4";
       }
+
       final String[] fetchedSql = new String[1];
       Map<Integer, String> idxToValue = new HashMap<>();
+
       DummyConnection con = new DummyConnection() {
          @Override
          public PreparedStatement prepareStatement(String sql) {
@@ -93,7 +62,8 @@ public class Q2ObjTest {
                   return new DummyParameterMetaData() {
                      @Override
                      public int getParameterCount() {
-                        return Q2ObjTest.this.getParameterCount(fetchedSql[0]);
+                        int count = Q2ObjTest.this.getParameterCount(fetchedSql[0]);
+                        return count;
                      }
                      @Override
                      public int getParameterType(int param) {
@@ -106,10 +76,18 @@ public class Q2ObjTest {
                public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
                   idxToValue.put(parameterIndex, (String) x);
                }
+
+               /** Called when MySQL */
+               @Override
+               public void setObject(int parameterIndex, Object x) throws SQLException {
+                  idxToValue.put(parameterIndex, (String) x);
+               }
             };
          }
       };
+
       TestClass obj = Q2Obj.updateExcludeColumns(con, new TestClass(), "field_1", "Field_3");
+
       assertEquals("UPDATE Test_Class SET FIELD_2=?,field4=? WHERE id=?", fetchedSql[0]);
       assertEquals("field2", idxToValue.get(1));
       assertEquals("field4", idxToValue.get(2));
@@ -119,11 +97,27 @@ public class Q2ObjTest {
    @Test
    public void byIdWithTarget() {
       try {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
+         if (database == Database.h2) {
+            Q2Sql.executeUpdate(
+               "CREATE TABLE LEFT_TABLE ("
+                  + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+                  + ", type VARCHAR(128)"
+                  + ")");
+         }
+         else if (database == Database.mysql) {
+            Q2Sql.executeUpdate(
+               "CREATE TABLE LEFT_TABLE ("
+                  + " id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT"
+                  + ", type VARCHAR(128)"
+                  + ")");
+         }
+         else if (database == Database.sqlite) {
+            Q2Sql.executeUpdate(
+               "CREATE TABLE LEFT_TABLE ("
+                  + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+                  + ", type VARCHAR(128)"
+                  + ")");
+         }
          Left left = new Left();
          left.setType("test");
          Q2Obj.insert(left);
@@ -176,17 +170,46 @@ public class Q2ObjTest {
       int id;
       String note;
       String note2;
+
+      @Override
+      public String toString() {
+         return "IncludeColumns{" +
+            "id=" + id +
+            ", note='" + note + '\'' +
+            ", note2='" + note2 + '\'' +
+            '}';
+      }
    }
 
    @Test
    public void updateIncludeColumns() {
       try {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE IncludeColumns ("
-               + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
-               + ", note VARCHAR(128)"
-               + ", note2 VARCHAR(128)"
-               + ")");
+         switch (database) {
+            case h2:
+            Q2Sql.executeUpdate(
+               "CREATE TABLE IncludeColumns ("
+                  + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
+                  + ", note VARCHAR(128)"
+                  + ", note2 VARCHAR(128)"
+                  + ")");
+               break;
+            case mysql:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE IncludeColumns ("
+                     + " id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ")");
+               break;
+            case sqlite:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE IncludeColumns ("
+                     + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ")");
+               break;
+         }
 
          IncludeColumns obj = new IncludeColumns();
          obj.note = "first insert";
@@ -211,12 +234,32 @@ public class Q2ObjTest {
    @Test
    public void updateIncludeColumnsOmitted() {
       try {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE IncludeColumns ("
-               + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
-               + ", note VARCHAR(128)"
-               + ", note2 VARCHAR(128)"
-               + ")");
+         switch (database) {
+            case h2:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE IncludeColumns ("
+                     + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ")");
+               break;
+            case mysql:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE IncludeColumns ("
+                     + " id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ")");
+               break;
+            case sqlite:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE IncludeColumns ("
+                     + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ")");
+               break;
+         }
 
          IncludeColumns obj = new IncludeColumns();
          obj.note = "first insert";
@@ -237,6 +280,102 @@ public class Q2ObjTest {
          Q2Sql.executeUpdate("drop table IncludeColumns");
       }
    }
+
+   public static class MyClass {
+      private int id;
+      private String note;
+      private String note2;
+
+      @Override
+      public String toString() {
+         return "IncludeColumns{" +
+            "id=" + id +
+            ", note='" + note + '\'' +
+            ", note2='" + note2 + '\'' +
+            '}';
+      }
+
+      @Id @GeneratedValue
+      public int getId() {
+         return id;
+      }
+
+      public void setId(int id) {
+         this.id = id;
+      }
+
+      public String getNote() {
+         return note;
+      }
+
+      public void setNote(String note) {
+         this.note = note;
+      }
+
+      public String getNote2() {
+         return note2;
+      }
+
+      public void setNote2(String note2) {
+         this.note2 = note2;
+      }
+   }
+
+   @Test
+   public void unknownFieldDelivered() throws SQLException {
+      try {
+         switch (database) {
+            case h2:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE MyClass ("
+                     + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ", note3 VARCHAR(128)"
+                     + ")");
+               break;
+            case mysql:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE MyClass ("
+                     + " id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ", note3 VARCHAR(128)"
+                     + ")");
+               break;
+            case sqlite:
+               Q2Sql.executeUpdate(
+                  "CREATE TABLE MyClass ("
+                     + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+                     + ", note VARCHAR(128)"
+                     + ", note2 VARCHAR(128)"
+                     + ", note3 VARCHAR(128)"
+                     + ")");
+               break;
+         }
+
+         Q2Sql.executeUpdate(
+            "insert into MyClass (note, note2, note3) values('inserted', 'inserted', 'inserted')");
+
+         MyClass obj = Q2Obj.fromSelect(MyClass.class, "select * from MyClass");
+         obj = Q2Obj.fromClause(MyClass.class, "id = 1");
+         Q2Obj.byId(MyClass.class, 1);
+
+         obj = Q2Obj.fromSelect(MyClass.class, "select * from MyClass");
+
+         Connection connection = dataSource.getConnection();
+         Statement statement = connection.createStatement();
+         ResultSet resultSet = statement.executeQuery("select * from MyClass");
+         resultSet.next();
+         obj = Q2Obj.fromResultSet(resultSet, obj);
+         resultSet.close();
+         System.out.println(obj);
+      }
+      finally {
+         Q2Sql.executeUpdate("drop table MyClass");
+      }
+   }
+
 
    // ######### Utility methods ######################################################
 

@@ -29,9 +29,8 @@ import static org.junit.Assert.assertNotNull;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 04.05.18
  */
-// TODO Rename to OneToOneTest
 @RunWith(Parameterized.class)
-public class OneToOneSpringTest {
+public class OneToOneTest {
 
    @Parameterized.Parameters(name = "withSpringTxSupport={0}")
    public static Collection<Object[]> data() {
@@ -97,7 +96,7 @@ public class OneToOneSpringTest {
                   return new DummyParameterMetaData() {
                      @Override
                      public int getParameterCount() {
-                        return OneToOneSpringTest.this.getParameterCount(fetchedSql[0]);
+                        return OneToOneTest.this.getParameterCount(fetchedSql[0]);
                      }
                      @Override
                      public int getParameterType(int param) {
@@ -320,6 +319,7 @@ public class OneToOneSpringTest {
          Q2Sql.executeUpdate("insert into MIDDLE_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
          Q2Sql.executeUpdate("insert into RIGHT_TABLE (id, type) values(1, 'type: right')");
 
+         // TODO Hier weiter
          Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT_TABLE, LEFT_TABLE, MIDDLE_TABLE where LEFT_TABLE.id = MIDDLE_TABLE.id and MIDDLE_TABLE.RIGHTID = RIGHT_TABLE.ID and LEFT_TABLE.id = ?", 1);
 
          System.out.println(left);

@@ -403,6 +403,9 @@ public class SqlClosure<T> {
       }
    }
 
+   /**
+    * Execute a {@link PreparedStatement}. Saves you the tedious task of setting all IN parameters manually.
+    */
    public static ResultSet statementToResultSet(PreparedStatement stmnt, Object... args) throws SQLException {
       return OrmReader.statementToResultSet(stmnt, args);
    }

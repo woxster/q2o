@@ -209,6 +209,39 @@ public class RefreshTest {
       }
    }
 
+   @Test
+   public void refreshObjectH2Null() throws SQLException {
+
+      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()) {
+         executeUpdate(
+            " CREATE TABLE TestClass ("
+               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
+               + "field1 VARCHAR(128), "
+               + "field2 VARCHAR(128) "
+               + ")");
+
+         TestClass obj = insert(new TestClass());
+         assertEquals(1, obj.Id);
+         obj = byId(TestClass.class, obj.Id);
+         assertNotNull(obj);
+         assertEquals("value1", obj.field1);
+
+         executeUpdate(
+            "update TestClass set field1 = NULL");
+
+         TestClass obj2 = Q2Obj.refresh(con, obj);
+         assertTrue(obj == obj2);
+         assertNull(obj.field1);
+
+      }
+      finally {
+         executeUpdate(
+            "DROP TABLE TestClass");
+      }
+   }
+
    @Table
    public static class TestClass2 {
       @Id
@@ -262,6 +295,8 @@ public class RefreshTest {
             "DROP TABLE TestClass2");
       }
    }
+
+   // TODO Set field of joined table to null after it was loaded and refresh the entity, to ensure it is updated.
 
    // ######### Utility methods ######################################################
 

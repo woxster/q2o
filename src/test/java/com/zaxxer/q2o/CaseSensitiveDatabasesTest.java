@@ -33,42 +33,10 @@ import static org.sansorm.TestUtils.makeH2DataSource;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 24.03.18
  */
-@RunWith(Parameterized.class)
 public class CaseSensitiveDatabasesTest {
-
-   @Parameterized.Parameters(name = "springTxSupport={0}")
-   public static Collection<Object[]> data() {
-      return Arrays.asList(new Object[][] {
-         {false}, {true}
-      });
-   }
-
-   @Parameterized.Parameter(0)
-   public static boolean withSpringTxSupport;
-
-   @Before
-   public void setUp() {
-      if (!withSpringTxSupport) {
-         q2o.initializeTxNone(null);
-      }
-      else {
-         q2o.initializeWithSpringTxSupport(null);
-      }
-   }
-
-   @After
-   public void tearDown() {
-      if (!withSpringTxSupport) {
-         q2o.deinitialize();
-      }
-      else {
-         q2o.deinitialize();
-      }
-   }
 
    @Rule
    public ExpectedException thrown = ExpectedException.none();
-
 
    @Test
    public void getColumnsCsv() {
@@ -781,95 +749,6 @@ public class CaseSensitiveDatabasesTest {
       assertEquals(123, count);
    }
 
-   @Test
-   public void insertObjectH2() {
-
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
-      try {
-         Q2Sql.executeUpdate(
-            " CREATE TABLE \"Test Class\" ("
-               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-               + "\"Delimited field name\" VARCHAR(128), "
-               + "Default_Case VARCHAR(128) "
-               + ")");
-
-         String delimitedFieldValue = "delimited field value";
-         String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = Q2Obj.insert(new InsertObjectH2());
-         assertEquals(1, obj.Id);
-         obj = Q2Obj.byId(InsertObjectH2.class, obj.Id);
-         assertNotNull(obj);
-         int count = Q2Obj.countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
-         assertEquals(1, count);
-      }
-      finally {
-         Q2Sql.executeUpdate(
-            "DROP TABLE \"Test Class\"");
-      }
-   }
-
-   @Test
-   public void updateObjectH2GeneratedId() {
-
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
-      try {
-         Q2Sql.executeUpdate(
-            " CREATE TABLE \"Test Class\" ("
-               + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-               + "\"Delimited field name\" VARCHAR(128), "
-               + "Default_Case VARCHAR(128) "
-               + ")");
-
-         String delimitedFieldValue = "delimited field value";
-         String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = new InsertObjectH2();
-         obj = Q2Obj.insert(obj);
-         obj.defaultCase = "changed";
-         obj = Q2Obj.update(obj);
-         assertEquals("changed", obj.defaultCase);
-      }
-      finally {
-         Q2Sql.executeUpdate(
-            "DROP TABLE \"Test Class\"");
-      }
-   }
-
-   @Test
-   public void updateObjectH2GeneratedDelimitedId() {
-
-      @Table(name = "\"Test Class\"")
-      class TestClass {
-         @Id @GeneratedValue @Column(name = "\"Id\"")
-         int id;
-         @Column(name = "\"Delimited field name\"")
-         String delimitedFieldName = "delimited field value";
-         @Column(name = "Default_Case")
-         String defaultCase = "default case value";
-      }
-
-      try {
-         JdbcDataSource dataSource = makeH2DataSource();
-         q2o.initializeTxNone(dataSource);
-         Q2Sql.executeUpdate(
-            " CREATE TABLE \"Test Class\" ("
-               + "\"Id\" INTEGER NOT NULL IDENTITY PRIMARY KEY, "
-               + "\"Delimited field name\" VARCHAR(128), "
-               + "Default_Case VARCHAR(128) "
-               + ")");
-
-         String delimitedFieldValue = "delimited field value";
-         String defaultCaseValue = "default case value";
-         TestClass obj = new TestClass();
-         obj = Q2Obj.insert(obj);
-         obj.defaultCase = "changed";
-         obj = Q2Obj.update(obj);
-         assertEquals("changed", obj.defaultCase);
-      }
-      finally {
-         Q2Sql.executeUpdate(
-            "DROP TABLE \"Test Class\"");
-      }
-   }
 
    @Test
    public void resultSetToObjectIgnoredColumns() throws SQLException {
