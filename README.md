@@ -10,7 +10,7 @@ q2o is a JPA based Java object mapper which helps you with many of the tedious S
 
 Support not only field access but property access to. With property access the class's getters and setters are called to read or write values. With field access the fields are read and written to directly. So if you need more control over the process of reading or writing set access type explicitely with `@Access` annotation or annotate getters, not fields (do not mix the style within one class). If there is no @Access annotation found the place of the annotations decide upon the access type. With support for property access you can also let IntelliJ generate your entity classes (IntelliJ defaults to annotating getters, not fields) and use them without reworking.
 
-Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with q2o. Remember q2o is not an ORM framework so only a small subset of JPA annotations are really supported (see below).
+Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with q2o. Remember q2o is not an ORM framework so only a small subset of JPA annotations are really supported ([see below](#supported-annotations)).
 
 Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
