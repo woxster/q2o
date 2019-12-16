@@ -4,29 +4,23 @@
 
 # q2o
 
-q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It also offers limited support for resolving object relations on demand. It does not intend to be an ORM out of the same conviction as expressed in articles like these:
+q2o is a JPA based Java object mapper which helps you with many of the tedious SQL and JDBC ResultSet related tasks, but without all the complexity an ORM framework comes with. It offers limited support for reading object relations on demand, but it does not intend to be an ORM.
 
-[How Hibernate Almost Ruined My Career](https://www.toptal.com/java/how-hibernate-ruined-my-career)<br>
-[OrmHate (by Martin Fowler)](https://martinfowler.com/bliki/OrmHate.html)<br>
-[ORM Is an Offensive Anti-Pattern](https://dzone.com/articles/orm-offensive-anti-pattern)<br>
-[ORM is an anti-pattern](http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern)<br>
-[Object-Relational Mapping is the Vietnam of Computer Science](https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/)
-
-**Note:** *q2o does not currently support MySQL because the MySQL JDBC driver does not return proper metadata
-which is required by q2o for mapping.  In the future, q2o may support a purely 100% annotation-based type
-mapping but this would merely be a concession to MySQL and in no way desirable.*
-
-## Intention of this fork
+### Intention of this fork
 
 Support not only field access but property access to. With property access the class's getters and setters are called to read or write values. With field access the fields are read and written to directly. So if you need more control over the process of reading or writing set access type explicitely with `@Access` annotation or annotate getters, not fields (do not mix the style within one class). If there is no @Access annotation found the place of the annotations decide upon the access type. With support for property access you can also let IntelliJ generate your entity classes (IntelliJ defaults to annotating getters, not fields) and use them without reworking.
 
-Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with q2o. Remember q2o is not an ORM frame work so only a small subset of JPA annotations are really supported (see below).
+Fully JPA annotated classes, you already have, should be processed as-is, without throwing exceptions due to unsupported annotations and not forcing you to change them just to make them usable with q2o. Remember q2o is not an ORM framework so only a small subset of JPA annotations are really supported ([see below](#supported-annotations)).
 
 Support for reading `@OneToOne` and `@ManyToOne` relations on demand.
 
 Spring Transaction Support.
 
-API clean-up **(still subject of change!)**. More convenient methods. There is a SansOrm 3.7 compatibility layer.
+MySQL Support (New in 3.13)
+
+More convenient methods.
+
+API clean-up **(still subject of change!)**. There is a SansOrm 3.7 compatibility layer.
 
 Numerous tests added to stabilize further development.
 
@@ -47,6 +41,10 @@ q2o.initializeTxCustom(ds, tm, ut);
 
 // Starting with V 3.12 you can make q2o Spring transaction aware
 q2o.initializeWithSpringTxSupport(ds);
+
+// From V 3.13 on you can enable MySQL support. Configure MySQL with generateSimpleParameterMetadata=true, call 
+// one of the q2o.initialize* methods and activate MySQL mode:
+q2o.setMySqlMode(true);
 ```
 Even without initialization there is support for some q2o methods. This means all methods taking a Connection, PreparedStatement or ResultSet as an argument can be called without q2o having been initialized.
 
@@ -63,9 +61,10 @@ CREATE TABLE customer (
 ```
 Let's imagine a Java class that reflects the table in a straight-forward way, and contains some JPA annotations. These annotations will instruct q2o how to map objects to SQL and ResultSets to Objects:
 ```Java
+@Entity
 @Table(name = "customer")
 public class Customer {
-   @Id @GeneratedValue
+   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    private int id;
 
    @Column(name = "last_name")
@@ -139,7 +138,7 @@ List<Customer> customers = jdbcTemplate.query("...", new RowMapper<Customer>() {
 ```
 All q2o methods taking a Connection, PreparedStatement or ResultSet are throwing SQLExceptions, so Spring can translate them into some subtype of its DataAccessException. These methods can even be called without initialization of q2o.
 
-Starting with V 3.12 you can initialize q2o with Spring Transaction support too.
+Starting with V 3.12 you can initialize q2o with Spring Transaction support too. See [Initialization](#initialization) above.
 
 
 
@@ -173,7 +172,7 @@ Starting with V 3.12 you can initialize q2o with Spring Transaction support too.
 &lt;dependency>
     &lt;groupId>com.github.h-thurow&lt;/groupId>
     &lt;artifactId>q2o&lt;/artifactId>
-    &lt;version>3.11&lt;/version>
+    &lt;version>3.13&lt;/version>
 &lt;/dependency>
 </pre>
 or <a href=http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.h-thurow%22%20AND%20a%3A%22q2o%22>download from here</a>.
