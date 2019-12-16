@@ -18,7 +18,6 @@ public class Q2SqlTest extends GeneralTestConfigurator {
    public void executeQuery() throws SQLException {
       switch (database) {
          case h2:
-         case sqlite:
             Q2Sql.executeUpdate(
                "CREATE TABLE MY_TABLE ("
                   + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -32,6 +31,13 @@ public class Q2SqlTest extends GeneralTestConfigurator {
                   + ", type VARCHAR(128)"
                   + ")");
             break;
+         case sqlite:
+            Q2Sql.executeUpdate(
+               "CREATE TABLE MY_TABLE ("
+                  + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+                  + ", type VARCHAR(128)"
+                  + ")");
+
       }
       try {
          Q2Sql.executeUpdate("insert into MY_TABLE (type) values('one')");

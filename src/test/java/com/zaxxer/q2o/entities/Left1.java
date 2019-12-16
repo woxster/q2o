@@ -7,14 +7,14 @@ import javax.persistence.*;
  * @since 2019-03-03
  */
 @Entity
-@Table(name = "LEFT_TABLE")
+@Table(name = "LEFT1_TABLE")
 public class Left1 {
    private int id;
    private String type;
    private Middle1 middle;
 
    @Id
-   @GeneratedValue
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
       return id;
    }
@@ -24,7 +24,7 @@ public class Left1 {
    }
 
    @OneToOne
-   @JoinColumn(name = "id")
+   @JoinColumn(name = "middleId")
    public Middle1 getMiddle() {
       return middle;
    }

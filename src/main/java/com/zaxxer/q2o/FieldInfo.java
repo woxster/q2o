@@ -1,7 +1,8 @@
 package com.zaxxer.q2o;
 
 import javax.persistence.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -68,7 +69,7 @@ class FieldInfo extends AttributeInfo {
          return field.get(target);
       }
       Object obj = field.get(target);
-      return idValueFromParentEntity(obj);
+      return idValueFromEntity(obj);
    }
 
    void setValue(final Object target, final Object value) throws IllegalAccessException {

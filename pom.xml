@@ -3,7 +3,7 @@
 
    <groupId>com.github.h-thurow</groupId>
    <artifactId>q2o</artifactId>
-   <version>3.12-SNAPSHOT</version>
+   <version>3.14-SNAPSHOT</version>
    <!--<packaging>bundle</packaging>-->
 
    <name>q2o</name>
@@ -33,6 +33,10 @@
          <name>Leo Bayer</name>
          <email>lfbayer@gmail.com</email>
       </developer>
+      <developer>
+         <name>Holger Thurow</name>
+         <email>thurow.h@gmail.com</email>
+      </developer>
    </developers>
 
    <dependencies>
@@ -52,7 +56,6 @@
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-api</artifactId>
          <version>1.7.25</version>
-         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.apache.felix</groupId>
@@ -94,12 +97,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-simple</artifactId>
-         <version>1.7.25</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.postgresql</groupId>
          <artifactId>postgresql</artifactId>
          <version>9.4-1206-jdbc42</version>
@@ -123,6 +120,37 @@
          <artifactId>spring-jdbc</artifactId>
          <version>5.1.4.RELEASE</version>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>mysql</groupId>
+         <artifactId>mysql-connector-java</artifactId>
+         <version>8.0.13</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jetbrains</groupId>
+         <artifactId>annotations</artifactId>
+         <!-- 13.0: Java 1.6, 15.0: Java 1.8 -->
+         <version>15.0</version>
+      </dependency>
+      <dependency>
+         <groupId>ch.qos.logback</groupId>
+         <artifactId>logback-classic</artifactId>
+         <version>1.2.3</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>
+<!--         <version>4.3.11.Final</version>-->
+         <version>5.4.4.Final</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.github.h-thurow</groupId>
+         <artifactId>simple-jndi</artifactId>
+         <version>0.21.0</version>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 

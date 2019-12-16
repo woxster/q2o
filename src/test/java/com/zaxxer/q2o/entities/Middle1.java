@@ -7,14 +7,14 @@ import javax.persistence.*;
  * @since 2019-03-03
  */
 @Entity
-@Table(name = "MIDDLE_TABLE")
+@Table(name = "MIDDLE1_TABLE")
 public class Middle1 {
    private int id;
    private String type;
-   private int rightId;
    private Right1 right;
+   private int rightId;
 
-   @Id
+   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
       return id;
    }
@@ -42,13 +42,11 @@ public class Middle1 {
       this.right = right;
    }
 
-   @Column(name = "rightId")
+// org.hibernate.MappingException: Repeated column in mapping for entity: com.zaxxer.q2o.entities.Right1 column: farRightId (should be mapped with insert="false" update="false")
+   //	at org.hibernate.mapping.PersistentClass.checkColumnDuplication(PersistentClass.java:862)
+   @Column(updatable = false, insertable = false)
    public int getRightId() {
       return rightId;
-   }
-
-   public void setRightId(int rightId) {
-      this.rightId = rightId;
    }
 
    @Override
@@ -60,4 +58,9 @@ public class Middle1 {
          ", right=" + right +
          '}';
    }
+
+   public void setRightId(int rightId) {
+      this.rightId = rightId;
+   }
+
 }

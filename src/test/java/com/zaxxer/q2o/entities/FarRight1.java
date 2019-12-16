@@ -10,7 +10,7 @@ import javax.persistence.Table;
  * @since 2019-03-03
  */
 @Entity
-@Table(name = "FAR_RIGHT_TABLE")
+@Table(name = "FAR_RIGHT1_TABLE")
 public class FarRight1 {
    private int id;
    private String type;

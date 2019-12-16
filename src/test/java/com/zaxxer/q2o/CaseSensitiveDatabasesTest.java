@@ -1,16 +1,9 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
-import com.zaxxer.q2o.entities.InsertObjectH2;
-import org.h2.jdbcx.JdbcDataSource;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
 import org.sansorm.testutils.*;
 
 import javax.persistence.Column;
@@ -18,14 +11,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.sansorm.TestUtils.makeH2DataSource;
 
 /**
  * See Issue #22: <a href="https://github.com/brettwooldridge/SansOrm/issues/22">Problem with upper case column names</a>
@@ -142,6 +131,16 @@ public class CaseSensitiveDatabasesTest {
                      public Object getObject(int columnIndex) {
                         return "auto-generated id";
                      }
+
+                     @Override
+                     public DummyResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData(){
+                           @Override
+                           public String getColumnTypeName(final int column) throws SQLException {
+                              return "BIGINT";
+                           }
+                        };
+                     }
                   };
                }
             };
@@ -204,6 +203,16 @@ public class CaseSensitiveDatabasesTest {
                      @Override
                      public Object getObject(int columnIndex) {
                         return "123";
+                     }
+
+                     @Override
+                     public DummyResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData(){
+                           @Override
+                           public String getColumnTypeName(final int column) throws SQLException {
+                              return "BIGINT";
+                           }
+                        };
                      }
                   };
                }
@@ -390,6 +399,16 @@ public class CaseSensitiveDatabasesTest {
                      public Object getObject(int columnIndex) {
                         return "123";
                      }
+
+                     @Override
+                     public DummyResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData(){
+                           @Override
+                           public String getColumnTypeName(final int column) throws SQLException {
+                              return "BIGINT";
+                           }
+                        };
+                     }
                   };
                }
             };
@@ -457,6 +476,16 @@ public class CaseSensitiveDatabasesTest {
                      @Override
                      public Object getObject(int columnIndex) {
                         return 123;
+                     }
+
+                     @Override
+                     public DummyResultSetMetaData getMetaData() throws SQLException {
+                        return new DummyResultSetMetaData(){
+                           @Override
+                           public String getColumnTypeName(final int column) throws SQLException {
+                              return "BIGINT";
+                           }
+                        };
                      }
                   };
                }

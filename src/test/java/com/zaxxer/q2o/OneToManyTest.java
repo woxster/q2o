@@ -457,7 +457,7 @@ public class OneToManyTest {
 
          LeftOneToMany left = SqlClosure.sqlExecute(c -> {
             PreparedStatement pstmt = c.prepareStatement(
-               "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.id = RIGHT_TABLE.id and LEFT_TABLE.id = ?");
+               "SELECT * FROM LEFT_TABLE, RIGHT_TABLE where LEFT_TABLE.rightId = RIGHT_TABLE.id and LEFT_TABLE.id = ?");
             return Q2Obj.fromStatement(pstmt, LeftOneToMany.class, 1);
          });
          assertEquals("LeftOneToMany{id=1, type='left', rights=[Right{id=1}]}", left.toString());

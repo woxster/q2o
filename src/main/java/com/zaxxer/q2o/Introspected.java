@@ -18,6 +18,8 @@ package com.zaxxer.q2o;
 
 import org.jetbrains.annotations.NotNull;
 import org.postgresql.util.PGobject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
 import java.beans.IntrospectionException;
@@ -38,6 +40,9 @@ import java.util.*;
  * An introspected class.
  */
 final class Introspected {
+
+   private static final Logger logger = LoggerFactory.getLogger(Introspected.class.getName());
+
    private final Class<?> clazz;
    final List<AttributeInfo> idFcInfos;
    private String delimitedTableName;
@@ -53,7 +58,7 @@ final class Introspected {
    private AttributeInfo selfJoinFCInfo;
    private HashMap<Field, AccessType> fieldsAccessType;
    private final HashMap<String, ArrayList<AttributeInfo>> allFcInfosByTableName = new HashMap<>();
-   private final TreeMap<String,Class<?>> tableNameToClassCaseInsensitive = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final TreeMap<String, Class<?>> tableNameToClassCaseInsensitive = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
    private final HashMap<Class<?>, AttributeInfo> actualTypeToFieldColumnInfo = new HashMap<Class<?>, AttributeInfo>();
 
    private boolean isGeneratedId;
@@ -263,7 +268,6 @@ final class Introspected {
    }
 
    /**
-    *
     * @return new entity representing this table
     */
    Object getTableTarget(String tableName) throws IllegalAccessException, InstantiationException {
@@ -287,9 +291,16 @@ final class Introspected {
    }
 
    AttributeInfo getFieldColumnInfo(String tableName, String columnName) {
+      logger.debug("tableName={} columnName={}", tableName, columnName);
       Class<?> cls = tableNameToClassCaseInsensitive.get(tableName);
-      Introspected introspected = Introspector.getIntrospected(cls);
-      return introspected.getFieldColumnInfo(columnName);
+      if (cls == null) {
+         logger.error("{} is not reachable from {}", tableName, getTableName());
+         throw new RuntimeException(tableName + " is not reachable from " + getTableName());
+      }
+      else {
+         Introspected introspected = Introspector.getIntrospected(cls);
+         return introspected.getFieldColumnInfo(columnName);
+      }
    }
 
    AttributeInfo getFieldColumnInfo(Class<?> actualType) {
@@ -522,7 +533,7 @@ final class Introspected {
                value = ((Enum<?>) value).ordinal();
                if (q2o.isMySqlMode()) {
                   // "Values from the list of permissible elements in the column specification are numbered beginning with 1." (MySQL 5.5 Reference Manual, 10.4.4. The ENUM Type).
-                  value = (int)value + 1;
+                  value = (int) value + 1;
                }
             }
             else {
@@ -571,10 +582,12 @@ final class Introspected {
                else if (BigInteger.class == columnType) {
                   typeCorrectedValue = convertBigInteger(columnTypeName, fieldType, value);
                }
-               else if (BigDecimal.class == columnType) {
+               // // With Sybase ASE it is SybBigDecimal
+               else if (BigDecimal.class.isAssignableFrom(columnType)) {
                   typeCorrectedValue = convertBigDecimal(columnTypeName, fieldType, value);
                }
-               else if (Timestamp.class == columnType) {
+               // With Sybase ASE it is SybTimestamp
+               else if (Timestamp.class.isAssignableFrom(columnType)) {
                   typeCorrectedValue = convertTimestamp(columnTypeName, fieldType, value);
                }
                else if (Time.class == columnType) {
@@ -582,6 +595,9 @@ final class Introspected {
                }
                else if (java.sql.Date.class == columnType) {
                   typeCorrectedValue = convertSqlDate(columnTypeName, fieldType, value);
+               }
+               else if (Boolean.class == columnType) {
+                  typeCorrectedValue = value;
                }
                else if (byte[].class == columnType) {
                   typeCorrectedValue = convertByteArray(columnTypeName, fieldType, value);
@@ -642,7 +658,7 @@ final class Introspected {
          columnValue = ((Integer) columnValue).shortValue();
       }
       else if (fieldType == Long.class || fieldType == long.class) {
-         columnValue = ((Integer)columnValue).longValue();
+         columnValue = ((Integer) columnValue).longValue();
       }
       else if (fieldType.isEnum()) {
          columnValue = enumFromNumber(fieldType, (Integer) columnValue);
@@ -654,7 +670,7 @@ final class Introspected {
       Object columnValue = null;
       try {
          Object[] values = (Object[]) fieldType.getMethod("values").invoke(null);
-         // TODO NULL und 0 behandeln.
+         // CLARIFY Deal with NULL and 0?
          if (ordinal != null) {
             if (q2o.isMySqlMode()) {
                // "Values from the list of permissible elements in the column specification are numbered beginning with 1." (MySQL 5.5 Reference Manual, 10.4.4. The ENUM Type).
@@ -682,10 +698,10 @@ final class Introspected {
          columnValue = BigInteger.valueOf((Long) columnValue);
       }
       else if (fieldType == Date.class) {
-         columnValue = new Date((Long)columnValue);
+         columnValue = new Date((Long) columnValue);
       }
       else if (fieldType == Timestamp.class) {
-         columnValue = new Timestamp((Long)columnValue);
+         columnValue = new Timestamp((Long) columnValue);
       }
       return columnValue;
    }
@@ -734,7 +750,7 @@ final class Introspected {
          columnValue = new Date(((Timestamp) columnValue).getTime());
       }
       else if (fieldType == Time.class) {
-         columnValue = Time.valueOf(((Timestamp)columnValue).toLocalDateTime().toLocalTime());
+         columnValue = Time.valueOf(((Timestamp) columnValue).toLocalDateTime().toLocalTime());
       }
       return columnValue;
    }
@@ -758,7 +774,7 @@ final class Introspected {
    }
 
    private Object convertSqlDate(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      // TODO Nur wenn MySQL?
+      // CLARIFY Just in case of MySQL?
       if ("YEAR".equals(columnTypeName)) {
          if (fieldType == String.class) {
             // MySQL 5.5 Reference Manual: "A year in two-digit or four-digit format. The default is four-digit format. In four-digit format, the permissible values are 1901 to 2155, and 0000. In two-digit format, the permissible values are 70 to 69, representing years from 1970 to 2069. MySQL displays YEAR values in YYYY format".
@@ -789,7 +805,6 @@ final class Introspected {
          columnValue = new String(v);
       }
       else if (fieldType == Byte.class || fieldType == byte.class) {
-         // TODO Cast null?
          columnValue = v[0];
       }
       else if (fieldType == Short.class || fieldType == short.class) {
@@ -1105,5 +1120,38 @@ final class Introspected {
 
    boolean hasCompositePrimaryKey() {
       return getIdFcInfos().size() > 1;
+   }
+
+   @Override
+   public String toString() {
+      return "Introspected{" +
+         "clazz=" + clazz +
+         ", idFcInfos=" + idFcInfos +
+         ", delimitedTableName='" + delimitedTableName + '\'' +
+         ", columnToField=" + columnToField +
+         ", propertyToField=" + propertyToField +
+         ", allFcInfos=" + allFcInfos +
+         ", insertableFcInfos=" + insertableFcInfos +
+         ", updatableFcInfos=" + updatableFcInfos +
+         ", selfJoinFCInfo=" + selfJoinFCInfo +
+         ", fieldsAccessType=" + fieldsAccessType +
+         ", allFcInfosByTableName=" + allFcInfosByTableName +
+         ", tableNameToClassCaseInsensitive=" + tableNameToClassCaseInsensitive +
+         ", actualTypeToFieldColumnInfo=" + actualTypeToFieldColumnInfo +
+         ", isGeneratedId=" + isGeneratedId +
+         ", tableName='" + tableName + '\'' +
+         ", idFieldColumnInfos=" + Arrays.toString(idFieldColumnInfos) +
+         ", idColumnNames=" + Arrays.toString(idColumnNames) +
+         ", columnTableNames=" + Arrays.toString(columnTableNames) +
+         ", insertableColumns=" + Arrays.toString(insertableColumns) +
+         ", updatableColumns=" + Arrays.toString(updatableColumns) +
+         ", delimitedColumnNames=" + Arrays.toString(delimitedColumnNames) +
+         ", caseSensitiveColumnNames=" + Arrays.toString(caseSensitiveColumnNames) +
+         ", delimitedColumnsSansIds=" + Arrays.toString(delimitedColumnsSansIds) +
+         ", insertableFcInfosArray=" + Arrays.toString(insertableFcInfosArray) +
+         ", updatableFcInfosArray=" + Arrays.toString(updatableFcInfosArray) +
+         ", selectableFcInfos=" + Arrays.toString(selectableFcInfos) +
+         ", initialized=" + initialized +
+         '}';
    }
 }

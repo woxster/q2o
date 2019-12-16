@@ -1,8 +1,6 @@
 package com.zaxxer.q2o.entities;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -12,8 +10,9 @@ import javax.persistence.Table;
 @Table(name = "RIGHT_TABLE")
 public class Right {
    private int id;
+   private String type;
 
-   @Id
+   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
       return id;
    }
@@ -26,6 +25,15 @@ public class Right {
    public String toString() {
       return "Right{" +
          "id=" + id +
+         ", type='" + type + '\'' +
          '}';
+   }
+
+   public String getType() {
+      return type;
+   }
+
+   public void setType(String type) {
+      this.type = type;
    }
 }

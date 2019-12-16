@@ -8,7 +8,6 @@ import org.sansorm.TargetClass1;
 import org.sansorm.sqlite.TargetClassSQL;
 
 import javax.persistence.*;
-
 import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -226,7 +225,6 @@ public class IntrospectedTest
 
    @Test
    public void introspectJoinColumn() {
-
       Introspected introspected = new Introspected(SelfJoinManyToOneFieldAccessTest.FieldAccessedSelfJoin.class);
       introspected.introspect();
       AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();

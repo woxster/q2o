@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.0">
+   <persistence-unit name="mysql_persistance_unit" transaction-type="RESOURCE_LOCAL">
+      <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+      <non-jta-data-source>datasources/mysql</non-jta-data-source>
+      <class>com.zaxxer.q2o.entities.DataTypes</class>
+      <class>com.zaxxer.q2o.entities.Left</class>
+      <class>com.zaxxer.q2o.entities.Right</class>
+      <class>com.zaxxer.q2o.entities.Left1</class>
+      <class>com.zaxxer.q2o.entities.Middle1</class>
+      <class>com.zaxxer.q2o.entities.Right1</class>
+      <class>com.zaxxer.q2o.entities.FarRight1</class>
+      <exclude-unlisted-classes>true</exclude-unlisted-classes>
+
+      <properties>
+
+<!--  Reuse JNDI bound datasource instead. See non-jta-data-source above. -->
+<!--         <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/q2o" />-->
+<!--         <property name="javax.persistence.jdbc.user" value="root" />-->
+<!--         <property name="javax.persistence.jdbc.password" value="yxcvbnm" />-->
+<!--         <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver" />-->
+
+         <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+         <!-- DB schema will be updated if needed -->
+         <property name="hibernate.hbm2ddl.auto" value="create-drop"/>
+      </properties>
+
+   </persistence-unit>
+</persistence>
