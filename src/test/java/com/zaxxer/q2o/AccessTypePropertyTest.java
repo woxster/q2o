@@ -350,7 +350,7 @@ public class AccessTypePropertyTest {
    }
 
    /**
-    * See {@link #mixedDefaultAccessType()}. When the access type of a single class is ambiguous SansOrm defaults to field access.
+    * See {@link #mixedDefaultAccessType()}. When the access type of a single class is ambiguous q2o defaults to field access.
     */
    @Test
    public void ambiguousAccessType() {

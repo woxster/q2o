@@ -363,8 +363,12 @@ class OrmWriter extends OrmBase
       }
       try (final ResultSet generatedKeys = stmt.getGeneratedKeys()) {
          if (generatedKeys.next()) {
-            introspected.set(target, fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData().getColumnTypeName(1));
+            Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData().getColumnTypeName(1), introspected);
+            fcInfo.setValue(target, typeCorrectedValue);
          }
+      }
+      catch (IllegalAccessException e) {
+         throw new RuntimeException(e);
       }
    }
 

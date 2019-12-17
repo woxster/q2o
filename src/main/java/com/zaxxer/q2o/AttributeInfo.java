@@ -130,7 +130,7 @@ abstract class AttributeInfo
    protected abstract void extractFieldName(final Field field);
 
    /**
-    * CLARIFY How does it relate to {@link Introspected#set(Object, AttributeInfo, Object, String)}
+    * CLARIFY How does it relate to {@link ValueToFieldTypeConverter#adaptValueToFieldType(AttributeInfo, Object, String, Introspected)}
     */
    private void adjustType(final Class<?> type) {
       if (type == null) {
