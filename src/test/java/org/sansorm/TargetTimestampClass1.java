@@ -1,13 +1,10 @@
 package org.sansorm;
 
-import java.sql.Timestamp;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.sql.Timestamp;
 
 /**
  * Created by lbayer on 2/25/16.
@@ -21,7 +18,6 @@ public class TargetTimestampClass1
     private int id;
 
     @Column(name = "timestamp")
-    @Temporal(value = TemporalType.TIMESTAMP)
     private Timestamp timestamp;
 
     @Column(name = "string")

@@ -1,19 +1,15 @@
 package org.sansorm;
 
-import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.Date;
 
 @Table(name = "target_class1")
 public class TargetClass1 extends BaseClass
 {
    @Column(name = "timestamp")
-   @Temporal(TemporalType.TIMESTAMP)
-   private Date timestamp;
+   private Date date;
 
    @Column(name = "string_from_number")
    @Convert(converter = TestConverter.class)
@@ -21,19 +17,19 @@ public class TargetClass1 extends BaseClass
 
    public TargetClass1() { }
 
-   public TargetClass1(Date timestamp, String string) {
-      this(timestamp, string, null);
+   public TargetClass1(Date date, String string) {
+      this(date, string, null);
    }
 
-   public TargetClass1(Date timestamp, String string, String stringFromNumber) {
-      this.timestamp = timestamp;
+   public TargetClass1(Date date, String string, String stringFromNumber) {
+      this.date = date;
       this.string = string;
       this.stringFromNumber = stringFromNumber;
    }
 
-   public Date getTimestamp()
+   public Date getDate()
    {
-      return timestamp;
+      return date;
    }
 
    public String getStringFromNumber() {

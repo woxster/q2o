@@ -1,24 +1,26 @@
 package org.sansorm;
 
 import com.zaxxer.q2o.*;
-import org.junit.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
-import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static com.zaxxer.q2o.Q2Obj.insert;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sansorm.TestUtils.makeH2DataSource;
 
 public class QueryTest extends GeneralTestConfigurator {
 
@@ -87,7 +89,7 @@ public class QueryTest extends GeneralTestConfigurator {
       TargetClass1 selected = Q2Obj.fromClause(TargetClass1.class, "string = ?", "Hi");
       assertThat(selected.getId()).isEqualTo(idAfterInsert);
       assertThat(selected.getString()).isEqualTo("Hi");
-      assertThat(selected.getTimestamp().getTime()).isEqualTo(ms);
+      assertThat(selected.getDate().getTime()).isEqualTo(ms);
 
       selected.setString("Hi edited");
       TargetClass1 updated = Q2Obj.update(selected);
@@ -121,7 +123,7 @@ public class QueryTest extends GeneralTestConfigurator {
       String expected =
          database == Database.mysql ? "2019-04-13 18:33:25.000"
                                   : "2019-04-13 18:33:25.123";
-      Assert.assertEquals(expected, format.format(target.getTimestamp()));
+      Assert.assertEquals(expected, format.format(target.getDate()));
    }
 
    @Test
