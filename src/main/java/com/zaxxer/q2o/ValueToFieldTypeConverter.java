@@ -20,13 +20,15 @@ import java.util.UUID;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 17.12.19
  */
-public class ValueToFieldTypeConverter {
+// IMPROVE Let user customize the converter to use.
+class ValueToFieldTypeConverter {
 
    /**
+    * Adjust value type to field type when necessary.
+    *
     * @return type corrected value
     */
    Object adaptValueToFieldType(@NotNull final AttributeInfo fcInfo, final Object value, final String columnTypeName, final Introspected introspected) {
-      // IMPROVE Encapsulate as DefaultTypeConverter and let user customize the converter to use.
       try {
          final Class<?> fieldType = fcInfo.getType();
          Object typeCorrectedValue = null;

@@ -34,8 +34,6 @@ class OrmBase
       csvCache = new ConcurrentHashMap<>();
    }
 
-   static final ValueToFieldTypeConverter valueToFieldTypeConverter = new ValueToFieldTypeConverter();
-
    protected OrmBase() {
       // protected constructor
    }

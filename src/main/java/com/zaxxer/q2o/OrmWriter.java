@@ -32,6 +32,7 @@ class OrmWriter extends OrmBase
    private static final Map<Introspected, String> createStatementCache;
    private static final Map<Introspected, String> updateStatementCache;
    private static final Logger logger = LoggerFactory.getLogger(OrmBase.class);
+   private static final ValueToFieldTypeConverter valueToFieldTypeConverter = new ValueToFieldTypeConverter();
 
    static {
       createStatementCache = Collections.synchronizedMap(new LinkedHashMap<Introspected, String>(CACHE_SIZE) {
