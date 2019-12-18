@@ -3,7 +3,7 @@ package com.zaxxer.q2o;
 import opix.domain.filetypes.filetypes.WinExtensionEntity;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 
 import javax.persistence.Id;
 import java.io.File;
@@ -113,7 +113,7 @@ public class OrmBaseTest {
 
    @Test
    public void bulkDelete() throws IOException {
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
+      q2o.initializeTxNone(DataSources.makeH2DataSource());
       try {
          Q2Sql.executeUpdate("create table D_WIN_EXTENSION\n" +
             "(" +

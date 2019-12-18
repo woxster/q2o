@@ -3,7 +3,7 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.PropertyAccessedOneToOneSelfJoin;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -22,7 +22,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
    @Test
    public void selfJoinColumnH2() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -74,7 +74,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
    @Test
    public void listFromClause() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -108,7 +108,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
    @Test
    public void insertListNotBatched() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

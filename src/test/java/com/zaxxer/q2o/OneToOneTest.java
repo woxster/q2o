@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 import org.sansorm.testutils.*;
 
 import java.lang.reflect.Field;
@@ -42,7 +42,7 @@ public class OneToOneTest {
 
    @Before
    public void setUp() throws Exception {
-      ds = TestUtils.makeH2DataSource();
+      ds = DataSources.makeH2DataSource();
       if (!withSpringTx) {
          q2o.initializeTxNone(ds);
       }
@@ -335,7 +335,7 @@ public class OneToOneTest {
    //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.process(OrmReader.java:352)
    @Test
    public void leftJoin3Tables() throws SQLException {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

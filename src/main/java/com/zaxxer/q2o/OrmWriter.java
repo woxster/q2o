@@ -364,7 +364,7 @@ class OrmWriter extends OrmBase
       }
       try (final ResultSet generatedKeys = stmt.getGeneratedKeys()) {
          if (generatedKeys.next()) {
-            Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData().getColumnTypeName(1), introspected);
+            Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData(), introspected, 1);
             fcInfo.setValue(target, typeCorrectedValue);
          }
       }

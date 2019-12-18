@@ -10,7 +10,7 @@ import org.hibernate.SessionFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -36,7 +36,7 @@ public class AnnotationsCheckTest {
    @BeforeClass
    public static void beforeClass() throws NamingException {
 
-      final DataSource dataSource = TestUtils.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+      final DataSource dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
 
       InitialContext initialContext = new InitialContext();
       Context jdbcCtx = initialContext.createSubcontext("datasources");

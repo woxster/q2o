@@ -4,7 +4,7 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -20,7 +20,7 @@ public class SQLExceptionTranslatorSpringTest {
 
    @BeforeClass
    public static void beforeClass() throws Exception {
-      dataSource = TestUtils.makeH2DataSource();
+      dataSource = DataSources.makeH2DataSource();
    }
 
    @AfterClass

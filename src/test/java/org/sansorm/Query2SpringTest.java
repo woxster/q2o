@@ -15,7 +15,7 @@ import java.util.List;
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static com.zaxxer.q2o.Q2Obj.insert;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sansorm.TestUtils.makeH2DataSource;
+import static org.sansorm.DataSources.makeH2DataSource;
 
 
 public class Query2SpringTest

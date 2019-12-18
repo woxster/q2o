@@ -53,7 +53,7 @@ public class MySQLDataTypesNullTest {
 //      dataSource.setGenerateSimpleParameterMetadata(true);
 //      MySQLTest.dataSource = dataSource;
 
-      dataSource = TestUtils.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+      dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
       q2o.initializeTxNone(dataSource);
       q2o.setMySqlMode(true);
 
@@ -93,7 +93,6 @@ public class MySQLDataTypesNullTest {
             + ", stringToChar4 CHAR(4)"
 
             + ", stringToVarChar4 VARCHAR(4)"
-            + ", intToVarChar4 VARCHAR(4)"
 
             + ", stringToBinary BINARY(4)"
 
@@ -191,7 +190,6 @@ public class MySQLDataTypesNullTest {
       String stringToVarBinary;
       byte[] byteArrayToBinary;
       byte[] byteArrayToVarBinary ;
-      Integer intToVarChar4;
 
       Byte byteToBit8;
       Short shortToBit16;
@@ -677,15 +675,6 @@ public class MySQLDataTypesNullTest {
       Q2Obj.insert(dataTypes);
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
       assertArrayEquals(dataTypes.byteArrayToBinary, dataTypes1.byteArrayToBinary);
-   }
-
-   @Test
-   public void intToVARCHAR4() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToVarChar4 = 123;
-      Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToVarChar4, dataTypes1.intToVarChar4);
    }
 
    @Test

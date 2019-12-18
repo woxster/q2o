@@ -4,7 +4,7 @@ import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
 import com.zaxxer.q2o.entities.Left1;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 import org.sansorm.testutils.*;
 
 import javax.persistence.Column;
@@ -179,7 +179,7 @@ public class RefreshTest {
    @Test
    public void refreshObjectH2() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -212,7 +212,7 @@ public class RefreshTest {
    @Test
    public void refreshObjectH2Null() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -255,7 +255,7 @@ public class RefreshTest {
    @Test
    public void refreshObjectCompositePrimaryKeyH2() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -303,7 +303,7 @@ public class RefreshTest {
     */
    @Test
    public void refreshObjectLeftJoinedTables() throws SQLException {
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

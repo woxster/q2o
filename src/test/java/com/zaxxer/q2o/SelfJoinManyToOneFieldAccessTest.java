@@ -2,7 +2,7 @@ package com.zaxxer.q2o;
 
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 
 import javax.persistence.*;
 import java.sql.Connection;
@@ -40,7 +40,7 @@ public class SelfJoinManyToOneFieldAccessTest {
    @Test
    public void selfJoinColumnH2() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -92,7 +92,7 @@ public class SelfJoinManyToOneFieldAccessTest {
    @Test
    public void listFromClause() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -126,7 +126,7 @@ public class SelfJoinManyToOneFieldAccessTest {
    @Test
    public void insertListNotBatched() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(

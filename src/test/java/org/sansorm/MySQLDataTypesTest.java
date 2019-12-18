@@ -1,19 +1,19 @@
 package org.sansorm;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2Sql;
 import com.zaxxer.q2o.entities.DataTypes;
 import com.zaxxer.q2o.q2o;
 import org.assertj.core.api.Assertions;
+import org.hamcrest.CoreMatchers;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
 import javax.sql.DataSource;
 import java.math.BigInteger;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -48,7 +48,7 @@ public class MySQLDataTypesTest {
 //      dataSource.setGenerateSimpleParameterMetadata(true);
 //      MySQLTest.dataSource = dataSource;
 
-      dataSource = TestUtils.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+      dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
       q2o.initializeTxNone(dataSource);
       q2o.setMySqlMode(true);
 
@@ -90,7 +90,6 @@ public class MySQLDataTypesTest {
             + ", stringToChar4 CHAR(4)"
 
             + ", stringToVarChar4 VARCHAR(4)"
-            + ", intToVarChar4 VARCHAR(4)"
 
             + ", stringToBinary BINARY(4)"
 
@@ -393,13 +392,43 @@ public class MySQLDataTypesTest {
     */
    @Test
    public void sqlDateToDATE() {
+
       DataTypes dataTypes = new DataTypes();
       dataTypes.setSqlDateToDate(java.sql.Date.valueOf("2019-04-01"));
-      assertEquals("2019-04-01 00:00:00.000", formatter.format(dataTypes.getSqlDateToDate()));
-      Q2Obj.insert(dataTypes);
+      assertEquals("2019-04-01", dataTypes.getSqlDateToDate().toString());
+
+      Q2Obj.insert(dataTypes); // DB stored: 2019-03-31
+
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.getSqlDateToDate()));
+      assertEquals("2019-03-31", dataTypes1.getSqlDateToDate().toString());
       assertEquals(dataTypes.getSqlDateToDate().getClass(), dataTypes1.getSqlDateToDate().getClass());
+   }
+
+   @Test @Ignore
+   public void sqlDateToDATEReference() {
+      try (Connection con = dataSource.getConnection()){
+
+         java.sql.Date dateToStore = java.sql.Date.valueOf("2019-04-01");
+
+         PreparedStatement stmnt = con.prepareStatement("insert into datatypes set sqlDateToDate = ?");
+         stmnt.setObject(1, dateToStore);
+         stmnt.execute(); // DB stored: 2019-03-31
+         ResultSet rs = stmnt.executeQuery("select sqlDateToDate from datatypes where id = 1");
+         rs.next();
+         java.sql.Date date = rs.getDate(1);
+         assertEquals("2019-03-31", date.toString());
+
+         stmnt.executeUpdate("insert into DataTypes (sqlDateToDate) values ('2019-04-01')"); // DB stored: 2019-04-01
+
+         rs = stmnt.executeQuery("select sqlDateToDate from datatypes where id = 2");
+         rs.next();
+         java.sql.Date date2 = rs.getDate(1);
+         assertEquals("2019-04-01", date2.toString());
+
+      }
+      catch (SQLException e) {
+         e.printStackTrace();
+      }
    }
 
    /**
@@ -585,13 +614,24 @@ public class MySQLDataTypesTest {
    }
 
    /**
+    * // TODO Warum diese Unterschiede?
+    * MySQL 8 without {@link q2o#isMySqlMode()} set to false delivers "1970-01-01 23:00:00.0":
     * <pre>
     * +-----------------+
     * | timestampToTime |
     * +-----------------+
-    * | 23:00:00        |
+    * | 22:00:00        |
     * +-----------------+
     * </pre>
+    * MySQL 8 with {@link q2o#isMySqlMode()} set to true delivers "1970-01-01 22:00:00.0":
+    * <pre>
+    * +-----------------+
+    * | timestampToTime |
+    * +-----------------+
+    * | 21:00:00        |
+    * +-----------------+
+    * </pre>
+    * <p>Compare with {@link #timestampToTIMEReference()}</p>
     */
    @Test
    public void timestampToTIME() {
@@ -601,6 +641,32 @@ public class MySQLDataTypesTest {
       Q2Obj.insert(dataTypes);
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       assertEquals("1970-01-01 22:00:00.0", dataTypes1.getTimestampToTime().toString());
+   }
+
+   /**
+    * "MySQL converts TIMESTAMP values from the current time zone to UTC for storage, and back from UTC to the current time zone for retrieval." (refman-8.0-en.a4.pdf, 1646)
+    *
+    */
+   @Test @Ignore
+   public void timestampToTIMEReference() {
+      try (Connection con = dataSource.getConnection()){
+
+         PreparedStatement stmnt = con.prepareStatement("insert into datatypes set timestampToTime = ?");
+         stmnt.setObject(1, Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
+         stmnt.execute(); // DB stored: 21:00:00
+
+         ResultSet rs = stmnt.executeQuery("select timestampToTime from datatypes where id = 1");
+         rs.next();
+         Timestamp timestamp = rs.getTimestamp(1);
+         // 2001-01-01 01:00:00.0
+         assertEquals("1970-01-01 22:00:00.0", timestamp.toString());
+
+         Time time = rs.getTime(1);
+         assertEquals("22:00:00", time.toString());
+      }
+      catch (SQLException e) {
+         e.printStackTrace();
+      }
    }
 
    /**
@@ -674,15 +740,6 @@ public class MySQLDataTypesTest {
       Q2Obj.insert(dataTypes);
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       assertArrayEquals(dataTypes.getByteArrayToBinary(), dataTypes1.getByteArrayToBinary());
-   }
-
-   @Test
-   public void intToVARCHAR4() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.setIntToVarChar4(123);
-      Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
-      assertEquals(dataTypes.getIntToVarChar4(), dataTypes1.getIntToVarChar4());
    }
 
    @Test
@@ -797,6 +854,30 @@ public class MySQLDataTypesTest {
       Q2Obj.insert(dataTypes);
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       assertEquals(dataTypes.getLongToTinyint(), dataTypes1.getLongToTinyint());
+   }
+
+   @Test
+   public void shortToTINYINTDataTruncation() {
+      DataTypes dataTypes = new DataTypes();
+      dataTypes.setShortToTinyint(Short.MAX_VALUE);
+      thrown.expectCause(CoreMatchers.isA(MysqlDataTruncation.class));
+      Q2Obj.insert(dataTypes);
+   }
+
+   @Test
+   public void intToTINYINTDataTruncation() {
+      DataTypes dataTypes = new DataTypes();
+      dataTypes.setIntToTinyint(Integer.MAX_VALUE);
+      thrown.expectCause(CoreMatchers.isA(MysqlDataTruncation.class));
+      Q2Obj.insert(dataTypes);
+   }
+
+   @Test
+   public void longToTINYINTDataTruncation() {
+      DataTypes dataTypes = new DataTypes();
+      dataTypes.setLongToTinyint(Long.MAX_VALUE);
+      thrown.expectCause(CoreMatchers.isA(MysqlDataTruncation.class));
+      Q2Obj.insert(dataTypes);
    }
 
    @Test

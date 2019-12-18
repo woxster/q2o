@@ -51,7 +51,6 @@ public class DataTypes {
    private String stringToVarBinary;
    private byte[] byteArrayToBinary;
    private byte[] byteArrayToVarBinary;
-   private int intToVarChar4;
 
    private byte byteToBit8;
    private short shortToBit16;
@@ -290,14 +289,6 @@ public class DataTypes {
 
    public void setByteArrayToVarBinary(byte[] byteArrayToVarBinary) {
       this.byteArrayToVarBinary = byteArrayToVarBinary;
-   }
-
-   public int getIntToVarChar4() {
-      return intToVarChar4;
-   }
-
-   public void setIntToVarChar4(int intToVarChar4) {
-      this.intToVarChar4 = intToVarChar4;
    }
 
    public byte getByteToBit8() {

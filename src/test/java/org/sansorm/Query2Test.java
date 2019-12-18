@@ -4,25 +4,18 @@ import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2ObjList;
 import com.zaxxer.q2o.Q2Sql;
 import com.zaxxer.q2o.q2o;
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
-import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static com.zaxxer.q2o.Q2Obj.insert;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sansorm.TestUtils.makeH2DataSource;
 
 
 public class Query2Test extends GeneralTestConfigurator {

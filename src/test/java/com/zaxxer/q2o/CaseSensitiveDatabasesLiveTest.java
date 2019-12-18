@@ -3,7 +3,7 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.InsertObjectH2;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import javax.persistence.Column;
@@ -11,8 +11,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import static org.junit.Assert.*;
-import static org.sansorm.TestUtils.makeH2DataSource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.sansorm.DataSources.makeH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -23,7 +24,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
    @Test
    public void insertObject() {
 
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
+      q2o.initializeTxNone(DataSources.makeH2DataSource());
       try {
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
@@ -50,7 +51,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
    @Test
    public void updateObjectGeneratedId() {
 
-      q2o.initializeTxNone(TestUtils.makeH2DataSource());
+      q2o.initializeTxNone(DataSources.makeH2DataSource());
       try {
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("

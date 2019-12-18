@@ -5,7 +5,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 
 import javax.sql.DataSource;
 import java.util.Arrays;
@@ -25,8 +25,8 @@ public class GeneralTestConfigurator {
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
-//         {false, Database.mysql}
+//         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
+         {false, Database.mysql}
 //         {false, Database.h2}
 //         {true, Database.sqlite}
       });
@@ -45,13 +45,13 @@ public class GeneralTestConfigurator {
 
       switch (database) {
          case h2:
-            dataSource = TestUtils.makeH2DataSource();
+            dataSource = DataSources.makeH2DataSource();
             break;
          case mysql:
-            dataSource = TestUtils.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+            dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
             break;
          case sqlite:
-            dataSource = TestUtils.getSqLiteDataSource(null);
+            dataSource = DataSources.getSqLiteDataSource(null);
             break;
       }
 

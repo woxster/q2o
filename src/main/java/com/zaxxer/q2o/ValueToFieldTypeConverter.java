@@ -8,10 +8,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Clob;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -28,54 +25,53 @@ class ValueToFieldTypeConverter {
     *
     * @return type corrected value
     */
-   Object adaptValueToFieldType(@NotNull final AttributeInfo fcInfo, final Object value, final String columnTypeName, final Introspected introspected) {
+   Object adaptValueToFieldType(@NotNull final AttributeInfo fcInfo, final Object value, final ResultSetMetaData metaData, final Introspected introspected, final int colIdx) {
       try {
          final Class<?> fieldType = fcInfo.getType();
          Object typeCorrectedValue = null;
+         String columnTypeName = metaData.getColumnTypeName(colIdx);
 
          if (fcInfo.getConverter() != null) {
             typeCorrectedValue = fcInfo.getConverter().convertToEntityAttribute(value);
          }
          else if (value != null) {
-            Class<?> columnType = value.getClass();
-            if (fieldType != columnType) {
+            Class<?> valueType = value.getClass();
+            if (fieldType != valueType) {
                // Fix-up column value for enums, integer as boolean, etc.
-               if (Integer.class == columnType) {
+               if (Integer.class == valueType) {
                   typeCorrectedValue = convertInteger(columnTypeName, fieldType, value, introspected);
                }
-               else if (Long.class == columnType) {
+               else if (Long.class == valueType) {
                   typeCorrectedValue = convertLong(columnTypeName, fieldType, value);
                }
-               else if (Double.class == columnType) {
+               else if (Double.class == valueType) {
                   typeCorrectedValue = convertDouble(columnTypeName, fieldType, value);
                }
-               else if (BigInteger.class == columnType) {
+               else if (BigInteger.class == valueType) {
                   typeCorrectedValue = convertBigInteger(columnTypeName, fieldType, value);
                }
-               // // With Sybase ASE it is SybBigDecimal
-               else if (BigDecimal.class.isAssignableFrom(columnType)) {
+               // With Sybase ASE it is SybBigDecimal
+               // IMPROVE Is getColumnClassName() check more reliable?
+               else if (BigDecimal.class.isAssignableFrom(valueType)) {
                   typeCorrectedValue = convertBigDecimal(columnTypeName, fieldType, value);
                }
                // With Sybase ASE it is SybTimestamp
-               else if (Timestamp.class.isAssignableFrom(columnType)) {
+               else if (Timestamp.class.isAssignableFrom(valueType)) {
                   typeCorrectedValue = convertTimestamp(columnTypeName, fieldType, value);
                }
-               else if (Time.class == columnType) {
+               else if (Time.class == valueType) {
                   typeCorrectedValue = convertTime(columnTypeName, fieldType, value);
                }
-               else if (java.sql.Date.class == columnType) {
+               else if (java.sql.Date.class == valueType) {
                   typeCorrectedValue = convertSqlDate(columnTypeName, fieldType, value);
                }
-               else if (Boolean.class == columnType) {
+               else if (Boolean.class == valueType) {
                   typeCorrectedValue = value;
                }
-               else if (byte[].class == columnType) {
+               else if (byte[].class == valueType) {
                   typeCorrectedValue = convertByteArray(columnTypeName, fieldType, value);
                }
-               else if (String.class == columnType && fcInfo.enumConstants == null) {
-                  typeCorrectedValue = convertString(columnTypeName, fieldType, value);
-               }
-               else if (UUID.class == columnType && String.class == fieldType) {
+               else if (UUID.class == valueType && String.class == fieldType) {
                   typeCorrectedValue = value.toString();
                }
                else if (fieldType.isEnum()) {
@@ -90,7 +86,7 @@ class ValueToFieldTypeConverter {
                else if (value instanceof Clob) {
                   typeCorrectedValue = readClob((Clob) value);
                }
-               else if ("PGobject".equals(columnType.getSimpleName())
+               else if ("PGobject".equals(valueType.getSimpleName())
                   && "citext".equalsIgnoreCase(((PGobject) value).getType())) {
                   typeCorrectedValue = ((PGobject) value).getValue();
                }
@@ -104,13 +100,6 @@ class ValueToFieldTypeConverter {
       catch (Exception e) {
          throw new RuntimeException(e);
       }
-   }
-
-   private Object convertString(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      if (fieldType == Integer.class || fieldType == int.class) {
-         columnValue = Integer.valueOf(((String) columnValue));
-      }
-      return columnValue;
    }
 
    private Object convertInteger(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue, final Introspected introspected) {

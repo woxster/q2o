@@ -171,7 +171,7 @@ public class ResultSetToObjectProcessor<T> {
             && (!fcInfo.isIdField || !fcInfo.getType().isPrimitive() || columnValue != null)) {
             // Do not call fcInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
             try {
-               Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(fcInfo, columnValue, metaData.getColumnTypeName(colIdx), introspected);
+               Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(fcInfo, columnValue, metaData, introspected, colIdx);
                fcInfo.setValue(parent, typeCorrectedValue);
             }
             catch (IllegalAccessException e) {
@@ -215,7 +215,7 @@ public class ResultSetToObjectProcessor<T> {
       ) {
          if (!(currentTargetInfo.getType().isPrimitive() && columnValue == null)) {
             try {
-               Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(currentTargetInfo, columnValue, metaData.getColumnTypeName(colIdx), introspected);
+               Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(currentTargetInfo, columnValue, metaData, introspected, colIdx);
                currentTargetInfo.setValue(currentEntity, typeCorrectedValue);
             }
             catch (IllegalAccessException e) {
@@ -236,7 +236,7 @@ public class ResultSetToObjectProcessor<T> {
             // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
             if (!parentInfo.isOneToManyAnnotated) {
                try {
-                  Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(parentInfo, currentEntity, metaData.getColumnTypeName(colIdx), introspected);
+                  Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(parentInfo, currentEntity, metaData, introspected, colIdx);
                   parentInfo.setValue(currentParent, typeCorrectedValue);
                }
                catch (IllegalAccessException e) {
@@ -256,7 +256,7 @@ public class ResultSetToObjectProcessor<T> {
          if (value == null) {
             Collection collection = new ArrayList();
             collection.add(currentEntity);
-            Object typeCorrecteValue = valueToFieldTypeConverter.adaptValueToFieldType(parentInfo, collection, metaData.getColumnTypeName(colIdx), introspected);
+            Object typeCorrecteValue = valueToFieldTypeConverter.adaptValueToFieldType(parentInfo, collection, metaData, introspected, colIdx);
             parentInfo.setValue(currentParent, typeCorrecteValue);
 
             String parentTableName = parentInfo.getOwnerClassTableName().toUpperCase();
@@ -267,7 +267,7 @@ public class ResultSetToObjectProcessor<T> {
             }
          }
       }
-      catch (IllegalAccessException | InvocationTargetException | SQLException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
          throw new RuntimeException(e);
       }
    }

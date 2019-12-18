@@ -5,14 +5,12 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.h2.jdbcx.JdbcDataSource;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
 import java.io.File;
 
-public final class TestUtils {
-   private TestUtils() {
+public final class DataSources {
+   private DataSources() {
    }
 
    public static JdbcDataSource makeH2DataSource() {

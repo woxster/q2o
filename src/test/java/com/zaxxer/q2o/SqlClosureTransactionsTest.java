@@ -20,7 +20,7 @@ import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static com.zaxxer.q2o.q2o.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.sansorm.TestUtils.makeH2DataSource;
+import static org.sansorm.DataSources.makeH2DataSource;
 
 @RunWith(Parameterized.class)
 public class SqlClosureTransactionsTest {

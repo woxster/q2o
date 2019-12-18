@@ -6,13 +6,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -24,7 +27,7 @@ public class VariousTest extends GeneralTestConfigurator {
    @Before
    public void setUp() throws Exception {
       super.setUp();
-      dataSource = TestUtils.getHikariDataSource(true, dataSource);
+      dataSource = DataSources.getHikariDataSource(true, dataSource);
       if (withSpringTx) {
          q2o.initializeWithSpringTxSupport(dataSource);
       }

@@ -3,7 +3,7 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.PropertyAccessedSelfJoin;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
-import org.sansorm.TestUtils;
+import org.sansorm.DataSources;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -19,7 +19,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
    @Test
    public void selfJoinColumnPropertyAccessH2() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -71,7 +71,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
    @Test
    public void listFromClauseSingleObject() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -105,7 +105,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
    @Test
    public void listFromClauseSeveralObjects() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -141,7 +141,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
    @Test
    public void listFromClause3() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -169,7 +169,7 @@ public class SelfJoinManyToOnePropertyAccessTest {
    @Test
    public void insertListNotBatched() throws SQLException {
 
-      JdbcDataSource ds = TestUtils.makeH2DataSource();
+      JdbcDataSource ds = DataSources.makeH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

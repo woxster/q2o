@@ -1,17 +1,9 @@
 package com.zaxxer.q2o;
 
-import org.h2.jdbcx.JdbcDataSource;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.sansorm.TestUtils;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import javax.persistence.Id;
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 
