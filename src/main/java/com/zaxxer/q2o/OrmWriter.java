@@ -19,7 +19,6 @@ package com.zaxxer.q2o;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
 
@@ -200,6 +199,10 @@ class OrmWriter extends OrmBase
          populateStatementParameters(stmt, args);
          return stmt.executeUpdate();
       }
+      catch (Exception e) {
+         logger.error("{}", sql);
+         throw e;
+      }
    }
 
    // -----------------------------------------------------------------------
@@ -304,7 +307,13 @@ class OrmWriter extends OrmBase
          }
       }
 
-      stmt.executeUpdate();
+      try {
+         stmt.executeUpdate();
+      }
+      catch (Exception e) {
+         logger.error("statement={}", stmt);
+         throw e;
+      }
       fillGeneratedId(target, introspected, stmt, checkExistingId);
    }
 
@@ -319,21 +328,41 @@ class OrmWriter extends OrmBase
       for (final AttributeInfo fcInfo : fcInfos) {
          if (excludedColumns == null || !isIgnoredColumn(excludedColumns, fcInfo.getColumnName())) {
             final int parameterType = parameterTypes[parameterIndex - 1];
-            final Object object = mapSqlType(introspected.get(item, fcInfo), parameterType);
+            final Object object = convertToDatabaseType(introspected.get(item, fcInfo), parameterType, fcInfo);
             if (q2o.isMySqlMode()) {
+               // Does not help with problem that fractional seconds get lost when stored.
+//               if (fcInfo.isTemporalAnnotated()) {
+//                  if (fcInfo.getTemporalType().equals(TemporalType.TIMESTAMP)) {
+//                     stmt.setObject(parameterIndex, object, Types.TIMESTAMP);
+//                  }
+//                  else if (fcInfo.getTemporalType().equals(TemporalType.TIME)) {
+//                     stmt.setObject(parameterIndex, object, Types.TIME);
+//                  }
+//                  else if (fcInfo.getTemporalType().equals(TemporalType.DATE)) {
+//                     stmt.setObject(parameterIndex, object, Types.DATE);
+//                  }
+//               }
+//               else {
+//                  stmt.setObject(parameterIndex, object);
+//               }
                stmt.setObject(parameterIndex, object);
             }
             else if (object != null) {
-               if (!fcInfo.isSelfJoinField()) {
-                  stmt.setObject(parameterIndex, object, parameterType);
-               }
-               else {
-                  try {
+               try {
+                  if (!fcInfo.isSelfJoinField()) {
+                     stmt.setObject(parameterIndex, object, parameterType);
+                  }
+                  else {
                      stmt.setObject(parameterIndex, fcInfo.getValue(item), parameterType);
                   }
-                  catch (InvocationTargetException | IllegalAccessException e) {
-                     throw new RuntimeException(e);
-                  }
+               }
+               catch (Exception e) {
+                  logger.error("sqlType={} \nvalue={} \nvalue type={} \nfcInfo={}",
+                     SqlTypesResolver.codeToName.get(parameterType),
+                     object,
+                     object.getClass(),
+                     fcInfo);
+                  throw new RuntimeException(e);
                }
             }
             else {

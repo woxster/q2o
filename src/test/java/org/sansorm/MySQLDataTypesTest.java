@@ -10,6 +10,7 @@ import org.assertj.core.api.Assertions;
 import org.hamcrest.CoreMatchers;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
 import javax.sql.DataSource;
 import java.math.BigInteger;
@@ -18,6 +19,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
 
@@ -29,10 +31,10 @@ import static org.junit.Assert.*;
  */
 public class MySQLDataTypesTest {
 
-   private static DataSource dataSource;
    private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");;
    @Rule
    public ExpectedException thrown = ExpectedException.none();
+   private static DataSource dataSource;
 
    @BeforeClass
    public static void beforeClass() throws SQLException {
@@ -51,9 +53,9 @@ public class MySQLDataTypesTest {
       dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
       q2o.initializeTxNone(dataSource);
       q2o.setMySqlMode(true);
+      GeneralTestConfigurator.Database database = GeneralTestConfigurator.Database.mysql;
 
       Q2Sql.executeUpdate("drop table if exists DataTypes");
-
       Q2Sql.executeUpdate(
          "CREATE TABLE DataTypes ("
             + " id INTEGER NOT NULL AUTO_INCREMENT"
@@ -69,9 +71,11 @@ public class MySQLDataTypesTest {
             + ", timeToDateTime DATETIME"
             + ", timestampToDateTime DATETIME"
 
-            + ", dateToTimestamp TIMESTAMP"
-            + ", sqlDateToTimestamp TIMESTAMP"
-            + ", timestampToTimestamp TIMESTAMP"
+            // NULL or MySQL 5.7 fails with "Invalid default value for 'sqlDateToTimestamp'"
+            + ", dateToTimestamp TIMESTAMP NULL"
+            + ", sqlDateToTimestamp TIMESTAMP NULL"
+            + ", timestampToTimestamp TIMESTAMP NULL"
+            + ", calendarToTimestamp TIMESTAMP NULL"
 
             + ", intToYear YEAR"
             + ", sqlDateToYear YEAR"
@@ -126,10 +130,17 @@ public class MySQLDataTypesTest {
 
             + ", longToUnsignedInt INT UNSIGNED"
 
-            + ", enumToEnumTypeString ENUM('one', 'two', 'three')"
-            + ", enumToEnumTypeOrdinal ENUM('one', 'two', 'three')"
+            + (database == GeneralTestConfigurator.Database.mysql ?
+                  ", enumToEnumTypeString ENUM('one', 'two', 'three')"
+                  + ", enumToEnumTypeOrdinal ENUM('one', 'two', 'three')"
+            : database == GeneralTestConfigurator.Database.h2 ?
+               ", enumToEnumTypeString varchar(8)"
+               + ", enumToEnumTypeOrdinal int"
+            : "")
 
             + ", PRIMARY KEY (id)"
+            //  check (enumToEnumTypeString in ('one', 'two', 'three')
+            //  check (enumToEnumTypeString in (1, 2, 3))
             + " )");
    }
 
@@ -147,88 +158,6 @@ public class MySQLDataTypesTest {
    public void tearDown() throws Exception {
       Q2Sql.executeUpdate("delete from DataTypes");
    }
-
-   //   public static class DataTypes {
-//      @Id @GeneratedValue
-//      int id;
-//
-//      int myInteger;
-//
-//      Date dateToDate;
-//      java.sql.Date sqlDateToDate;
-//      Timestamp timestampToDate;
-//
-//      Date dateToDateTime;
-//      java.sql.Date sqlDateToDateTime;
-//      Time timeToDateTime;
-//      Timestamp timestampToDateTime;
-//
-//      Date dateToTimestamp;
-//      Timestamp timestampToTimestamp;
-//      java.sql.Date sqlDateToTimestamp;
-//
-//      Integer intToYear;
-//      java.sql.Date sqlDateToYear;
-//      String stringToYear;
-//
-//      // YEAR(2): No longer supported by MySQL 8
-////      Integer intToYear2;
-////      java.sql.Date sqlDateToYear2;
-////      String stringToYear2;
-//
-//      Integer intToTime;
-//      String stringToTime;
-//      Time timeToTime;
-//      Timestamp timestampToTime;
-//
-//      String stringToChar4;
-//      String stringToVarChar4;
-//      String stringToBinary;
-//      String stringToVarBinary;
-//      byte[] byteArrayToBinary;
-//      byte[] byteArrayToVarBinary;
-//      Integer intToVarChar4;
-//
-//      byte byteToBit8;
-//      Short shortToBit16;
-//      Integer intToBit32;
-//      Long longToBit64;
-//      String stringToBit8;
-//      byte[] byteArrayToBit64;
-//
-//      byte byteToTinyint;
-//      Short shortToTinyint;
-//      Integer intToTinyint;
-//      Long longToTinyint;
-//
-//      byte byteToSmallint;
-//      Short shortToSmallint;
-//      Integer intToSmallint;
-//      Long longToSmallint;
-//
-//      Integer intToBigint;
-//      Long longToBigint;
-//      BigInteger bigintToBigint;
-//
-//      Integer intToInt;
-//      Integer integerToInt;
-//      Integer intToMediumint;
-//      Long longToUnsignedInt;
-//
-//      // CLARIFY Mimic Hibernate? "Hibernate Annotations support out of the box enum type mapping ... the persistence representation, defaulted to ordinal" (Mapping with JPA (Java Persistence Annotations).pdf, "2.2.2.1. Declaring basic property mappings")
-//      @Enumerated(EnumType.STRING)
-//      CaseMatched enumToEnumTypeString;
-//
-//      @Enumerated(EnumType.ORDINAL)
-//      CaseMatched enumToEnumTypeOrdinal;
-//
-//      @Enumerated(EnumType.ORDINAL)
-//      CaseMatched enumToInt;
-//
-//      public enum CaseMatched {
-//         one, two, three
-//      }
-//   }
 
    @Test
    public void insertInteger() {
@@ -378,6 +307,19 @@ public class MySQLDataTypesTest {
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       assertEquals("2019-04-01 21:51:00.0", dataTypes1.getTimestampToTimestamp().toString());
       assertEquals(dataTypes.getTimestampToTimestamp().getClass(), dataTypes1.getTimestampToTimestamp().getClass());
+   }
+
+   @Test
+   public void calendarToTimestamp() {
+      DataTypes dataTypesStored = new DataTypes();
+      Calendar calToStore = Calendar.getInstance();
+      calToStore.setTimeInMillis(1576852719413L);
+      assertEquals("2019-12-20 15:38:39.413", formatter.format(calToStore.getTime()));
+      dataTypesStored.setCalendarToTimestamp(calToStore);
+      Q2Obj.insert(dataTypesStored);
+      DataTypes dataTypesRetrieved = Q2Obj.byId(DataTypes.class, dataTypesStored.getId());
+      String expected = "2019-12-20 15:38:39.000";
+      assertEquals(expected, formatter.format(dataTypesRetrieved.getCalendarToTimestamp().getTime()));
    }
 
    /**
@@ -614,7 +556,7 @@ public class MySQLDataTypesTest {
    }
 
    /**
-    * // TODO Warum diese Unterschiede?
+    * // CLARIFY Warum diese Unterschiede?
     * MySQL 8 without {@link q2o#isMySqlMode()} set to false delivers "1970-01-01 23:00:00.0":
     * <pre>
     * +-----------------+
@@ -637,7 +579,7 @@ public class MySQLDataTypesTest {
    public void timestampToTIME() {
       DataTypes dataTypes = new DataTypes();
 //      dataTypes.timestampToTime = new Timestamp(1555138024405L);
-      dataTypes.setTimestampToTime(Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
+      dataTypes.setTimestampToTime(Timestamp.valueOf("1970-1-1 21:59:59.999"));
       Q2Obj.insert(dataTypes);
       DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.getId());
       assertEquals("1970-01-01 22:00:00.0", dataTypes1.getTimestampToTime().toString());

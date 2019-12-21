@@ -184,6 +184,7 @@ final class Introspected {
          extractClassTableName();
          tableNameToClassCaseInsensitive.put(tableName, clazz);
 
+         AttributeInfo fcInfo = null;
          try {
             for (final Field field : getDeclaredFields()) {
                final int modifiers = field.getModifiers();
@@ -192,10 +193,9 @@ final class Introspected {
                }
 
                final Class<?> fieldClass = field.getDeclaringClass();
-               final AttributeInfo fcInfo =
-                  fieldsAccessType.get(field) == AccessType.FIELD
-                     ? new FieldInfo(field, clazz)
-                     : new PropertyInfo(field, clazz);
+               fcInfo = fieldsAccessType.get(field) == AccessType.FIELD
+                  ? new FieldInfo(field, clazz)
+                  : new PropertyInfo(field, clazz);
                if (fcInfo.isToBeConsidered()) {
 
                   List<AttributeInfo> attributeInfos = columnToField.computeIfAbsent(fcInfo.getCaseSensitiveColumnName(), k -> new ArrayList<>());
@@ -244,6 +244,8 @@ final class Introspected {
 
          }
          catch (Exception e) {
+            logger.error("", e);
+            logger.error("fcInfo={}", fcInfo);
             throw new RuntimeException(e);
          }
       }
@@ -500,8 +502,10 @@ final class Introspected {
    }
 
    /**
-    * Get the value of the specified field from the specified target object, possibly after applying a
-    * {@link AttributeConverter}.
+    * <p>Get the value of the specified field from the specified target object, possibly after applying a {@link AttributeConverter}.
+    * </p><p>
+    * IMPROVE Interferes with {@link OrmBase#convertToDatabaseType(Object, int, AttributeInfo)}
+    * </p>
     *
     * @param target the target instance
     * @param fcInfo the {@link AttributeInfo} used to access the field value
@@ -512,11 +516,12 @@ final class Introspected {
          throw new RuntimeException("FieldColumnInfo must not be null. Type is " + target.getClass().getCanonicalName());
       }
 
+      Object value = null;
       try {
-         Object value = fcInfo.getValue(target);
+         value = fcInfo.getValue(target);
          // Fix-up column value for enums, integer as boolean, etc.
          if (fcInfo.getConverter() != null) {
-            value = fcInfo.getConverter().convertToDatabaseColumn(value);
+            return fcInfo.getConverter().convertToDatabaseColumn(value);
          }
          else if (fcInfo.enumConstants != null && value != null) {
             if (fcInfo.enumType == EnumType.ORDINAL) {
@@ -534,6 +539,8 @@ final class Introspected {
          return value;
       }
       catch (Exception e) {
+         logger.error("", e);
+         logger.error("value={}\n value type={}\n fcInfo={}", value, Optional.ofNullable(value).orElse(null), fcInfo);
          throw new RuntimeException(e);
       }
    }

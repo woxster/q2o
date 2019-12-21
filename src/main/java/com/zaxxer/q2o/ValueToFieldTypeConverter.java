@@ -2,6 +2,8 @@ package com.zaxxer.q2o;
 
 import org.jetbrains.annotations.NotNull;
 import org.postgresql.util.PGobject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -20,16 +22,19 @@ import java.util.UUID;
 // IMPROVE Let user customize the converter to use.
 class ValueToFieldTypeConverter {
 
+   private static Logger logger = LoggerFactory.getLogger(ValueToFieldTypeConverter.class);
    /**
     * Adjust value type to field type when necessary.
     *
     * @return type corrected value
     */
    Object adaptValueToFieldType(@NotNull final AttributeInfo fcInfo, final Object value, final ResultSetMetaData metaData, final Introspected introspected, final int colIdx) {
+      String columnTypeName = null;
+      Class<?> fieldType = null;
       try {
-         final Class<?> fieldType = fcInfo.getType();
+         fieldType = fcInfo.getType();
          Object typeCorrectedValue = null;
-         String columnTypeName = metaData.getColumnTypeName(colIdx);
+         columnTypeName = metaData.getColumnTypeName(colIdx);
 
          if (fcInfo.getConverter() != null) {
             typeCorrectedValue = fcInfo.getConverter().convertToEntityAttribute(value);
@@ -98,6 +103,7 @@ class ValueToFieldTypeConverter {
          return typeCorrectedValue;
       }
       catch (Exception e) {
+         logger.error("columnTypeName={}\n fieldType={}\n value={}\n fcInfo={}", columnTypeName, fieldType, value, fcInfo);
          throw new RuntimeException(e);
       }
    }
@@ -204,12 +210,20 @@ class ValueToFieldTypeConverter {
       if (fieldType == java.sql.Date.class) {
          columnValue = new java.sql.Date(((Timestamp) columnValue).getTime());
       }
+      // With DATE, TIME and TIMESTAMP fields handled by @Temporal annotation, but not with DATETIME fields.
       else if (fieldType == Date.class) {
          columnValue = new Date(((Timestamp) columnValue).getTime());
       }
       else if (fieldType == Time.class) {
          columnValue = Time.valueOf(((Timestamp) columnValue).toLocalDateTime().toLocalTime());
       }
+      // Handled by @Temporal annotation
+//      else if (fieldType.isAssignableFrom(Calendar.class)) {
+//         // "Hibernate will always return a Calendar value, created with Calendar.getInstance() (the actual type depends on locale and time zone)." (Java Persistence with Hibernate, Second Edition > Part 2. Mapping strategies > Chapter 5. Mapping value types)
+//         Calendar calendar = Calendar.getInstance();
+//         calendar.setTimeInMillis(((Timestamp)columnValue).getTime());
+//         columnValue = calendar;
+//      }
       return columnValue;
    }
 
@@ -217,17 +231,16 @@ class ValueToFieldTypeConverter {
       if (fieldType == Timestamp.class) {
          columnValue = new Timestamp(((Time) columnValue).getTime());
       }
-      else if (fieldType == Date.class) {
-         columnValue = new Date(((Timestamp) columnValue).getTime());
-      }
-      //               else if ("TIME".equals(columnTypeName)) {
-      if (fieldType == String.class) {
+      // Handled by @Temporal annotation
+//      else if (fieldType == Date.class) {
+//         columnValue = new Date(((Time) columnValue).getTime());
+//      }
+      else if (fieldType == String.class) {
          columnValue = columnValue.toString();
       }
       else if (fieldType == Integer.class || fieldType == int.class) {
          columnValue = Long.valueOf(((Time) columnValue).getTime()).intValue();
       }
-      //               }
       return columnValue;
    }
 
@@ -247,9 +260,10 @@ class ValueToFieldTypeConverter {
             columnValue = cal.get(Calendar.YEAR);
          }
       }
-      else if (fieldType == Date.class) {
-         columnValue = new Date(((java.sql.Date) columnValue).getTime());
-      }
+      // Handled by @Temporal annotation
+//      else if (fieldType == Date.class) {
+//         columnValue = new Date(((java.sql.Date) columnValue).getTime());
+//      }
       // CLARIFY Should it really be converted?
       else if (fieldType == Timestamp.class) {
          columnValue = new Timestamp(((java.sql.Date) columnValue).getTime());

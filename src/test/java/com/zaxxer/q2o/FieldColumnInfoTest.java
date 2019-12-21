@@ -4,8 +4,12 @@ import org.junit.Test;
 
 import javax.persistence.Column;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import java.util.Calendar;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -27,7 +31,19 @@ public class FieldColumnInfoTest {
       assertEquals("TEST_CLASS.field", fqn);
    }
 
-//   @Test
+   @Test
+   public void temporal() throws NoSuchFieldException {
+      @Table
+      class TestClass {
+         @Temporal(value = TemporalType.TIMESTAMP)
+         Calendar calendar = Calendar.getInstance();
+      }
+      FieldInfo fieldInfo = new FieldInfo(TestClass.class.getDeclaredField("calendar"), TestClass.class);
+      assertTrue(fieldInfo.isTemporalAnnotated());
+      assertEquals(TemporalType.TIMESTAMP, fieldInfo.getTemporalType());
+   }
+
+   //   @Test
 //   public void getFullyQualifiedTableNameFromClassName() {
 //      @Table
 //      class TestClass {

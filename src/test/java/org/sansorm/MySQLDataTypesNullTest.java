@@ -3,26 +3,24 @@ package org.sansorm;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2Sql;
+import com.zaxxer.q2o.entities.DataTypesNullable;
 import com.zaxxer.q2o.q2o;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.sansorm.testutils.GeneralTestConfigurator;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.sql.DataSource;
 import java.math.BigInteger;
-import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -32,217 +30,170 @@ import static org.junit.Assert.*;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 2019-03-27
  */
+@RunWith(Parameterized.class)
 public class MySQLDataTypesNullTest {
 
-   private static DataSource dataSource;
+   private DataSource dataSource;
+
+   public enum Database {
+      mysql, sqlite, h2
+   }
+
+   @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
+   public static Collection<Object[]> data() {
+      return Arrays.asList(new Object[][] {
+         {false, GeneralTestConfigurator.Database.h2}
+         , {true, GeneralTestConfigurator.Database.h2}
+         , {false, GeneralTestConfigurator.Database.mysql}
+         , {true, GeneralTestConfigurator.Database.mysql}
+//         , {false, GeneralTestConfigurator.Database.sqlite}
+//         , {true, GeneralTestConfigurator.Database.sqlite}
+      });
+   }
+
+   @Parameterized.Parameter(0)
+   public boolean withSpringTx;
+
+   @Parameterized.Parameter(1)
+   public GeneralTestConfigurator.Database database;
+
    private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");;
    @Rule
    public ExpectedException thrown = ExpectedException.none();
 
-   @BeforeClass
-   public static void beforeClass() throws SQLException {
-//      conn =
-//         DriverManager.getConnection("jdbc:mysql://localhost/q2o?" +
-//            "user=root&password=opixcntl&generateSimpleParameterMetadata=true");
-//      stmnt = conn.createStatement();
-//      MysqlDataSource dataSource = new MysqlDataSource();
-//      dataSource.setServerName("localhost");
-//      dataSource.setDatabaseName("q2o");
-//      dataSource.setUser("root");
-//      dataSource.setPassword("opixcntl");
-//      dataSource.setGenerateSimpleParameterMetadata(true);
-//      MySQLTest.dataSource = dataSource;
+   @Before
+   public void setUp() throws Exception {
 
-      dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
-      q2o.initializeTxNone(dataSource);
-      q2o.setMySqlMode(true);
+      switch (database) {
+         case h2:
+            dataSource = DataSources.makeH2DataSource();
+            break;
+         case mysql:
+            dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+            break;
+         case sqlite:
+            dataSource = DataSources.getSqLiteDataSource(null);
+            break;
+      }
 
-      Q2Sql.executeUpdate(
-         "CREATE TABLE DataTypes ("
-            + " id INTEGER NOT NULL AUTO_INCREMENT"
+      if (!withSpringTx) {
+         q2o.initializeTxNone(dataSource);
+      }
+      else {
+         q2o.initializeWithSpringTxSupport(dataSource);
+      }
 
-            + ", myInteger INTEGER"
+      if (database == GeneralTestConfigurator.Database.mysql) {
+         q2o.setMySqlMode(true);
+      }
 
-            + ", dateToDate DATE"
-            + ", sqlDateToDate DATE"
-            + ", timestampToDate DATE"
+      Q2Sql.executeUpdate("drop table if exists DataTypes");
+      String sql = "CREATE TABLE DataTypes ("
+         + " id INTEGER NOT NULL AUTO_INCREMENT"
 
-            + ", dateToDateTime DATETIME"
-            + ", sqlDateToDateTime DATETIME"
-            + ", timeToDateTime DATETIME"
-            + ", timestampToDateTime DATETIME"
+         + ", myInteger INTEGER"
 
-            + ", dateToTimestamp TIMESTAMP"
-            + ", sqlDateToTimestamp TIMESTAMP"
-            + ", timestampToTimestamp TIMESTAMP"
+         + ", utilDateToDATE DATE"
+         + ", utilDateToDATETemporal DATE"
+         + ", sqlDateToDATE DATE"
+         + ", timestampToDATE DATE"
+         + ", calendarToDATE DATE"
 
-            + ", intToYear YEAR"
-            + ", sqlDateToYear YEAR"
-            + ", stringToYear YEAR"
+         + ", dateToDATETIME DATETIME"
+         + ", sqlDateToDATETIME DATETIME"
+         + ", timeToDATETIME DATETIME"
+         + ", timestampToDATETIME DATETIME"
 
-            // MySQL 8: java.sql.SQLException: Supports only YEAR or YEAR(4) column.
+         // NULL or MySQL 5.7 fails with: "Invalid default value for 'sqlDateToTimestamp'"
+         + ", utilDateToTIMESTAMP TIMESTAMP NULL"
+         + ", utilDateToTIMESTAMPWithoutTemporal TIMESTAMP NULL"
+         + ", sqlDateToTIMESTAMP TIMESTAMP NULL"
+         + ", timestampToTIMESTAMP TIMESTAMP NULL"
+         + ", calendarToTIMESTAMP TIMESTAMP NULL"
+
+         + ", intToYEAR YEAR"
+         + ", sqlDateToYEAR YEAR"
+         + ", stringToYEAR YEAR"
+
+         // MySQL 8: java.sql.SQLException: Supports only YEAR or YEAR(4) column.
 //            + ", intToYear2 YEAR(2)"
 //            + ", sqlDateToYear2 YEAR(2)"
 //            + ", stringToYear2 YEAR(2)"
 
-            + ", intToTime TIME"
-            + ", stringToTime TIME"
-            + ", timeToTime TIME"
-            + ", timestampToTime TIME"
+         + ", intToTIME TIME"
+         + ", stringToTIME TIME"
+         + ", timeToTIME TIME"
+         + ", timestampToTIME TIME"
+         + ", calendarToTIME TIME"
+         + ", utilDateToTIME TIME"
 
-            + ", stringToChar4 CHAR(4)"
+         + ", stringToCHAR4 CHAR(4)"
 
-            + ", stringToVarChar4 VARCHAR(4)"
+         + ", stringToVarCHAR4 VARCHAR(4)"
 
-            + ", stringToBinary BINARY(4)"
+         + ", stringToBINARY BINARY(4)"
 
-            + ", stringToVarBinary VARBINARY(4)"
-            + ", byteArrayToBinary VARBINARY(4)"
-            + ", byteArrayToVarBinary VARBINARY(4)"
+         + ", stringToVARBINARY VARBINARY(4)"
+         + ", byteArrayToBINARY VARBINARY(4)"
+         + ", byteArrayToVARBINARY VARBINARY(4)"
 
-            + ", byteToBit8 bit(8)"
-            + ", shortToBit16 bit(16)"
-            + ", intToBit32 bit(32)"
-            + ", longToBit64 bit(64)"
-            + ", stringToBit8 bit(8)"
-            + ", byteArrayToBit64 bit(64)"
+         + ", byteToBIT8 bit(8)"
+         + ", shortToBIT16 bit(16)"
+         + ", intToBIT32 bit(32)"
+         + ", longToBIT64 bit(64)"
+         + ", stringToBIT8 bit(8)"
+         + ", byteArrayToBIT64 bit(64)"
 
-            + ", byteToTinyint TINYINT"
-            + ", shortToTinyint TINYINT"
-            + ", intToTinyint TINYINT"
-            + ", longToTinyint TINYINT"
+         + ", byteToTINYINT TINYINT"
+         + ", shortToTINYINT TINYINT"
+         + ", intToTINYINT TINYINT"
+         + ", longToTINYINT TINYINT"
 
-            + ", byteToSmallint SMALLINT"
-            + ", shortToSmallint SMALLINT"
-            + ", intToSmallint SMALLINT"
-            + ", longToSmallint SMALLINT"
+         + ", byteToSMALLINT SMALLINT"
+         + ", shortToSMALLINT SMALLINT"
+         + ", intToSMALLINT SMALLINT"
+         + ", longToSMALLINT SMALLINT"
 
-            + ", intToBigint BIGINT"
-            + ", longToBigint BIGINT"
-            + ", bigintToBigint BIGINT"
+         + ", intToBIGINT BIGINT"
+         + ", longToBIGINT BIGINT"
+         + ", bigintToBIGINT BIGINT"
 
-            + ", intToInt INT"
-            + ", integerToInt INT"
-            + ", enumToInt INT"
+         + ", intToINT INT"
+         + ", intToMEDIUMINT MEDIUMINT"
+         + ", longToINT_UNSIGNED INT UNSIGNED"
 
-            + ", intToMediumint MEDIUMINT"
+         + (database == GeneralTestConfigurator.Database.mysql ?
+            ", enumToENUMString ENUM('one', 'two', 'three')"
+            + ", enumToENUMOrdinal ENUM('one', 'two', 'three')"
+         : database == GeneralTestConfigurator.Database.h2 ?
+            ", enumToENUMString varchar(8)"
+            + ", enumToENUMOrdinal int"
+         : "")
+         + ", enumToINTOrdinal INT"
+         + ", enumToVARCHARString VARCHAR(5)"
 
-            + ", longToUnsignedInt INT UNSIGNED"
-
-            + ", enumToEnumTypeString ENUM('one', 'two', 'three')"
-            + ", enumToEnumTypeOrdinal ENUM('one', 'two', 'three')"
-
-            + ", PRIMARY KEY (id)"
-            + " )");
-   }
-
-   @AfterClass
-   public static void afterClass() throws SQLException {
-      try {
-         Q2Sql.executeUpdate("drop table DataTypes");
-      }
-      finally {
-         q2o.deinitialize();
-      }
+         + ", PRIMARY KEY (id)"
+         + " )";
+//      System.out.println(sql);
+      Q2Sql.executeUpdate(sql);
    }
 
    @After
    public void tearDown() throws Exception {
-      Q2Sql.executeUpdate("delete from DataTypes");
-   }
-
-   public static class DataTypes {
-      @Id @GeneratedValue
-      int id;
-
-      Integer myInteger;
-
-      Date dateToDate;
-      java.sql.Date sqlDateToDate;
-      Timestamp timestampToDate;
-
-      Date dateToDateTime;
-      java.sql.Date sqlDateToDateTime;
-      Time timeToDateTime;
-      Timestamp timestampToDateTime;
-
-      Date dateToTimestamp;
-      Timestamp timestampToTimestamp;
-      java.sql.Date sqlDateToTimestamp;
-
-      Integer intToYear;
-      java.sql.Date sqlDateToYear;
-      String stringToYear;
-
-      // YEAR(2): No longer supported by MySQL 8
-//      Integer intToYear2;
-//      java.sql.Date sqlDateToYear2;
-//      String stringToYear2;
-
-      Integer intToTime;
-      String stringToTime;
-      Time timeToTime;
-      Timestamp timestampToTime;
-
-      String stringToChar4;
-      String stringToVarChar4;
-      String stringToBinary;
-      String stringToVarBinary;
-      byte[] byteArrayToBinary;
-      byte[] byteArrayToVarBinary ;
-
-      Byte byteToBit8;
-      Short shortToBit16;
-      Integer intToBit32;
-      Long longToBit64;
-      String stringToBit8;
-      byte[] byteArrayToBit64;
-
-      Byte byteToTinyint;
-      Short shortToTinyint;
-      Integer intToTinyint;
-      Long longToTinyint;
-
-      Byte byteToSmallint;
-      Short shortToSmallint;
-      Integer intToSmallint;
-      Long longToSmallint;
-
-      Integer intToBigint;
-      Long longToBigint;
-      BigInteger bigintToBigint;
-
-      Integer intToInt;
-      Integer integerToInt;
-      Integer intToMediumint;
-      Long longToUnsignedInt;
-
-      // CLARIFY Mimic Hibernate? "Hibernate Annotations support out of the box enum type mapping ... the persistence representation, defaulted to ordinal" (Mapping with JPA (Java Persistence Annotations).pdf, "2.2.2.1. Declaring basic property mappings")
-      @Enumerated(EnumType.STRING)
-      CaseMatched enumToEnumTypeString;
-
-      @Enumerated(EnumType.ORDINAL)
-      CaseMatched enumToEnumTypeOrdinal;
-
-      @Enumerated(EnumType.ORDINAL)
-      CaseMatched enumToInt;
-
-      public enum CaseMatched {
-         one, two, three
-      }
+      Q2Sql.executeUpdate("drop table if exists DataTypes");
+      q2o.deinitialize();
    }
 
    @Test
    public void insertInteger() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.myInteger = 1;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setMyInteger(1);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.myInteger, dataTypes1.myInteger);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getMyInteger(), dataTypes1.getMyInteger());
    }
 
    /**
-    * Surprising.
     * <pre>
     * +----+-----------+------------+
     * | id | myInteger | dateToDate |
@@ -254,12 +205,25 @@ public class MySQLDataTypesNullTest {
    @Test
    public void dateToDATE() throws ParseException {
 
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.dateToDate = formatter.parse("2019-04-01 23:59:59.999");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setUtilDateToDATE(formatter.parse("2019-04-01 23:59:59.999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-04-01 02:00:00.000", formatter.format(dataTypes1.dateToDate));
-      assertEquals(dataTypes.dateToDate.getClass(), dataTypes1.dateToDate.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      String expected;
+      switch (database) {
+         case mysql:
+            expected = "2019-04-01 02:00:00.000";
+            break;
+         case h2:
+            expected = "2019-04-01 00:00:00.000";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+
+      }
+      assertEquals(expected, formatter.format(dataTypes1.getUtilDateToDATE()));
+      assertEquals(dataTypes.getUtilDateToDATE().getClass(), dataTypes1.getUtilDateToDATE().getClass());
    }
 
    /**
@@ -274,16 +238,28 @@ public class MySQLDataTypesNullTest {
    @Test
    public void dateToDATETIME() throws ParseException {
 
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
 
       String dateFormatted = "2019-04-01 23:30:30.555";
-      dataTypes.dateToDateTime = formatter.parse(dateFormatted); // local time
+      dataTypes.setDateToDATETIME(formatter.parse(dateFormatted)); // local time
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
 
-      assertEquals("2019-04-01 23:30:31.000", formatter.format(dataTypes1.dateToDateTime));
-      assertEquals(dataTypes.dateToDateTime.getClass(), dataTypes1.dateToDateTime.getClass());
+      String expected;
+      switch (database) {
+         case mysql:
+            expected = "2019-04-01 23:30:31.000";
+            break;
+         case h2:
+            expected = "2019-04-01 23:30:30.555";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+      assertEquals(expected, formatter.format(dataTypes1.getDateToDATETIME()));
+      assertEquals(dataTypes.getDateToDATETIME().getClass(), dataTypes1.getDateToDATETIME().getClass());
 
    }
 
@@ -299,15 +275,28 @@ public class MySQLDataTypesNullTest {
    @Test
    public void timestampToDATETIME() throws ParseException {
 
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
 
-      dataTypes.timestampToDateTime = Timestamp.valueOf("1970-01-01 00:00:00.999999999");
+      dataTypes.setTimestampToDATETIME(Timestamp.valueOf("1970-01-01 00:00:00.999999999"));
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
 
-      assertEquals("1970-01-01 00:00:01.0", dataTypes1.timestampToDateTime.toString());
-      assertEquals(dataTypes.timestampToDateTime.getClass(), dataTypes1.timestampToDateTime.getClass());
+      String expected;
+      switch (database) {
+         case mysql:
+            expected = "1970-01-01 00:00:01.0";
+            break;
+         case h2:
+            expected = "1970-01-01 00:00:00.999999999";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getTimestampToDATETIME().toString());
+      assertEquals(dataTypes.getTimestampToDATETIME().getClass(), dataTypes1.getTimestampToDATETIME().getClass());
 
    }
 
@@ -321,20 +310,38 @@ public class MySQLDataTypesNullTest {
     * </pre>
     * <p>
     *     "MySQL converts a time value to a date or date-and-time value by parsing the string value of the time as a date or date-and-time. This is unlikely to be useful. For example, '23:12:31' interpreted as a date becomes '2032-12-31'. Time values not valid as dates become '0000-00-00' or NULL." (MySQL 5.5 Reference Manual, 10.3.5. Conversion Between Date and Time Types).
+    * </p><p>
+    * "MySQL permits a “relaxed” format for values specified as strings, in which any punctuation character may be used as the delimiter
+    * between date parts or time parts. In some cases, this syntax can be deceiving. For example, a value such as
+    * '10:11:12' might look like a time value because of the “:” delimiter, but is interpreted as the year '2010-11-12' if used
+    * in a date context." (10.3.1. The DATE, DATETIME, and TIMESTAMP Types)
     * </p>
     */
    @Test
    public void timeToDATETIME() throws ParseException {
 
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setTimeToDATETIME(Time.valueOf("11:10:11"));
 
-      dataTypes.timeToDateTime = Time.valueOf("11:10:11");
-
+      // MySQL: Stored is "2010-10-11 00:00:00"
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
 
-      assertEquals("02:00:00", dataTypes1.timeToDateTime.toString());
-      assertEquals(dataTypes.timeToDateTime.getClass(), dataTypes1.timeToDateTime.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected;
+      switch (database) {
+         case mysql:
+            expected = "02:00:00"; // "02:00:00";
+            break;
+         case h2:
+            expected = "11:10:11";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+      assertEquals(expected, dataTypes1.getTimeToDATETIME().toString());
+      assertEquals(dataTypes.getTimeToDATETIME().getClass(), dataTypes1.getTimeToDATETIME().getClass());
 
    }
 
@@ -350,13 +357,25 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void dateToTIMESTAMP() throws ParseException {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.dateToTimestamp = formatter.parse("2019-04-01 21:59:59.999");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setUtilDateToTIMESTAMP(formatter.parse("2019-04-01 21:59:59.999"));
 
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-04-01 22:00:00.000", formatter.format(dataTypes1.dateToTimestamp));
-      assertEquals(dataTypes.dateToTimestamp.getClass(), dataTypes1.dateToTimestamp.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-04-01 22:00:00.000";
+            break;
+         case h2:
+            expected = "2019-04-01 21:59:59.999";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+      assertEquals(expected, formatter.format(dataTypes1.getUtilDateToTIMESTAMP()));
+      assertEquals(dataTypes.getUtilDateToTIMESTAMP().getClass(), dataTypes1.getUtilDateToTIMESTAMP().getClass());
    }
 
    /**
@@ -374,12 +393,104 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void timestampToTIMESTAMP() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.timestampToTimestamp = Timestamp.valueOf("2019-04-01 21:50:59.999");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setTimestampToTIMESTAMP(Timestamp.valueOf("2019-04-01 21:50:59.999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-04-01 21:51:00.0", dataTypes1.timestampToTimestamp.toString());
-      assertEquals(dataTypes.timestampToTimestamp.getClass(), dataTypes1.timestampToTimestamp.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-04-01 21:51:00.0";
+            break;
+         case h2:
+            expected = "2019-04-01 21:50:59.999";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getTimestampToTIMESTAMP().toString());
+      assertEquals(dataTypes.getTimestampToTIMESTAMP().getClass(), dataTypes1.getTimestampToTIMESTAMP().getClass());
+   }
+
+   @Test
+   public void calendarToTimestamp() {
+      DataTypesNullable dataTypesStored = new DataTypesNullable();
+      Calendar calToStore = Calendar.getInstance();
+      calToStore.setTimeInMillis(1576852719413L);
+      assertEquals("2019-12-20 15:38:39.413", formatter.format(calToStore.getTime()));
+      dataTypesStored.setCalendarToTIMESTAMP(calToStore);
+      Q2Obj.insert(dataTypesStored);
+      DataTypesNullable dataTypesRetrieved = Q2Obj.byId(DataTypesNullable.class, dataTypesStored.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-12-20 15:38:39.000";
+            break;
+         case h2:
+            expected = "2019-12-20 15:38:39.413";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, formatter.format(dataTypesRetrieved.getCalendarToTIMESTAMP().getTime()));
+   }
+
+   @Test
+   public void calendarToDate() {
+      DataTypesNullable dataTypesStored = new DataTypesNullable();
+      Calendar calStored = Calendar.getInstance();
+      calStored.setTimeInMillis(1576852719413L);
+      assertEquals("2019-12-20 15:38:39.413", formatter.format(calStored.getTime()));
+      dataTypesStored.setCalendarToDATE(calStored);
+      Q2Obj.insert(dataTypesStored);
+      DataTypesNullable dataTypesRetrieved = Q2Obj.byId(DataTypesNullable.class, dataTypesStored.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-12-20 01:00:00.000";
+            break;
+         case h2:
+            expected = "2019-12-20 00:00:00.000";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, formatter.format(dataTypesRetrieved.getCalendarToDATE().getTime()));
+   }
+
+   @Test
+   public void calendarToTime() {
+      DataTypesNullable dataTypesStored = new DataTypesNullable();
+      Calendar calToStore = Calendar.getInstance();
+      calToStore.setTimeInMillis(1576856328437L);
+      assertEquals("2019-12-20 16:38:48.437", formatter.format(calToStore.getTime()));
+      dataTypesStored.setCalendarToTIME(calToStore);
+      Q2Obj.insert(dataTypesStored);
+      DataTypesNullable dataTypesRetrieved = Q2Obj.byId(DataTypesNullable.class, dataTypesStored.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "1970-01-01 16:38:48.000";
+            break;
+         case h2:
+            expected = "1970-01-01 16:38:48.437";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, formatter.format(dataTypesRetrieved.getCalendarToTIME().getTime()));
    }
 
    /**
@@ -394,13 +505,27 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void sqlDateToDATE() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToDate = java.sql.Date.valueOf("2019-04-01");
-      assertEquals("2019-04-01 00:00:00.000", formatter.format(dataTypes.sqlDateToDate));
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setSqlDateToDATE(java.sql.Date.valueOf("2019-04-01"));
+      assertEquals("2019-04-01 00:00:00.000", formatter.format(dataTypes.getSqlDateToDATE()));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.sqlDateToDate));
-      assertEquals(dataTypes.sqlDateToDate.getClass(), dataTypes1.sqlDateToDate.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-03-31 01:00:00.000";
+            break;
+         case h2:
+            expected = "2019-04-01 00:00:00.000";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, formatter.format(dataTypes1.getSqlDateToDATE()));
+      assertEquals(dataTypes.getSqlDateToDATE().getClass(), dataTypes1.getSqlDateToDATE().getClass());
    }
 
    /**
@@ -414,12 +539,26 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void sqlDateToDATETIME() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToDateTime = java.sql.Date.valueOf("2019-04-01");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setSqlDateToDATETIME(java.sql.Date.valueOf("2019-04-01"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.sqlDateToDateTime));
-      assertEquals(dataTypes.sqlDateToDateTime.getClass(), dataTypes1.sqlDateToDateTime.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-03-31 01:00:00.000";
+            break;
+         case h2:
+            expected = "2019-04-01 00:00:00.000";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, formatter.format(dataTypes1.getSqlDateToDATETIME()));
+      assertEquals(dataTypes.getSqlDateToDATETIME().getClass(), dataTypes1.getSqlDateToDATETIME().getClass());
    }
 
    /**
@@ -433,12 +572,26 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void sqlDateToTIMESTAMP() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToTimestamp = java.sql.Date.valueOf("2019-04-01");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setSqlDateToTIMESTAMP(java.sql.Date.valueOf("2019-04-01"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019-03-31 01:00:00.000", formatter.format(dataTypes1.sqlDateToTimestamp));
-      assertEquals(dataTypes.sqlDateToTimestamp.getClass(), dataTypes1.sqlDateToTimestamp.getClass());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019-03-31 01:00:00.000";
+            break;
+         case h2:
+            expected = "2019-04-01 00:00:00.000";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, formatter.format(dataTypes1.getSqlDateToTIMESTAMP()));
+      assertEquals(dataTypes.getSqlDateToTIMESTAMP().getClass(), dataTypes1.getSqlDateToTIMESTAMP().getClass());
    }
 
    /**
@@ -452,11 +605,26 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void intToYEAR() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToYear = 2019;
+//      if (database ==GeneralTestConfigurator.Database.h2) {
+//         return;
+//      }
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToYEAR(2019);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(2019, Optional.ofNullable(dataTypes1.intToYear).orElse(0).intValue());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      int expected;
+      switch (database) {
+         case mysql:
+            expected = 2019;
+            break;
+         case h2:
+            expected = 0;
+            break;
+         case sqlite:
+         default:
+            expected = 1234;
+      }
+      assertEquals(expected, Optional.ofNullable(dataTypes1.getIntToYEAR()).orElse(0).intValue());
    }
 
 //   @Test
@@ -480,10 +648,10 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void intToYEARNotSet() {
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertNull(dataTypes1.intToYear);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertNull(dataTypes1.getIntToYEAR());
    }
 
    /**
@@ -491,19 +659,33 @@ public class MySQLDataTypesNullTest {
     */
    @Test @Ignore
    public void sqlDateToYEAR() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.sqlDateToYear = java.sql.Date.valueOf("2019-04-01");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setSqlDateToYEAR(java.sql.Date.valueOf("2019-04-01"));
       thrown.expectMessage("SQLException: Data truncated for column 'sqlDateToYear'");
       Q2Obj.insert(dataTypes);
    }
 
    @Test
    public void stringToYEAR4Digits() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToYear = "2019";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToYEAR("2019");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019", dataTypes1.stringToYear);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019";
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getStringToYEAR());
    }
 
    /**
@@ -517,22 +699,36 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void stringToYEAR2Digits() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToYear = "19";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToYEAR("19");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("2019", dataTypes1.stringToYear);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "2019";
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getStringToYEAR());
    }
 
    // com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Incorrect time value: '36000000' for column 'intToTime'
    // Execution in mysql client leads to the same error: ERROR 1292 (22007): Incorrect time value: '36000' for column 'intToTime' at row 1
    @Test @Ignore
    public void intToTIME() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToTime = 10 * 60 * 60;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToTIME(10 * 60 * 60);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToTime, dataTypes1.intToTime);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToTIME(), dataTypes1.getIntToTIME());
    }
 
    /**
@@ -546,13 +742,27 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void stringToTIME() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToTime = "10:59:59";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToTIME("10:59:59");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
       // CLARIFY
-      assertEquals("11:59:59", dataTypes1.stringToTime);
-      assertNull(dataTypes1.intToTime);
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = "11:59:59";
+            break;
+         case h2:
+            expected = "10:59:59";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getStringToTIME());
+      assertNull(dataTypes1.getIntToTIME());
    }
 
    /**
@@ -567,22 +777,25 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void stringToTIME2() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToTime = "105959";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToTIME("105959");
+      if (database == GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Cannot parse \"TIME\" constant");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
       // CLARIFY
-      assertEquals("11:59:59", dataTypes1.stringToTime);
-      assertNull(dataTypes1.intToTime);
+      assertEquals("11:59:59", dataTypes1.getStringToTIME());
+      assertNull(dataTypes1.getIntToTIME());
    }
 
    @Test
    public void timeToTIME() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.timeToTime = Time.valueOf("11:48:22");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setTimeToTIME(Time.valueOf("11:48:22"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.timeToTime.getTime(), dataTypes1.timeToTime.getTime());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getTimeToTIME().getTime(), dataTypes1.getTimeToTIME().getTime());
    }
 
    /**
@@ -596,12 +809,50 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void timestampToTIME() {
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
 //      dataTypes.timestampToTime = new Timestamp(1555138024405L);
-      dataTypes.timestampToTime = Timestamp.valueOf("1970-1-1 21:59:59.999999999");
+      dataTypes.setTimestampToTIME(Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("1970-01-01 22:00:00.0", dataTypes1.timestampToTime.toString());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      String expected;
+      switch (database) {
+         case mysql:
+            expected = "1970-01-01 22:00:00.0";
+            break;
+         case h2:
+            expected = "1970-01-01 21:59:59.999";
+            break;
+         case sqlite:
+            expected = "";
+            break;
+         default:
+            expected = "";
+      }
+      assertEquals(expected, dataTypes1.getTimestampToTIME().toString());
+   }
+
+   @Test
+   public void utilDateToTIME() throws ParseException {
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      Date dateToStore = formatter.parse("1970-01-01 21:59:59.999");
+      dataTypes.setUtilDateToTIME(dateToStore);
+      Q2Obj.insert(dataTypes);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      String expected;
+      switch (database) {
+         case mysql:
+            expected = "22:00:00";
+            break;
+         case h2:
+            expected = "21:59:59";
+            break;
+         case sqlite:
+            expected = "";
+            break;
+         default:
+            expected = "";
+      }
+      assertEquals(expected, dataTypes1.getUtilDateToTIME().toString());
    }
 
    /**
@@ -615,82 +866,130 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void timestampToDATE() {
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
 //      dataTypes.timestampToTime = new Timestamp(1555138024405L);
-      dataTypes.timestampToDate = Timestamp.valueOf("1970-1-1 21:59:59.999999999");
+      dataTypes.setTimestampToDATE(Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals("1970-01-01 01:00:00.0", dataTypes1.timestampToDate.toString());
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      String expected =
+         database == GeneralTestConfigurator.Database.mysql ? "1970-01-01 01:00:00.0"
+         : database == GeneralTestConfigurator.Database.h2 ? "1970-01-01 00:00:00.0"
+         : database == GeneralTestConfigurator.Database.sqlite ? ""
+         : "";
+      assertEquals(expected, dataTypes1.getTimestampToDATE().toString());
    }
 
    @Test
    public void stringToCHAR4() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToChar4 = "1234";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToCHAR4("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToChar4, dataTypes1.stringToChar4);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getStringToCHAR4(), dataTypes1.getStringToCHAR4());
    }
 
    @Test
    public void stringToVARCHAR4() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToVarChar4 = "1234";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToVarCHAR4("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToVarChar4, dataTypes1.stringToVarChar4);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getStringToVarCHAR4(), dataTypes1.getStringToVarCHAR4());
    }
 
    @Test
    public void stringToBINARY() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToBinary = "1234";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToBINARY("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToBinary, dataTypes1.stringToBinary);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getStringToBINARY();
+            break;
+         case h2:
+            expected = "\u00124";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getStringToBINARY());
    }
 
    @Test
    public void stringToVARBINARY() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToVarBinary = "1234";
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToVARBINARY("1234");
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.stringToVarBinary, dataTypes1.stringToVarBinary);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      String expected = "";
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getStringToVARBINARY();
+            break;
+         case h2:
+            expected = "\u00124";
+            break;
+         case sqlite:
+         default:
+            expected = "";
+      }
+
+      assertEquals(expected, dataTypes1.getStringToVARBINARY());
    }
 
    @Test
    public void byteArrayToVARBINARY() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteArrayToVarBinary = "1234".getBytes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteArrayToVARBINARY("1234".getBytes());
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertArrayEquals(dataTypes.byteArrayToVarBinary, dataTypes1.byteArrayToVarBinary);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      byte[] expected;
+      switch (database) {
+         case mysql:
+         case h2:
+            expected = dataTypes.getByteArrayToVARBINARY();
+            break;
+         case sqlite:
+         default:
+            expected = null;
+      }
+
+      assertArrayEquals(expected, dataTypes1.getByteArrayToVARBINARY());
    }
 
    @Test
    public void byteArrayToBINARY() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteArrayToBinary = "1".getBytes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteArrayToBINARY("1".getBytes());
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertArrayEquals(dataTypes.byteArrayToBinary, dataTypes1.byteArrayToBinary);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertArrayEquals(dataTypes.getByteArrayToBINARY(), dataTypes1.getByteArrayToBINARY());
    }
 
    @Test
    public void byteToBIT8() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToBit8 = 0b00001000;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteToBIT8((byte) 0b00001000);
+      if (database == GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Can not set java.lang.Byte field com.zaxxer.q2o.entities.DataTypesNullable.byteToBIT8 to java.lang.Boolean");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.byteToBit8, dataTypes1.byteToBit8);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getByteToBIT8(), dataTypes1.getByteToBIT8());
    }
 
    @Test @Ignore
    public void byteToBIT8Negative() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToBit8 = -1;
-      thrown.expectMessage("MysqlDataTruncation: Data truncation: Data too long for column 'byteToBit8'");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteToBIT8((byte) -1);
+      thrown.expectMessage("MysqlDataTruncation: Data truncation: Data too long for column 'byteToBIT8'");
       Q2Obj.insert(dataTypes);
    }
 
@@ -701,12 +1000,15 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void byteArrayToBIT64() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteArrayToBit64 = new byte[]{
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteArrayToBIT64(new byte[]{
          (byte)1, (byte)2, (byte)3, (byte)4,
-      };
+      });
+      if (database ==GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Data conversion error converting \"01020304\"");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
       byte[] expected = new byte[]{
             (byte)0,
             (byte)0,
@@ -717,203 +1019,311 @@ public class MySQLDataTypesNullTest {
             (byte)3,
             (byte)4
          };
-      Assertions.assertThat(dataTypes1.byteArrayToBit64).containsExactly(expected);
+      Assertions.assertThat(dataTypes1.getByteArrayToBIT64()).containsExactly(expected);
    }
 
    @Test @Ignore
    public void stringToBIT8() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.stringToBit8 = "b'11'";
-      thrown.expectMessage("MysqlDataTruncation: Data truncation: Data too long for column 'stringToBit8'");
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setStringToBIT8("b'11'");
+      thrown.expectMessage("MysqlDataTruncation: Data truncation: Data too long for column 'stringToBIT8'");
       Q2Obj.insert(dataTypes);
    }
 
    @Test
    public void shortToBIT16() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.shortToBit16 = Short.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setShortToBIT16(Short.MAX_VALUE);
+      if (database ==GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Can not set java.lang.Short field com.zaxxer.q2o.entities.DataTypesNullable.shortToBIT16 to java.lang.Boolean");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.shortToBit16, dataTypes1.shortToBit16);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getShortToBIT16(), dataTypes1.getShortToBIT16());
    }
 
    @Test
    public void intToBIT32() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToBit32 = Integer.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToBIT32(Integer.MAX_VALUE);
+      if (database ==GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Can not set java.lang.Integer field com.zaxxer.q2o.entities.DataTypesNullable.intToBIT32 to java.lang.Boolean");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToBit32, dataTypes1.intToBit32);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToBIT32(), dataTypes1.getIntToBIT32());
    }
 
    @Test
    public void longToBIT64() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.longToBit64 = Long.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setLongToBIT64(Long.MAX_VALUE);
+      if (database ==GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Can not set java.lang.Long field com.zaxxer.q2o.entities.DataTypesNullable.longToBIT64 to java.lang.Boolean");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToBit64, dataTypes1.longToBit64);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToBIT64(), dataTypes1.getLongToBIT64());
    }
 
    @Test
    public void byteToTINYINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToTinyint = Byte.MIN_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteToTINYINT(Byte.MIN_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.byteToTinyint, dataTypes1.byteToTinyint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getByteToTINYINT(), dataTypes1.getByteToTINYINT());
    }
 
    @Test
    public void shortToTINYINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.shortToTinyint = 127;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setShortToTINYINT((short) 127);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.shortToTinyint, dataTypes1.shortToTinyint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      Short expected;
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getShortToTINYINT();
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = dataTypes.getShortToTINYINT();
+      }
+
+      assertEquals(expected, dataTypes1.getShortToTINYINT());
    }
 
    @Test
    public void intToTINYINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToTinyint = 127;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToTINYINT(127);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToTinyint, dataTypes1.intToTinyint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      Integer expected;
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getIntToTINYINT();;
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = expected = dataTypes.getIntToTINYINT();;
+      }
+
+      assertEquals(expected, dataTypes1.getIntToTINYINT());
    }
 
    @Test
    public void longToTINYINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.longToTinyint = 127L;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setLongToTINYINT(127L);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToTinyint, dataTypes1.longToTinyint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      Long expected;
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getLongToTINYINT();;
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = expected = dataTypes.getLongToTINYINT();;
+      }
+
+      assertEquals(expected, dataTypes1.getLongToTINYINT());
    }
 
    @Test
    public void byteToSMALLINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.byteToSmallint = Byte.MIN_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setByteToSMALLINT(Byte.MIN_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.byteToSmallint, dataTypes1.byteToSmallint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      Byte expected;
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getByteToSMALLINT();
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = dataTypes.getByteToSMALLINT();
+      }
+
+      assertEquals(expected, dataTypes1.getByteToSMALLINT());
    }
 
    @Test
    public void shortToSMALLINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.shortToSmallint = Short.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setShortToSMALLINT(Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.shortToSmallint, dataTypes1.shortToSmallint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getShortToSMALLINT(), dataTypes1.getShortToSMALLINT());
    }
 
    @Test
    public void intToSMALLINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToSmallint = (int)Short.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToSMALLINT((int)Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToSmallint, dataTypes1.intToSmallint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      Integer expected;
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getIntToSMALLINT();
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = dataTypes.getIntToSMALLINT();
+      }
+
+      assertEquals(expected, dataTypes1.getIntToSMALLINT());
    }
 
    @Test
    public void longToSMALLINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.longToSmallint = (long)Short.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setLongToSMALLINT((long)Short.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToSmallint, dataTypes1.longToSmallint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+
+      Long expected;
+      switch (database) {
+         case mysql:
+            expected = dataTypes.getLongToSMALLINT();
+            break;
+         case h2:
+            expected = null;
+            break;
+         case sqlite:
+         default:
+            expected = dataTypes.getLongToSMALLINT();
+      }
+
+      assertEquals(expected, dataTypes1.getLongToSMALLINT());
    }
 
    @Test
    public void bigintToBIGINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.bigintToBigint = BigInteger.valueOf(Long.MAX_VALUE);
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setBigintToBIGINT(BigInteger.valueOf(Long.MAX_VALUE));
+      if (database ==GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Data conversion error");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.bigintToBigint, dataTypes1.bigintToBigint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getBigintToBIGINT(), dataTypes1.getBigintToBIGINT());
    }
 
    @Test
    public void longToBIGINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.longToBigint = Long.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setLongToBIGINT(Long.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToBigint, dataTypes1.longToBigint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToBIGINT(), dataTypes1.getLongToBIGINT());
    }
 
    @Test
    public void intToBIGINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToBigint = Integer.MAX_VALUE;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToBIGINT(Integer.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToBigint, dataTypes1.intToBigint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToBIGINT(), dataTypes1.getIntToBIGINT());
    }
 
    @Test
-   public void intToINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToInt = Integer.MAX_VALUE;
+   public void integerToINT() {
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToINT(Integer.MAX_VALUE);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToInt, dataTypes1.intToInt);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToINT(), dataTypes1.getIntToINT());
    }
 
    @Test
    public void integerToINTNull() {
-      DataTypes dataTypes = new DataTypes();
+      DataTypesNullable dataTypes = new DataTypesNullable();
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.integerToInt, dataTypes1.integerToInt);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToINT(), dataTypes1.getIntToINT());
    }
 
    @Test
    public void intToMEDIUMINT() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.intToMediumint = -8388608;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setIntToMEDIUMINT(-8388608);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.intToMediumint, dataTypes1.intToMediumint);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getIntToMEDIUMINT(), dataTypes1.getIntToMEDIUMINT());
    }
 
    @Test
    public void longToINT_UNSIGNED() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.longToUnsignedInt = ((long)Integer.MAX_VALUE * 2) + 1;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setLongToINT_UNSIGNED(((long)Integer.MAX_VALUE * 2) + 1);
+      if (database ==GeneralTestConfigurator.Database.h2) {
+         thrown.expectMessage("Numeric value out of range");
+      }
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.longToUnsignedInt, dataTypes1.longToUnsignedInt);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getLongToINT_UNSIGNED(), dataTypes1.getLongToINT_UNSIGNED());
    }
 
    @Test
    public void enumToEnumTypeString() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.enumToEnumTypeString = DataTypes.CaseMatched.one;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setEnumToENUMString(DataTypesNullable.CaseMatched.one);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.enumToEnumTypeString, dataTypes1.enumToEnumTypeString);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToENUMString(), dataTypes1.getEnumToENUMString());
    }
 
    @Test
    public void enumToEnumTypeOrdinal() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.enumToEnumTypeOrdinal = DataTypes.CaseMatched.one;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setEnumToENUMOrdinal(DataTypesNullable.CaseMatched.one);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.enumToEnumTypeOrdinal, dataTypes1.enumToEnumTypeOrdinal);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToENUMOrdinal(), dataTypes1.getEnumToENUMOrdinal());
    }
 
    @Test
    public void enumToInt() {
-      DataTypes dataTypes = new DataTypes();
-      dataTypes.enumToInt = DataTypes.CaseMatched.one;
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setEnumToINTOrdinal(DataTypesNullable.CaseMatched.one);
       Q2Obj.insert(dataTypes);
-      DataTypes dataTypes1 = Q2Obj.byId(DataTypes.class, dataTypes.id);
-      assertEquals(dataTypes.enumToInt, dataTypes1.enumToInt);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToINTOrdinal(), dataTypes1.getEnumToINTOrdinal());
+   }
+
+   @Test
+   public void enumToVARCHARString() {
+      DataTypesNullable dataTypes = new DataTypesNullable();
+      dataTypes.setEnumToVARCHARString(DataTypesNullable.CaseMatched.two);
+      Q2Obj.insert(dataTypes);
+      DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
+      assertEquals(dataTypes.getEnumToVARCHARString(), dataTypes1.getEnumToVARCHARString());
    }
 
    /**
@@ -927,9 +1337,19 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void enumToEnumTypeStringLettercase() {
-      Q2Sql.executeUpdate("insert into datatypes (enumToEnumTypeString) values('OnE')");
-      DataTypes dataTypes = Q2Obj.fromClause(DataTypes.class, null);
-      assertNotNull(dataTypes.enumToEnumTypeString);
+      Q2Sql.executeUpdate("insert into datatypes (enumToENUMString) values('OnE')");
+      DataTypesNullable dataTypes = Q2Obj.fromClause(DataTypesNullable.class, null);
+
+      switch (database) {
+         case mysql:
+            assertNotNull(dataTypes.getEnumToENUMString());
+            break;
+         case h2:
+            break;
+         case sqlite:
+         default:
+            assertNotNull(dataTypes.getEnumToENUMString());
+      }
    }
 
    /*

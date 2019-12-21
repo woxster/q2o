@@ -19,11 +19,23 @@ public final class DataSources {
 
    public static JdbcDataSource makeH2DataSource(boolean autoCommit) {
       final JdbcDataSource dataSource = new JdbcDataSource();
-      dataSource.setUrl(String.format("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
+      dataSource.setUrl(String.format("jdbc:h2:mem:q2o;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
+//      dataSource.setUrl(String.format("jdbc:h2:./h2/db:q2o;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
       return dataSource;
    }
 
    public static DataSource makeMySqlDataSource(String dbName, String user, String password) {
+//      conn =
+//         DriverManager.getConnection("jdbc:mysql://localhost/q2o?" +
+//            "user=root&password=opixcntl&generateSimpleParameterMetadata=true");
+//      stmnt = conn.createStatement();
+//      MysqlDataSource dataSource = new MysqlDataSource();
+//      dataSource.setServerName("localhost");
+//      dataSource.setDatabaseName("q2o");
+//      dataSource.setUser("root");
+//      dataSource.setPassword("opixcntl");
+//      dataSource.setGenerateSimpleParameterMetadata(true);
+
       MysqlDataSource dataSource = new MysqlDataSource();
       dataSource.setUrl(String.format("jdbc:mysql://localhost/%s?user=%s&password=%s&generateSimpleParameterMetadata=true&serverTimezone=UTC", dbName, user, password)); //
       return dataSource;

@@ -327,12 +327,6 @@ public class OneToOneTest {
       }
    }
 
-   // TODO Q2ObjList.fromSelect() throws java.lang.RuntimeException: java.lang.RuntimeException: getWriteMethod().invoke() failed: target=Middle1{id=0, type='null', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}} value=null
-   //PropertyInfo=PropertyInfo{propertyDescriptor=java.beans.PropertyDescriptor[name=rightId; propertyType=int; readMethod=public int com.zaxxer.q2o.entities.Middle1.getRightId(); writeMethod=public void com.zaxxer.q2o.entities.Middle1.setRightId(int)], toBeConsidered=true, readMethod=public int com.zaxxer.q2o.entities.Middle1.getRightId(), ownerClazz=class com.zaxxer.q2o.entities.Middle1, name='rightId', field=private int com.zaxxer.q2o.entities.Middle1.rightId, type=int, isDelimited=false, updatable=true, insertable=true, columnName='rightid', delimitedTableName='MIDDLE1_TABLE', enumType=null, enumConstants=null, converter=null, caseSensitiveColumnName='rightId', isGeneratedId=false, isIdField=false, isJoinColumn=false, isTransient=false, isEnumerated=false, isColumnAnnotated=true, delimitedName='rightId', fullyQualifiedDelimitedName='MIDDLE1_TABLE.rightId'}
-   // 	at com.zaxxer.q2o.Introspected.set(Introspected.java:631)
-   //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.processColumnOfJoinedTable(OrmReader.java:421)
-   //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.processColumn(OrmReader.java:393)
-   //	   at com.zaxxer.q2o.OrmReader$ResultSetToObjectProcessor.process(OrmReader.java:352)
    @Test
    public void leftJoin3Tables() throws SQLException {
       JdbcDataSource ds = DataSources.makeH2DataSource();

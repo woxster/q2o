@@ -25,8 +25,8 @@ public class GeneralTestConfigurator {
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-//         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
-         {false, Database.mysql}
+         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
+//         {false, Database.mysql}
 //         {false, Database.h2}
 //         {true, Database.sqlite}
       });
@@ -69,7 +69,7 @@ public class GeneralTestConfigurator {
    }
 
    @After
-   public void tearDown() throws Exception {
+   public void tearDown()throws Exception {
       q2o.deinitialize();
    }
 }

@@ -36,6 +36,12 @@ class PropertyInfo extends AttributeInfo {
    }
 
    @Override
+   protected Temporal extractTemporalAnnotation() {
+      return readMethod.getDeclaredAnnotation(Temporal.class);
+
+   }
+
+   @Override
    protected OneToOne extractOneToOneAnnotation() {
       return readMethod.getDeclaredAnnotation(OneToOne.class);
    }

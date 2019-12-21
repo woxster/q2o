@@ -16,6 +16,9 @@
 
 package com.zaxxer.q2o;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -29,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class OrmBase
 {
    private static final Map<String, String> csvCache;
+   private static Logger logger = LoggerFactory.getLogger(OrmBase.class.getName());
 
    static {
       csvCache = new ConcurrentHashMap<>();
@@ -48,7 +52,7 @@ class OrmBase
 
       for (int colIdx = paramCount; colIdx > 0; colIdx--) {
          final int parameterType = parameterMetaData.getParameterType(colIdx);
-         final Object object = mapSqlType(args[colIdx - 1], parameterType);
+         final Object object = convertToDatabaseType(args[colIdx - 1], parameterType, null);
          stmt.setObject(colIdx, object, parameterType);
       }
    }
@@ -97,26 +101,29 @@ class OrmBase
       return sb.deleteCharAt(sb.length() - 1).toString();
    }
 
-   protected static Object mapSqlType(final Object object, final int sqlType)
+   /**
+    * IMPROVE Interferes with {@link Introspected#get(Object, AttributeInfo)}
+    */
+   protected static Object convertToDatabaseType(final Object value, final int sqlType, final AttributeInfo fcInfo)
    {
       if (!q2o.isMySqlMode()) {
          switch (sqlType) {
          case Types.TIMESTAMP:
-            if (object instanceof Timestamp) {
-               return object;
+            if (value instanceof Timestamp) {
+               return value;
             }
-            if (object instanceof java.util.Date) {
-               return new Timestamp(((java.util.Date) object).getTime());
+            else if (value instanceof java.util.Date) {
+               return new Timestamp(((java.util.Date) value).getTime());
             }
             break;
          case Types.DECIMAL:
-            if (object instanceof BigInteger) {
-               return new BigDecimal(((BigInteger) object));
+            if (value instanceof BigInteger) {
+               return new BigDecimal(((BigInteger) value));
             }
             break;
          case Types.SMALLINT:
-            if (object instanceof Boolean) {
-               return (((Boolean) object) ? (short) 1 : (short) 0);
+            if (value instanceof Boolean) {
+               return (((Boolean) value) ? (short) 1 : (short) 0);
             }
             break;
          default:
@@ -139,7 +146,7 @@ class OrmBase
 //            }
 //         }
       }
-      return object;
+      return value;
    }
 
    /**

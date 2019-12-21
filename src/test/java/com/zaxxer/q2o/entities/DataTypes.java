@@ -4,6 +4,7 @@ import javax.persistence.*;
 import java.math.BigInteger;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -18,6 +19,7 @@ public class DataTypes {
 
    private int myInteger;
 
+   @Temporal(TemporalType.DATE)
    private Date dateToDate;
    private java.sql.Date sqlDateToDate;
    private Timestamp timestampToDate;
@@ -27,9 +29,13 @@ public class DataTypes {
    private Time timeToDateTime;
    private Timestamp timestampToDateTime;
 
+   /** Must work without @Temporal(value = TemporalType.TIMESTAMP) too. See {@link com.zaxxer.q2o.ValueToFieldTypeConverter#convertTimestamp(String, Class, Object)} */
+   @SuppressWarnings("JavadocReference")
    private Date dateToTimestamp;
    private Timestamp timestampToTimestamp;
    private java.sql.Date sqlDateToTimestamp;
+   @Temporal(value = TemporalType.TIMESTAMP)
+   private Calendar calendarToTimestamp;
 
    private Integer intToYear;
    private java.sql.Date sqlDateToYear;
@@ -481,6 +487,14 @@ public class DataTypes {
 
    public void setEnumToInt(CaseMatched enumToInt) {
       this.enumToInt = enumToInt;
+   }
+
+   public Calendar getCalendarToTimestamp() {
+      return calendarToTimestamp;
+   }
+
+   public void setCalendarToTimestamp(Calendar calendarToTimestamp) {
+      this.calendarToTimestamp = calendarToTimestamp;
    }
 
    public enum CaseMatched {

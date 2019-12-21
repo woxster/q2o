@@ -1,5 +1,6 @@
 package com.zaxxer.q2o;
 
+import com.zaxxer.q2o.converters.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
@@ -7,9 +8,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Time;
+import java.util.*;
 
 /**
  * Column information about a field
@@ -51,6 +51,8 @@ abstract class AttributeInfo
    private Column columnAnnotation;
    private Class<?> actualType;
    private String tableName;
+   private boolean isTemporalAnnotated;
+   private TemporalType temporalType;
 
    AttributeInfo(final Field field, final Class<?> ownerClazz) {
       this.field = field;
@@ -164,13 +166,44 @@ abstract class AttributeInfo
             }
             else {
                // CLARIFY Dead code? Never reached by tests.
+               // No @Column annotation, so preserve case of property name.
                setColumnName(name);
+            }
+         }
+      }
+      if (isTemporalAnnotated) {
+         if (temporalType.equals(TemporalType.TIMESTAMP)) {
+            if (Calendar.class.isAssignableFrom(type)) {
+               converter = new CalendarTimestampConverter();
+            }
+            else if (Date.class.isAssignableFrom(type)) {
+               // Also supported without @Temporal annotation
+               converter = new DateTimestampConverter();
+            }
+         }
+         else if (temporalType.equals(TemporalType.DATE)) {
+            if (Calendar.class.isAssignableFrom(type)) {
+               converter = new CalendarDateConverter();
+            }
+            if (Date.class.isAssignableFrom(type)) {
+               converter = new UtilDateDateConverter();
+            }
+         }
+         else if (temporalType.equals(TemporalType.TIME)) {
+            if (Calendar.class.isAssignableFrom(type)) {
+               converter = new CalenderTimeConverter();
+            }
+            else if (Time.class.isAssignableFrom(type)) {
+               converter = new UtilDateTimeConverter();
             }
          }
       }
       processConvertAnnotation();
    }
 
+   /**
+    * First ONLY extract every annotation then deal with it in {@link #processFieldAnnotations()}.
+    */
    private void extractAnnotations() {
       final Id idAnnotation = extractIdAnnotation();
       if (idAnnotation != null) {
@@ -202,9 +235,17 @@ abstract class AttributeInfo
          isJoinColumnsAnnotated = true;
          toBeConsidered = false;
       }
+      final Temporal temporalAnnotation = extractTemporalAnnotation();
+      if (temporalAnnotation != null) {
+         isTemporalAnnotated = true;
+         temporalType = temporalAnnotation.value();
+      }
+
       // relationship annotations can exist without @JoinColumn annotation
       extractRelationship();
    }
+
+   protected abstract Temporal extractTemporalAnnotation();
 
    private void extractRelationship() {
       final OneToMany oneToMany = extractOneToManyAnnotation();
@@ -393,15 +434,51 @@ abstract class AttributeInfo
    }
 
    @Override
-   public String toString()
-   {
-      return name + "->" + getColumnName();
+   public String toString() {
+      return "AttributeInfo{" +
+         "ownerClazz=" + ownerClazz +
+         ", ownerClassTableName='" + ownerClassTableName + '\'' +
+         ", name='" + name + '\'' +
+         ", field=" + field +
+         ", type=" + type +
+         ", isDelimited=" + isDelimited +
+         ", updatable=" + updatable +
+         ", insertable=" + insertable +
+         ", columnName='" + columnName + '\'' +
+         ", delimitedTableName='" + delimitedTableName + '\'' +
+         ", enumType=" + enumType +
+         ", enumConstants=" + enumConstants +
+         ", converter=" + converter +
+         ", caseSensitiveColumnName='" + caseSensitiveColumnName + '\'' +
+         ", isGeneratedId=" + isGeneratedId +
+         ", isIdField=" + isIdField +
+         ", isJoinColumn=" + isJoinColumn +
+         ", isTransient=" + isTransient +
+         ", isEnumerated=" + isEnumerated +
+         ", isColumnAnnotated=" + isColumnAnnotated +
+         ", delimitedName='" + delimitedName + '\'' +
+         ", fullyQualifiedDelimitedName='" + fullyQualifiedDelimitedName + '\'' +
+         ", toBeConsidered=" + toBeConsidered +
+         ", isJoinColumnsAnnotated=" + isJoinColumnsAnnotated +
+         ", isOneToManyAnnotated=" + isOneToManyAnnotated +
+         ", isManyToManyAnnotated=" + isManyToManyAnnotated +
+         ", isManyToOneAnnotated=" + isManyToOneAnnotated +
+         ", isOneToOneAnnotated=" + isOneToOneAnnotated +
+         ", joinWithSecondTable=" + joinWithSecondTable +
+         ", joinColumnAnnotation=" + joinColumnAnnotation +
+         ", columnAnnotation=" + columnAnnotation +
+         ", actualType=" + actualType +
+         ", tableName='" + tableName + '\'' +
+         '}';
    }
 
    void setConverter(final AttributeConverter converter) {
       this.converter = converter;
    }
 
+   /**
+    * Also internally set on @Temporal annotated fields.
+    */
    AttributeConverter getConverter() {
       return converter;
    }
@@ -553,5 +630,13 @@ abstract class AttributeInfo
 
    public Class<?> getType() {
       return type;
+   }
+
+   public boolean isTemporalAnnotated() {
+      return isTemporalAnnotated;
+   }
+
+   public TemporalType getTemporalType() {
+      return temporalType;
    }
 }

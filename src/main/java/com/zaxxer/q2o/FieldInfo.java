@@ -20,6 +20,11 @@ class FieldInfo extends AttributeInfo {
    }
 
    @Override
+   protected Temporal extractTemporalAnnotation() {
+      return field.getDeclaredAnnotation(Temporal.class);
+   }
+
+   @Override
    protected OneToOne extractOneToOneAnnotation() {
       return field.getDeclaredAnnotation(OneToOne.class);
    }
