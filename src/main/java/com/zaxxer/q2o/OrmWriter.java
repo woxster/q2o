@@ -19,6 +19,7 @@ package com.zaxxer.q2o;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
 
@@ -31,7 +32,7 @@ class OrmWriter extends OrmBase
    private static final Map<Introspected, String> createStatementCache;
    private static final Map<Introspected, String> updateStatementCache;
    private static final Logger logger = LoggerFactory.getLogger(OrmBase.class);
-   private static final ValueToFieldTypeConverter valueToFieldTypeConverter = new ValueToFieldTypeConverter();
+   private static final DatabaseValueToFieldType DATABASE_VALUE_TO_FIELD_TYPE = new DatabaseValueToFieldType();
 
    static {
       createStatementCache = Collections.synchronizedMap(new LinkedHashMap<Introspected, String>(CACHE_SIZE) {
@@ -327,8 +328,8 @@ class OrmWriter extends OrmBase
       int parameterIndex = 1;
       for (final AttributeInfo fcInfo : fcInfos) {
          if (excludedColumns == null || !isIgnoredColumn(excludedColumns, fcInfo.getColumnName())) {
-            final int parameterType = parameterTypes[parameterIndex - 1];
-            final Object object = convertToDatabaseType(introspected.get(item, fcInfo), parameterType, fcInfo);
+            final int sqlType = parameterTypes[parameterIndex - 1];
+            final Object object = FieldValueToDatabaseType.getValue(item, fcInfo, sqlType);
             if (q2o.isMySqlMode()) {
                // Does not help with problem that fractional seconds get lost when stored.
 //               if (fcInfo.isTemporalAnnotated()) {
@@ -350,15 +351,15 @@ class OrmWriter extends OrmBase
             else if (object != null) {
                try {
                   if (!fcInfo.isSelfJoinField()) {
-                     stmt.setObject(parameterIndex, object, parameterType);
+                     stmt.setObject(parameterIndex, object, sqlType);
                   }
                   else {
-                     stmt.setObject(parameterIndex, fcInfo.getValue(item), parameterType);
+                     stmt.setObject(parameterIndex, fcInfo.getValue(item), sqlType);
                   }
                }
                catch (Exception e) {
                   logger.error("sqlType={} \nvalue={} \nvalue type={} \nfcInfo={}",
-                     SqlTypesResolver.codeToName.get(parameterType),
+                     SqlTypesResolver.codeToName.get(sqlType),
                      object,
                      object.getClass(),
                      fcInfo);
@@ -366,7 +367,7 @@ class OrmWriter extends OrmBase
                }
             }
             else {
-               stmt.setNull(parameterIndex, parameterType);
+               stmt.setNull(parameterIndex, sqlType);
             }
             ++parameterIndex;
          }
@@ -385,7 +386,13 @@ class OrmWriter extends OrmBase
 
       final AttributeInfo fcInfo = introspected.getGeneratedIdFcInfo();
       if (checkExistingId) {
-         final Object idExisting = introspected.get(target, fcInfo);
+         Object idExisting;
+         try {
+            idExisting = fcInfo.getValue(target);
+         }
+         catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+         }
          if (idExisting != null && (!(idExisting instanceof Integer) || (Integer) idExisting > 0)) {
             // a bit tied to implementation but let's assume that integer id <= 0 means that it was not generated yet
             return;
@@ -393,7 +400,7 @@ class OrmWriter extends OrmBase
       }
       try (final ResultSet generatedKeys = stmt.getGeneratedKeys()) {
          if (generatedKeys.next()) {
-            Object typeCorrectedValue = valueToFieldTypeConverter.adaptValueToFieldType(fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData(), introspected, 1);
+            Object typeCorrectedValue = DATABASE_VALUE_TO_FIELD_TYPE.adaptValueToFieldType(fcInfo, generatedKeys.getObject(1), generatedKeys.getMetaData(), introspected, 1);
             fcInfo.setValue(target, typeCorrectedValue);
          }
       }

@@ -513,50 +513,6 @@ final class Introspected {
    }
 
    /**
-    * <p>Get the value of the specified field from the specified target object, possibly after applying a {@link AttributeConverter}.
-    * </p><p>
-    * IMPROVE Interferes with {@link OrmBase#convertToDatabaseType(Object, int, AttributeInfo)}
-    * </p>
-    *
-    * @param target the target instance
-    * @param fcInfo the {@link AttributeInfo} used to access the field value
-    * @return the value of the field from the target object, possibly after applying a {@link AttributeConverter}
-    */
-   Object get(final Object target, final AttributeInfo fcInfo) {
-      if (fcInfo == null) {
-         throw new RuntimeException("FieldColumnInfo must not be null. Type is " + target.getClass().getCanonicalName());
-      }
-
-      Object value = null;
-      try {
-         value = fcInfo.getValue(target);
-         // Fix-up column value for enums, integer as boolean, etc.
-         if (fcInfo.getConverter() != null) {
-            return fcInfo.getConverter().convertToDatabaseColumn(value);
-         }
-         else if (fcInfo.isEnumerated() && value != null) {
-            if (fcInfo.getEnumType() == EnumType.ORDINAL) {
-               value = ((Enum<?>) value).ordinal();
-               if (q2o.isMySqlMode()) {
-                  // "Values from the list of permissible elements in the column specification are numbered beginning with 1." (MySQL 5.5 Reference Manual, 10.4.4. The ENUM Type).
-                  value = (int) value + 1;
-               }
-            }
-            else {
-               value = ((Enum<?>) value).name();
-            }
-         }
-
-         return value;
-      }
-      catch (Exception e) {
-         logger.error("", e);
-         logger.error("value={}\n value type={}\n fcInfo={}", value, Optional.ofNullable(value).orElse(null), fcInfo);
-         throw new RuntimeException(e);
-      }
-   }
-
-   /**
     * Determines whether this class has join columns.
     *
     * @return true if this class has {@link JoinColumn} annotations

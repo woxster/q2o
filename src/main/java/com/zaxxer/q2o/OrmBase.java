@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.*;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,9 +51,9 @@ class OrmBase
       }
 
       for (int colIdx = paramCount; colIdx > 0; colIdx--) {
-         final int parameterType = parameterMetaData.getParameterType(colIdx);
-         final Object object = convertToDatabaseType(args[colIdx - 1], parameterType, null);
-         stmt.setObject(colIdx, object, parameterType);
+         final int sqlType = parameterMetaData.getParameterType(colIdx);
+         final Object object = FieldValueToDatabaseType.getValue(args[colIdx - 1], sqlType);
+         stmt.setObject(colIdx, object, sqlType);
       }
    }
 
@@ -99,54 +99,6 @@ class OrmBase
       }
 
       return sb.deleteCharAt(sb.length() - 1).toString();
-   }
-
-   /**
-    * IMPROVE Interferes with {@link Introspected#get(Object, AttributeInfo)}
-    */
-   protected static Object convertToDatabaseType(final Object value, final int sqlType, final AttributeInfo fcInfo)
-   {
-      if (!q2o.isMySqlMode()) {
-         switch (sqlType) {
-         case Types.TIMESTAMP:
-            if (value instanceof Timestamp) {
-               return value;
-            }
-            else if (value instanceof java.util.Date) {
-               return new Timestamp(((java.util.Date) value).getTime());
-            }
-            break;
-         case Types.DECIMAL:
-            if (value instanceof BigInteger) {
-               return new BigDecimal(((BigInteger) value));
-            }
-            break;
-         case Types.SMALLINT:
-            if (value instanceof Boolean) {
-               return (((Boolean) value) ? (short) 1 : (short) 0);
-            }
-            break;
-         default:
-            break;
-         }
-      }
-      else {
-         // IMPROVE Encalsulate in converter class and provide pattern to compose OrmBase with it.
-//         if (sqlType == Types.VARCHAR) {
-//            if (object instanceof Timestamp) {
-////               DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn");
-//               DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-//               LocalDateTime localDateTime = LocalDateTime.now();
-//               return localDateTime.format(dateTimeFormatter);
-//            }
-//            else if (object instanceof Date) {
-//               SimpleDateFormat dateFormat = new SimpleDateFormat();
-//               dateFormat.applyPattern("yyyy-MM-dd");
-//               return dateFormat.format(object);
-//            }
-//         }
-      }
-      return value;
    }
 
    /**

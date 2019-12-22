@@ -20,11 +20,11 @@ import java.util.UUID;
  * @since 17.12.19
  */
 // IMPROVE Let user customize the converter to use.
-class ValueToFieldTypeConverter {
+class DatabaseValueToFieldType {
 
-   private static Logger logger = LoggerFactory.getLogger(ValueToFieldTypeConverter.class);
+   private static Logger logger = LoggerFactory.getLogger(DatabaseValueToFieldType.class);
    /**
-    * Adjust value type to field type when necessary.
+    * Adjust the value's type as retrieved from database to the field's type in the Java entity when necessary.
     *
     * @return type corrected value
     */
