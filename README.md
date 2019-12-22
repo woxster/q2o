@@ -159,7 +159,7 @@ Starting with V 3.12 you can initialize q2o with Spring Transaction support too.
 | ``@MappedSuperclass`` | n/a                                                    | Classes           |
 | ``@Table``            | ``name``                                               | Classes           |
 | ``@Transient``        | n/a                                                    | Getters, Fields |
-| ``@Temporal``         | ``DATE, TIME, TIMESTAMP``                              | Getters, Fields |
+| ``@Temporal``         | ``DATE, TIME, TIMESTAMP`` (New in 3.14)                | Getters, Fields |
 
 
 ### More Advanced
