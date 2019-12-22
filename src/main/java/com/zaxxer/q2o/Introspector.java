@@ -21,18 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class Introspector
-{
+final class Introspector {
    private static final Map<Class<?>, Introspected> descriptorMap;
 
    static {
       descriptorMap = new ConcurrentHashMap<>();
    }
 
-   private Introspector() {
-   }
-
-   public static Introspected getIntrospected(@NotNull Class<?> clazz) {
+   static Introspected getIntrospected(@NotNull Class<?> clazz) {
       return descriptorMap.computeIfAbsent(clazz, cls -> new Introspected(cls).introspect());
    }
 }
