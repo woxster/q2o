@@ -562,7 +562,7 @@ abstract class AttributeInfo
 
    protected Object idValueFromEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
       if (obj != null) {
-         final Introspected introspected = Introspector.getIntrospected(obj.getClass());
+         final Introspected introspected = Introspected.getInstance(obj.getClass());
          final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
          return generatedIdFcInfo.getValue(obj);
       }
@@ -583,7 +583,7 @@ abstract class AttributeInfo
 
    protected Object idValueToParentEntity(final Object target, @NotNull final Object value) throws InstantiationException, IllegalAccessException {
       final Object obj = target.getClass().newInstance();
-      final Introspected introspected = Introspector.getIntrospected(obj.getClass());
+      final Introspected introspected = Introspected.getInstance(obj.getClass());
       final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
       generatedIdFcInfo.setValue(obj, value);
       return obj;

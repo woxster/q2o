@@ -61,7 +61,7 @@ class ResultSetToObjectProcessor<T> {
       this.target = target;
 
       metaData = resultSet.getMetaData();
-      introspected = Introspector.getIntrospected(target.getClass());
+      introspected = Introspected.getInstance(target.getClass());
       tableNameToEntitiesInCurrentRow = new HashMap<>();
       tableNameToEntitiesInCurrentRow.putIfAbsent(introspected.getTableName().toUpperCase(), target);
       tableNameToEntities = new HashMap<>();
@@ -104,7 +104,7 @@ class ResultSetToObjectProcessor<T> {
    T process(final T target) throws SQLException {
       this.target = target;
       metaData = resultSet.getMetaData();
-      introspected = Introspector.getIntrospected(target.getClass());
+      introspected = Introspected.getInstance(target.getClass());
       tableNameToEntitiesInCurrentRow = new HashMap<>();
       tableNameToEntitiesInCurrentRow.putIfAbsent(introspected.getTableName().toUpperCase(), target);
       tableNameToEntities = new HashMap<>();
@@ -119,7 +119,7 @@ class ResultSetToObjectProcessor<T> {
    List<T> process(final Class<T> targetClass) throws SQLException {
 
       metaData = resultSet.getMetaData();
-      introspected = Introspector.getIntrospected(targetClass);
+      introspected = Introspected.getInstance(targetClass);
       targets = new ArrayList<>();
 
       do {
@@ -206,7 +206,7 @@ class ResultSetToObjectProcessor<T> {
       currentEntity = currentEntity == null ? target : currentEntity;
 
       Class<?> currentTargetClass = currentEntity.getClass();
-      AttributeInfo currentTargetInfo = Introspector.getIntrospected(currentTargetClass).getFieldColumnInfo(columnName);
+      AttributeInfo currentTargetInfo = Introspected.getInstance(currentTargetClass).getFieldColumnInfo(columnName);
       // Do not call currentTargetInfo.setValue() directly. AttributeInfo#setValue() does not apply type conversion (e. g. identity fields of type BigInteger to integer)!
       if (currentTargetInfo != null && (
          !currentTargetInfo.isIdField

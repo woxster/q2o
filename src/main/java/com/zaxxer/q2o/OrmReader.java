@@ -17,7 +17,10 @@
 package com.zaxxer.q2o;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -112,12 +115,12 @@ class OrmReader extends OrmBase
 
    static <T> T objectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
    {
-      String where = getWhereIdClause(Introspector.getIntrospected(clazz));
+      String where = getWhereIdClause(Introspected.getInstance(clazz));
       return objectFromClause(connection, clazz, where, args);
    }
 
    static <T> T objectById(final Connection connection, final T target) throws SQLException {
-      Introspected introspected = Introspector.getIntrospected(target.getClass());
+      Introspected introspected = Introspected.getInstance(target.getClass());
       String where = getWhereIdClause(introspected);
       List<AttributeInfo> idFcInfos = introspected.getIdFcInfos();
       Object[] args = new Object[idFcInfos.size()];
@@ -134,7 +137,7 @@ class OrmReader extends OrmBase
    }
 
    static <T> T refresh(final Connection connection, final T target) throws SQLException {
-      final Introspected introspected = Introspector.getIntrospected(target.getClass());
+      final Introspected introspected = Introspected.getInstance(target.getClass());
       final String where = getWhereIdClause(introspected);
       final String sql = generateSelectFromClause(target.getClass(), where);
       final PreparedStatement stmt = connection.prepareStatement(sql);
@@ -179,7 +182,7 @@ class OrmReader extends OrmBase
 
    static <T> int countObjectsFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
 
       final String tableName = introspected.getDelimitedTableName();
       final String[] idColumnNames = introspected.getIdColumnNames();
@@ -222,7 +225,7 @@ class OrmReader extends OrmBase
       final String cacheKey = clazz.getName() + clause;
 
       return fromClauseStmtCache.computeIfAbsent(cacheKey, key -> {
-        final Introspected introspected = Introspector.getIntrospected(clazz);
+        final Introspected introspected = Introspected.getInstance(clazz);
         final String tableName = introspected.getDelimitedTableName();
 
         final StringBuilder sqlSB = new StringBuilder()

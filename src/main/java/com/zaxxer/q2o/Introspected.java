@@ -16,6 +16,7 @@
 
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Holds all informations we need about an entity.
@@ -32,6 +34,11 @@ import java.util.*;
 final class Introspected {
 
    private static final Logger logger = LoggerFactory.getLogger(Introspected.class.getName());
+
+   static final Map<Class<?>, Introspected> descriptorMap;
+   static {
+      descriptorMap = new ConcurrentHashMap<>();
+   }
 
    private final Class<?> clazz;
    final List<AttributeInfo> idFcInfos;
@@ -179,6 +186,10 @@ final class Introspected {
       this.idFcInfos = new ArrayList<>();
    }
 
+   static Introspected getInstance(@NotNull Class<?> clazz) {
+      return descriptorMap.computeIfAbsent(clazz, cls -> new Introspected(cls).introspect());
+   }
+
    Introspected introspect() {
       if (!initialized) {
          extractClassTableName();
@@ -265,12 +276,12 @@ final class Introspected {
    Object getTableTarget(String tableName) throws IllegalAccessException, InstantiationException {
       Class<?> cls = tableNameToClassCaseInsensitive.get(tableName);
       if (cls != null) {
-         Introspected i = Introspector.getIntrospected(cls);
+         Introspected i = getInstance(cls);
          return i.clazz.newInstance();
       }
       else {
          for (Class<?> c : tableNameToClassCaseInsensitive.values()) {
-            Introspected introspected = Introspector.getIntrospected(c);
+            Introspected introspected = getInstance(c);
             if (introspected != this) {
                Object target = introspected.getTableTarget(tableName);
                if (target != null) {
@@ -290,7 +301,7 @@ final class Introspected {
          throw new RuntimeException(tableName + " is not reachable from " + getTableName());
       }
       else {
-         Introspected introspected = Introspector.getIntrospected(cls);
+         Introspected introspected = getInstance(cls);
          return introspected.getFieldColumnInfo(columnName);
       }
    }
@@ -302,7 +313,7 @@ final class Introspected {
       }
       else {
          for (Class<?> cls : tableNameToClassCaseInsensitive.values()) {
-            Introspected introspected = Introspector.getIntrospected(cls);
+            Introspected introspected = getInstance(cls);
             if (introspected != this) {
                AttributeInfo fieldColumnInfo = introspected.getFieldColumnInfo(actualType);
                if (fieldColumnInfo != null) {

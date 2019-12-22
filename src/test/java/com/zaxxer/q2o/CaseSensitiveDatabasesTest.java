@@ -847,7 +847,7 @@ public class CaseSensitiveDatabasesTest {
       };
 
 //      Introspected introspected = new Introspected(ResultSetToObjectClass.class);
-      Introspector.getIntrospected(ResultSetToObjectClass.class);
+      Introspected.getInstance(ResultSetToObjectClass.class);
 
       HashSet<String> ignoredCols = new HashSet<>();
       ignoredCols.add("ignoredCol");
@@ -926,7 +926,7 @@ public class CaseSensitiveDatabasesTest {
       };
 
 //      Introspected introspected = new Introspected(ResultSetToObjectClass.class);
-      Introspector.getIntrospected(ResultSetToObjectClass.class);
+      Introspected.getInstance(ResultSetToObjectClass.class);
 
       HashSet<String> ignoredCols = new HashSet<>();
 //      ignoredCols.add("ignoredCol");

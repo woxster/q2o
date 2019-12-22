@@ -173,7 +173,7 @@ public class OneToManyTest {
 
    @Test
    public void introspectChapter() {
-      Introspected introspected = Introspector.getIntrospected(Chapter.class);
+      Introspected introspected = Introspected.getInstance(Chapter.class);
       AttributeInfo info = introspected.getFieldColumnInfo("CHAPTERTITLE");
       assertNotNull(info);
    }

@@ -154,7 +154,7 @@ public class Q2Sql {
     */
    public static String getColumnFromProperty(Class<?> clazz, String propertyName)
    {
-      return Introspector.getIntrospected(clazz).getColumnNameForProperty(propertyName);
+      return Introspected.getInstance(clazz).getColumnNameForProperty(propertyName);
    }
 
 }

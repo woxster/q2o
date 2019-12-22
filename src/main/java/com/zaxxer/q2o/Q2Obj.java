@@ -199,7 +199,7 @@ public final class Q2Obj {
     */
    public static <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
    {
-      Introspected introspected = Introspector.getIntrospected(object.getClass());
+      Introspected introspected = Introspected.getInstance(object.getClass());
       String[] updatableColumns = introspected.getUpdatableColumns();
       HashSet<String> excludedCols = new HashSet<>();
       for (int i = 0; i < updatableColumns.length; i++) {

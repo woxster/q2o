@@ -63,7 +63,7 @@ class OrmWriter extends OrmBase
       }
 
       final Class<?> clazz = iterableIterator.next().getClass();
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
       final boolean hasSelfJoinColumn = introspected.hasSelfJoinColumn();
       if (hasSelfJoinColumn) {
          throw new RuntimeException("insertListBatched() is not supported for objects with self-referencing columns due to Derby limitations");
@@ -88,7 +88,7 @@ class OrmWriter extends OrmBase
       }
 
       final Class<?> clazz = iterableIterator.next().getClass();
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
       final boolean hasSelfJoinColumn = introspected.hasSelfJoinColumn();
       final String[] idColumnNames = introspected.getIdColumnNames();
       final AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
@@ -114,7 +114,7 @@ class OrmWriter extends OrmBase
    static <T> T insertObject(final Connection connection, final T target) throws SQLException
    {
       final Class<?> clazz = target.getClass();
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
       final AttributeInfo[] insertableFcInfos = introspected.getInsertableFcInfos();
       try (final PreparedStatement stmt = createStatementForInsert(connection, introspected, insertableFcInfos)) {
          setParamsExecute(target, introspected, insertableFcInfos, stmt, /*checkExistingId=*/false, null);
@@ -130,7 +130,7 @@ class OrmWriter extends OrmBase
    static <T> T updateObject(final Connection connection, final T target, final Set<String> excludedColumns) throws SQLException
    {
       final Class<?> clazz = target.getClass();
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
       final AttributeInfo[] updatableFcInfos = introspected.getUpdatableFcInfos();
       if (excludedColumns == null) {
          try (final PreparedStatement stmt = createStatementForUpdate(connection, introspected, updatableFcInfos)) {
@@ -148,7 +148,7 @@ class OrmWriter extends OrmBase
    static <T> int deleteObject(final Connection connection, final T target) throws SQLException
    {
       final Class<?> clazz = target.getClass();
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
 
       return deleteObjectById(connection, clazz, introspected.getActualIds(target));
    }
@@ -159,7 +159,7 @@ class OrmWriter extends OrmBase
     */
    static <T> int deleteObjectById(final Connection connection, final Class<T> clazz, final Object... args) throws SQLException
    {
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
 
       final StringBuilder sql = new StringBuilder()
         .append("DELETE FROM ").append(introspected.getDelimitedTableName())
@@ -180,7 +180,7 @@ class OrmWriter extends OrmBase
 
    static <T> int deleteByWhereClause(final Connection connection, final Class<T> clazz, final String whereClause, final Object... args) throws SQLException
    {
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
 
       final StringBuilder sql = new StringBuilder()
         .append("DELETE FROM ").append(introspected.getDelimitedTableName())

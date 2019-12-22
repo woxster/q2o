@@ -18,11 +18,11 @@ public class IntrospectedTest
 
    @Test
    public void generatedId() {
-      Introspected is = Introspector.getIntrospected(TargetClass1.class);
+      Introspected is = Introspected.getInstance(TargetClass1.class);
       assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
       assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
 
-      is = Introspector.getIntrospected(TargetClassSQL.class);
+      is = Introspected.getInstance(TargetClassSQL.class);
       assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
       assertThat(is.getIdColumnNames()).isEqualTo(new String[]{"id"});
 
@@ -413,7 +413,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       assertEquals("\"Delimited Field Name\"", introspected.getColumnNameForProperty("delimitedFieldName"));
       assertEquals("Default_Case", introspected.getColumnNameForProperty("defaultCase"));
    }
@@ -446,7 +446,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
    }
@@ -462,7 +462,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{"Id", "\"Delimited Field Name\"", "Default_Case"}, cols);
    }
@@ -476,7 +476,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case", insertable = false)
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{}, cols);
    }
@@ -495,7 +495,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case", insertable = false)
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{}, cols);
    }
@@ -514,7 +514,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case", insertable = false)
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{}, cols);
    }
@@ -533,7 +533,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case", updatable = false)
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getUpdatableColumns();
       assertArrayEquals(new String[]{}, cols);
    }
@@ -552,7 +552,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case", updatable = false)
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getUpdatableColumns();
       assertArrayEquals(new String[]{}, cols);
    }
@@ -568,7 +568,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
    }
@@ -587,7 +587,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case", table="\"Delimited Table Name\"")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getInsertableColumns();
       assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
    }
@@ -603,7 +603,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getUpdatableColumns();
       assertArrayEquals(new String[]{"Id", "\"Delimited Field Name\"", "Default_Case"}, cols);
    }
@@ -619,7 +619,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getUpdatableColumns();
       assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
    }
@@ -635,7 +635,7 @@ public class IntrospectedTest
          @Column(name = "Default_Case")
          String defaultCase;
       }
-      Introspected introspected = Introspector.getIntrospected(TestClass.class);
+      Introspected introspected = Introspected.getInstance(TestClass.class);
       String[] cols = introspected.getUpdatableColumns();
       assertArrayEquals(new String[]{"\"Delimited Field Name\"", "Default_Case"}, cols);
    }

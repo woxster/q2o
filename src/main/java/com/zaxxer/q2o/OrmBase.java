@@ -69,7 +69,7 @@ class OrmBase
       return csvCache.computeIfAbsent(cacheKey, key -> {
         final StringBuilder sb = new StringBuilder();
 
-        final Introspected introspected = Introspector.getIntrospected(clazz);
+        final Introspected introspected = Introspected.getInstance(clazz);
         final AttributeInfo[] selectableFields = introspected.getSelectableFcInfos();
         for (AttributeInfo selectableField : selectableFields) {
            if (!selectableField.isJoinFieldWithSecondTable()) {
@@ -90,7 +90,7 @@ class OrmBase
       final Set<String> excludes = new HashSet<>(Arrays.asList(excludeColumns));
       final StringBuilder sb = new StringBuilder();
 
-      final Introspected introspected = Introspector.getIntrospected(clazz);
+      final Introspected introspected = Introspected.getInstance(clazz);
       final AttributeInfo[] selectableFields = introspected.getSelectableFcInfos();
       for (AttributeInfo selectableField : selectableFields) {
          if (!excludes.contains(selectableField.getCaseSensitiveColumnName())) {
@@ -157,7 +157,7 @@ class OrmBase
    }
 
    protected static <T> String idsAsInClause(Class<T> clazz, List<T> objects) {
-      Introspected introspected = Introspector.getIntrospected(clazz);
+      Introspected introspected = Introspected.getInstance(clazz);
       List<AttributeInfo> idFcInfos = introspected.getIdFcInfos();
       StringBuilder ids = new StringBuilder();
       if (!introspected.hasCompositePrimaryKey()) {
