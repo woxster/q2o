@@ -194,7 +194,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +----+-----------+------------+
     * | id | myInteger | dateToDate |
     * +----+-----------+------------+
@@ -227,7 +227,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +----+-----------+------------+---------------------+
     * | id | myInteger | dateToDate | dateToDateTime      |
     * +----+-----------+------------+---------------------+
@@ -264,7 +264,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +---------------------+
     * | timestampToDateTime |
     * +---------------------+
@@ -301,7 +301,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +---------------------+
     * | timeToDateTime      |
     * +---------------------+
@@ -347,7 +347,7 @@ public class MySQLDataTypesNullTest {
 
    /**
     * <pre>
-    * mysql> mysql> select * from DataTypes;
+    * mysql> select * from DataTypes;
     * +----+-----------+------------+----------------+---------------------+
     * | id | myInteger | dateToDate | dateToDateTime | dateToTimestamp     |
     * +----+-----------+------------+----------------+---------------------+
@@ -494,8 +494,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * Surprising.
-    * <pre>
+    * <pre>MySQL
     * +---------------+
     * | sqlDateToDate |
     * +---------------+
@@ -529,7 +528,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +---------------------+
     * | sqlDateToDateTime   |
     * +---------------------+
@@ -562,7 +561,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +---------------------+
     * | sqlDateToTimestamp  |
     * +---------------------+
@@ -595,7 +594,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +-----------+
     * | intToYear |
     * +-----------+
@@ -637,7 +636,7 @@ public class MySQLDataTypesNullTest {
 //   }
 
    /**
-    * With intToYear of type int there gets 0000 stored when intToYear has not been set but when the object is retrieved from database its intToYear is 2000. With intToYear of type Integer it behaves as expected.
+    * MySQL: With intToYear of type int there gets 0000 stored when intToYear has not been set but when the object is retrieved from database its intToYear is 2000. With intToYear of type Integer it behaves as expected.
     * <pre>
     * +-----------+
     * | intToYear |
@@ -689,7 +688,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +--------------+
     * | stringToYear |
     * +--------------+
@@ -732,7 +731,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +--------------+
     * | stringToTime |
     * +--------------+
@@ -766,8 +765,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * Format is changed.
-    * <pre>
+    * <pre>MySQL
     * +--------------+
     * | stringToTime |
     * +--------------+
@@ -799,7 +797,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +-----------------+
     * | timestampToTime |
     * +-----------------+
@@ -856,7 +854,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +-----------------+
     * | timestampToDate |
     * +-----------------+
@@ -1115,7 +1113,7 @@ public class MySQLDataTypesNullTest {
             break;
          case sqlite:
          default:
-            expected = expected = dataTypes.getIntToTINYINT();;
+            expected = dataTypes.getIntToTINYINT();;
       }
 
       assertEquals(expected, dataTypes1.getIntToTINYINT());
@@ -1138,7 +1136,7 @@ public class MySQLDataTypesNullTest {
             break;
          case sqlite:
          default:
-            expected = expected = dataTypes.getLongToTINYINT();;
+            expected = dataTypes.getLongToTINYINT();;
       }
 
       assertEquals(expected, dataTypes1.getLongToTINYINT());
@@ -1327,7 +1325,7 @@ public class MySQLDataTypesNullTest {
    }
 
    /**
-    * <pre>
+    * <pre>MySQL
     * +----------------------+
     * | enumToEnumTypeString |
     * +----------------------+

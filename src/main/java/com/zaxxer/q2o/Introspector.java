@@ -32,8 +32,7 @@ public final class Introspector
    private Introspector() {
    }
 
-   public static Introspected getIntrospected(@NotNull Class<?> clazz)
-   {
+   public static Introspected getIntrospected(@NotNull Class<?> clazz) {
       return descriptorMap.computeIfAbsent(clazz, cls -> new Introspected(cls).introspect());
    }
 }

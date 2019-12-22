@@ -27,7 +27,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 /**
- * An introspected class.
+ * Holds all informations we need about an entity.
  */
 final class Introspected {
 
