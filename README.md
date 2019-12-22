@@ -18,6 +18,8 @@ Spring Transaction Support.
 
 MySQL Support (New in 3.13)
 
+Automatic type conversion between java.util.Date or java.util.Calender and DATE, TIME and TIMESTAMP fields via JPA's @Temporal annotation (New in 3.14)
+
 More convenient methods.
 
 API clean-up **(still subject of change!)**. There is a SansOrm 3.7 compatibility layer.
@@ -157,6 +159,7 @@ Starting with V 3.12 you can initialize q2o with Spring Transaction support too.
 | ``@MappedSuperclass`` | n/a                                                    | Classes           |
 | ``@Table``            | ``name``                                               | Classes           |
 | ``@Transient``        | n/a                                                    | Getters, Fields |
+| ``@Temporal``         | ``DATE, TIME, TIMESTAMP`` (New in 3.14)                | Getters, Fields |
 
 
 ### More Advanced
