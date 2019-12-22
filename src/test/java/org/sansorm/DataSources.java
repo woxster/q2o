@@ -13,18 +13,22 @@ public final class DataSources {
    private DataSources() {
    }
 
-   public static JdbcDataSource makeH2DataSource() {
-      return makeH2DataSource(true);
+   public static JdbcDataSource getH2DataSource() {
+      return getH2DataSource(true);
    }
 
-   public static JdbcDataSource makeH2DataSource(boolean autoCommit) {
+   public static JdbcDataSource getH2DataSource(boolean autoCommit) {
       final JdbcDataSource dataSource = new JdbcDataSource();
       dataSource.setUrl(String.format("jdbc:h2:mem:q2o;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
-//      dataSource.setUrl(String.format("jdbc:h2:./h2/db:q2o;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
+
+      // Not "USER=root" or an exception is thrown: org.h2.jdbc.JdbcSQLException: Duplicate property "USER" [90066-191]
+//      dataSource.setUser("root");
+//      dataSource.setUrl(String.format("jdbc:h2:./h2/db:q2o;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;PASSWORD=yxcvbnm;autocommit=%s", autoCommit ? "on" : "off"));
+
       return dataSource;
    }
 
-   public static DataSource makeMySqlDataSource(String dbName, String user, String password) {
+   public static DataSource getMySqlDataSource(String dbName, String user, String password) {
 //      conn =
 //         DriverManager.getConnection("jdbc:mysql://localhost/q2o?" +
 //            "user=root&password=opixcntl&generateSimpleParameterMetadata=true");

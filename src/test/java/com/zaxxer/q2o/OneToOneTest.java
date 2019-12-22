@@ -42,7 +42,7 @@ public class OneToOneTest {
 
    @Before
    public void setUp() throws Exception {
-      ds = DataSources.makeH2DataSource();
+      ds = DataSources.getH2DataSource();
       if (!withSpringTx) {
          q2o.initializeTxNone(ds);
       }
@@ -329,7 +329,7 @@ public class OneToOneTest {
 
    @Test
    public void leftJoin3Tables() throws SQLException {
-      JdbcDataSource ds = DataSources.makeH2DataSource();
+      JdbcDataSource ds = DataSources.getH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

@@ -13,7 +13,6 @@ import javax.persistence.Table;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.sansorm.DataSources.makeH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -24,7 +23,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
    @Test
    public void insertObject() {
 
-      q2o.initializeTxNone(DataSources.makeH2DataSource());
+      q2o.initializeTxNone(DataSources.getH2DataSource());
       try {
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
@@ -51,7 +50,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
    @Test
    public void updateObjectGeneratedId() {
 
-      q2o.initializeTxNone(DataSources.makeH2DataSource());
+      q2o.initializeTxNone(DataSources.getH2DataSource());
       try {
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
@@ -90,7 +89,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
       }
 
       try {
-         JdbcDataSource dataSource = makeH2DataSource();
+         JdbcDataSource dataSource = DataSources.getH2DataSource();
          q2o.initializeTxNone(dataSource);
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("

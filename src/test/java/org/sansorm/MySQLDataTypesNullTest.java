@@ -35,19 +35,14 @@ public class MySQLDataTypesNullTest {
 
    private DataSource dataSource;
 
-   public enum Database {
-      mysql, sqlite, h2
-   }
-
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-         {false, GeneralTestConfigurator.Database.h2}
-         , {true, GeneralTestConfigurator.Database.h2}
-         , {false, GeneralTestConfigurator.Database.mysql}
-         , {true, GeneralTestConfigurator.Database.mysql}
-//         , {false, GeneralTestConfigurator.Database.sqlite}
-//         , {true, GeneralTestConfigurator.Database.sqlite}
+         {false, GeneralTestConfigurator.Database.h2}, {true, GeneralTestConfigurator.Database.h2} , {false, GeneralTestConfigurator.Database.mysql} , {true, GeneralTestConfigurator.Database.mysql}
+
+//         {false, GeneralTestConfigurator.Database.mysql}
+//         {false, GeneralTestConfigurator.Database.mysql}, {false, GeneralTestConfigurator.Database.h2}
+//         {false, GeneralTestConfigurator.Database.h2}
       });
    }
 
@@ -66,10 +61,10 @@ public class MySQLDataTypesNullTest {
 
       switch (database) {
          case h2:
-            dataSource = DataSources.makeH2DataSource();
+            dataSource = DataSources.getH2DataSource();
             break;
          case mysql:
-            dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+            dataSource = DataSources.getMySqlDataSource("q2o", "root", "yxcvbnm");
             break;
          case sqlite:
             dataSource = DataSources.getSqLiteDataSource(null);
@@ -1297,6 +1292,9 @@ public class MySQLDataTypesNullTest {
       assertEquals(dataTypes.getEnumToENUMString(), dataTypes1.getEnumToENUMString());
    }
 
+   /**
+    * Stored H2: 0; MySQL "one"
+    */
    @Test
    public void enumToEnumTypeOrdinal() {
       DataTypesNullable dataTypes = new DataTypesNullable();

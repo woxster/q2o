@@ -113,7 +113,7 @@ public class OrmBaseTest {
 
    @Test
    public void bulkDelete() throws IOException {
-      q2o.initializeTxNone(DataSources.makeH2DataSource());
+      q2o.initializeTxNone(DataSources.getH2DataSource());
       try {
          Q2Sql.executeUpdate("create table D_WIN_EXTENSION\n" +
             "(" +

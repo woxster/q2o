@@ -162,19 +162,13 @@ class PropertyInfo extends AttributeInfo {
    public String toString() {
       return "PropertyInfo{" +
          "propertyDescriptor=" + propertyDescriptor +
-         ", toBeConsidered=" + toBeConsidered +
-         ", readMethod=" + readMethod +
-         ", ownerClazz=" + getOwnerClazz() +
          ", name='" + name + '\'' +
          ", field=" + field +
-         ", type=" + getType() +
          ", isDelimited=" + isDelimited +
          ", updatable=" + updatable +
          ", insertable=" + insertable +
          ", columnName='" + columnName + '\'' +
          ", delimitedTableName='" + delimitedTableName + '\'' +
-         ", enumType=" + enumType +
-         ", enumConstants=" + enumConstants +
          ", converter=" + converter +
          ", caseSensitiveColumnName='" + caseSensitiveColumnName + '\'' +
          ", isGeneratedId=" + isGeneratedId +
@@ -185,6 +179,12 @@ class PropertyInfo extends AttributeInfo {
          ", isColumnAnnotated=" + isColumnAnnotated +
          ", delimitedName='" + delimitedName + '\'' +
          ", fullyQualifiedDelimitedName='" + fullyQualifiedDelimitedName + '\'' +
+         ", toBeConsidered=" + toBeConsidered +
+         ", isJoinColumnsAnnotated=" + isJoinColumnsAnnotated +
+         ", isOneToManyAnnotated=" + isOneToManyAnnotated +
+         ", isManyToManyAnnotated=" + isManyToManyAnnotated +
+         ", isManyToOneAnnotated=" + isManyToOneAnnotated +
+         ", isOneToOneAnnotated=" + isOneToOneAnnotated +
          '}';
    }
 }

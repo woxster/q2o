@@ -534,8 +534,8 @@ final class Introspected {
          if (fcInfo.getConverter() != null) {
             return fcInfo.getConverter().convertToDatabaseColumn(value);
          }
-         else if (fcInfo.enumConstants != null && value != null) {
-            if (fcInfo.enumType == EnumType.ORDINAL) {
+         else if (fcInfo.isEnumerated() && value != null) {
+            if (fcInfo.getEnumType() == EnumType.ORDINAL) {
                value = ((Enum<?>) value).ordinal();
                if (q2o.isMySqlMode()) {
                   // "Values from the list of permissible elements in the column specification are numbered beginning with 1." (MySQL 5.5 Reference Manual, 10.4.4. The ENUM Type).

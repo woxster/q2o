@@ -179,7 +179,7 @@ public class RefreshTest {
    @Test
    public void refreshObjectH2() throws SQLException {
 
-      JdbcDataSource ds = DataSources.makeH2DataSource();
+      JdbcDataSource ds = DataSources.getH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -212,7 +212,7 @@ public class RefreshTest {
    @Test
    public void refreshObjectH2Null() throws SQLException {
 
-      JdbcDataSource ds = DataSources.makeH2DataSource();
+      JdbcDataSource ds = DataSources.getH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -255,7 +255,7 @@ public class RefreshTest {
    @Test
    public void refreshObjectCompositePrimaryKeyH2() throws SQLException {
 
-      JdbcDataSource ds = DataSources.makeH2DataSource();
+      JdbcDataSource ds = DataSources.getH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -303,7 +303,7 @@ public class RefreshTest {
     */
    @Test
    public void refreshObjectLeftJoinedTables() throws SQLException {
-      JdbcDataSource ds = DataSources.makeH2DataSource();
+      JdbcDataSource ds = DataSources.getH2DataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

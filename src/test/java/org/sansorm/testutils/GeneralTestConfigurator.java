@@ -45,10 +45,10 @@ public class GeneralTestConfigurator {
 
       switch (database) {
          case h2:
-            dataSource = DataSources.makeH2DataSource();
+            dataSource = DataSources.getH2DataSource();
             break;
          case mysql:
-            dataSource = DataSources.makeMySqlDataSource("q2o", "root", "yxcvbnm");
+            dataSource = DataSources.getMySqlDataSource("q2o", "root", "yxcvbnm");
             break;
          case sqlite:
             dataSource = DataSources.getSqLiteDataSource(null);

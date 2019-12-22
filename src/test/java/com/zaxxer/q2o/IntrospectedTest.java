@@ -17,6 +17,14 @@ public class IntrospectedTest
 {
 
    @Test
+   public void shouldCache() {
+      Introspected is1 = Introspected.getInstance(TargetClass1.class);
+      Introspected is2 = Introspected.getInstance(TargetClass1.class);
+      assertThat(is1).isNotNull();
+      assertThat(is1).isSameAs(is2);
+   }
+
+   @Test
    public void generatedId() {
       Introspected is = Introspected.getInstance(TargetClass1.class);
       assertThat(is.hasGeneratedId()).isTrue().as("test is meaningful only if class has generated id");
@@ -722,5 +730,38 @@ public class IntrospectedTest
       assertEquals("Col2", columnsSansIds[1]); // differs from getIdColumnNames()
       assertEquals("Col3", columnsSansIds[2]);
       assertEquals("Col4", columnsSansIds[3]);
+   }
+
+   @Test
+   public void testEnumString() throws NoSuchFieldException {
+      class TestClass {
+         @Enumerated(EnumType.STRING)
+         DataTypesNullable.CaseMatched stringEnum;
+      }
+      Field enumToENUMString = TestClass.class.getDeclaredField("stringEnum");
+      FieldInfo info = new FieldInfo(enumToENUMString, TestClass.class);
+      assertEquals(DataTypesNullable.CaseMatched.one, info.getEnumConstant("one"));
+   }
+
+   @Test
+   public void testEnumOrdinal() throws NoSuchFieldException {
+      class TestClass {
+         @Enumerated(EnumType.ORDINAL)
+         DataTypesNullable.CaseMatched ordinalEnum;
+      }
+      Field enumToENUMString = TestClass.class.getDeclaredField("ordinalEnum");
+      FieldInfo info = new FieldInfo(enumToENUMString, TestClass.class);
+      assertEquals(DataTypesNullable.CaseMatched.one, info.getEnumConstant(0));
+   }
+
+   @Test
+   public void testEnumNoSuchValue() throws NoSuchFieldException {
+      class TestClass {
+         @Enumerated(EnumType.STRING)
+         DataTypesNullable.CaseMatched enumToENUMString;
+      }
+      Field enumToENUMString = TestClass.class.getDeclaredField("enumToENUMString");
+      FieldInfo info = new FieldInfo(enumToENUMString, TestClass.class);
+      assertNull(info.getEnumConstant("null"));
    }
 }

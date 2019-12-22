@@ -20,7 +20,7 @@ import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static com.zaxxer.q2o.q2o.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.sansorm.DataSources.makeH2DataSource;
+import static org.sansorm.DataSources.getH2DataSource;
 
 @RunWith(Parameterized.class)
 public class SqlClosureTransactionsTest {
@@ -40,7 +40,7 @@ public class SqlClosureTransactionsTest {
 
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException {
-      final JdbcDataSource dataSource = makeH2DataSource(/*autoCommit=*/withAutoCommit);
+      final JdbcDataSource dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
          initializeTxSimple(dataSource);
       }

@@ -15,14 +15,13 @@ import java.util.List;
 import static com.zaxxer.q2o.Q2Obj.countFromClause;
 import static com.zaxxer.q2o.Q2Obj.insert;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sansorm.DataSources.makeH2DataSource;
 
 
 public class Query2SpringTest
 {
    @BeforeClass
    public static void beforeClass() throws Throwable {
-      q2o.initializeWithSpringTxSupport(makeH2DataSource());
+      q2o.initializeWithSpringTxSupport(DataSources.getH2DataSource());
       Q2Sql.executeUpdate(
          "CREATE TABLE TargetClass2 ("
             + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"

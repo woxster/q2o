@@ -28,8 +28,11 @@ abstract class AttributeInfo
    protected Boolean insertable;
    protected String columnName;
    protected String delimitedTableName;
-   EnumType enumType;
-   Map<Object, Object> enumConstants;
+   private EnumType enumType;
+   /**
+    * Holds the constants by name or ordinal.
+    */
+   private Map<Object, Object> enumConstants;
    protected AttributeConverter converter;
    protected String caseSensitiveColumnName;
    protected boolean isGeneratedId;
@@ -638,5 +641,17 @@ abstract class AttributeInfo
 
    public TemporalType getTemporalType() {
       return temporalType;
+   }
+
+   /**
+    *
+    * @param value In case of EnumType.ORDINAL the ordinal or else the value.
+    */
+   public Object getEnumConstant(Object value) {
+      return enumConstants.get(value);
+   }
+
+   public EnumType getEnumType() {
+      return enumType;
    }
 }

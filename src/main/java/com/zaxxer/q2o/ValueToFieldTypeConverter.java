@@ -81,9 +81,10 @@ class ValueToFieldTypeConverter {
                }
                else if (fieldType.isEnum()) {
                   if (!q2o.isMySqlMode()) {
-                     typeCorrectedValue = fcInfo.enumConstants.get(value);
+                     typeCorrectedValue = fcInfo.getEnumConstant(value);
                   }
                   else {
+                     // With ENUM fields MySQL returns always the value, not the ordinal, even when the ordinal was stored.
                      //noinspection unchecked
                      typeCorrectedValue = Enum.valueOf((Class) fieldType, (String) value);
                   }
