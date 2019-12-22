@@ -24,7 +24,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 
-public class ConnectionProxy implements InvocationHandler
+class ConnectionProxy implements InvocationHandler
 {
    private final ArrayList<Statement> statements;
    private final Connection delegate;

@@ -31,7 +31,7 @@ public final class TransactionHelper
    }
 
    /**
-    * Set the JTA TransactionManager implementation used by the Elf.
+    * Set the JTA TransactionManager implementation.
     *
     * @param tm a JTA TransactionManager instance
     */
@@ -63,7 +63,7 @@ public final class TransactionHelper
     */
    public static boolean beginOrJoinTransaction()
    {
-      boolean newTransaction = false;
+      boolean newTransaction;
       try {
          newTransaction = userTransaction.getStatus() == Status.STATUS_NO_TRANSACTION;
          if (newTransaction) {
@@ -147,7 +147,7 @@ public final class TransactionHelper
    }
 
    /**
-    * See https://github.com/bitronix/btm/blob/1072c3042c8b65ecf17ded88115631e061f23333/btm/src/main/java/bitronix/tm/BitronixTransaction.java#L580
+    * See <a href="https://github.com/bitronix/btm/blob/1072c3042c8b65ecf17ded88115631e061f23333/btm/src/main/java/bitronix/tm/BitronixTransaction.java#L580">BitronixTransaction.java</a>
     * for reference.
     *
     * @return whether the current transaction is done or not

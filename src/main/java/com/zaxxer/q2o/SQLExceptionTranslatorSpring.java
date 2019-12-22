@@ -10,7 +10,7 @@ import java.sql.SQLException;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 2019-03-04
  */
-public class SQLExceptionTranslatorSpring implements SQLExceptionTranslator<DataAccessException> {
+class SQLExceptionTranslatorSpring implements SQLExceptionTranslator<DataAccessException> {
 
    SQLErrorCodeSQLExceptionTranslator translator;
 

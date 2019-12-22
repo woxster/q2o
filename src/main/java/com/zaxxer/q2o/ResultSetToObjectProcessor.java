@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 17.12.19
  */
-public class ResultSetToObjectProcessor<T> {
+class ResultSetToObjectProcessor<T> {
    private final ResultSet resultSet;
    /**
     * the provided target ({@link #process(Object)}) for a single row result or the

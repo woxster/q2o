@@ -9,7 +9,7 @@ import java.util.Map;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 20.12.19
  */
-public class SqlTypesResolver {
+class SqlTypesResolver {
    static Map<Integer, String> codeToName = new HashMap<Integer, String>();
    static {
       for (Field field : Types.class.getFields()) {
