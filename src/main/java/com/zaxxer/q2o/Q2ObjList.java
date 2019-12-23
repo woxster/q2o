@@ -15,11 +15,10 @@ import java.util.List;
 public class Q2ObjList {
 
    /**
-    * Load a list of objects using the specified where condition.  The clause "WHERE" is automatically
-    * appended, so the {@code where} parameter should just be the conditional portion.
-    *
-    * If the {@code where} parameter is {@code null} a select of every object from the
-    * table mapped for the specified class is executed.
+    * <p>Load a list of objects using the specified where condition. If the {@code where} parameter is {@code null} a select of every object from the table mapped for the specified class is executed. See also {@link Q2Obj#fromClause(Connection, Class, String, Object...)}.
+    * </p><p>
+    * For "ORDER BY" support use {@link #fromRawClause(Connection, Class, String, Object...)}.
+    * </p>
     *
     * @param connection a SQL Connection object
     * @param clazz the class of the object to load
@@ -33,6 +32,14 @@ public class Q2ObjList {
    public static <T> List<T> fromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
    {
       return OrmReader.listFromClause(connection, clazz, clause, args);
+   }
+
+   /**
+    * See {@link Q2Obj#fromRawClause(Connection, Class, String, Object...)}.
+    */
+   public static <T> List<T> fromRawClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
+   {
+      return OrmReader.listFromRawClause(connection, clazz, clause, args);
    }
 
    /**
@@ -69,16 +76,17 @@ public class Q2ObjList {
    }
 
    /**
-    * Gets a list of objects from the database.
-    * @param clazz The type of the desired objects.
-    * @param clause The from or where clause.
-    * @param args The arguments needed for the clause.
-    * @param <T> The type of the objects.
-    * @return The list of objects.
-    * @see Q2Obj#fromClause(Connection, Class, String, Object...)
+    * See {@link #fromClause(Connection, Class, String, Object...)}.
     */
    public static <T> List<T> fromClause(Class<T> clazz, String clause, Object... args) {
       return SqlClosure.sqlExecute(c -> OrmReader.listFromClause(c, clazz, clause, args));
+   }
+
+   /**
+    * See {@link Q2Obj#fromRawClause(Connection, Class, String, Object...)}.
+    */
+   public static <T> List<T> fromRawClause(Class<T> clazz, String clause, Object... args) {
+      return SqlClosure.sqlExecute(c -> OrmReader.listFromRawClause(c, clazz, clause, args));
    }
 
    /**

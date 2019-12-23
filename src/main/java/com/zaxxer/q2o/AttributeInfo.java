@@ -175,6 +175,7 @@ abstract class AttributeInfo
          }
       }
       if (isTemporalAnnotated) {
+         // TODO Set only converter when no @Converter was specified.
          if (temporalType.equals(TemporalType.TIMESTAMP)) {
             if (Calendar.class.isAssignableFrom(type)) {
                converter = new CalendarTimestampConverter();

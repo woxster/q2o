@@ -4,7 +4,10 @@ import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2ObjList;
 import com.zaxxer.q2o.Q2Sql;
 import com.zaxxer.q2o.q2o;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.sql.Timestamp;
@@ -62,25 +65,48 @@ public class Query2Test extends GeneralTestConfigurator {
       }
    }
 
-   /**
-    * IMPROVE Tests @Temporal annotation.
-    */
-   @Test @Ignore
+   @Test
    public void testObjectFromClause()
    {
-      long timestamp = Timestamp.valueOf("1970-01-01 10:00:00.0").getTime();
+      Timestamp timestamp = Timestamp.valueOf("1970-01-01 10:00:00.0");
+      long ms = timestamp.getTime();
       String string = "Hi";
-      TargetClass2 original = new TargetClass2(new Date(timestamp), string);
+      Date date = new Date(ms);
+      TargetClass2 original = new TargetClass2(date, string);
       Q2Obj.insert(original);
 
-      TargetClass2 target = Q2Obj.fromClause(TargetClass2.class, "someDate = ?", timestamp);
-      assertThat(target.getString()).isEqualTo(string);
-      assertThat(target.getSomeDate().getTime()).isEqualTo(timestamp);
+      TargetClass2 retrievedObj = Q2Obj.fromClause(
+         TargetClass2.class,
+         "someDate = ?",
+         // With serverTimezone=UTC MySQL stores "1970-01-01 09:00:00.0"
+         database == Database.mysql ? Timestamp.valueOf("1970-01-01 09:00:00.0")
+                                    : timestamp);
+      assertThat(retrievedObj.getString()).isEqualTo(string);
+      assertThat(retrievedObj.getSomeDate().getTime()).isEqualTo(ms);
 
-      TargetClass2 targetAgain = Q2Obj.byId(TargetClass2.class, target.getId());
-      assertThat(targetAgain.getId()).isEqualTo(target.getId());
+      TargetClass2 targetAgain = Q2Obj.byId(TargetClass2.class, retrievedObj.getId());
+      assertThat(targetAgain.getId()).isEqualTo(retrievedObj.getId());
       assertThat(targetAgain.getString()).isEqualTo(string);
-      assertThat(targetAgain.getSomeDate().getTime()).isEqualTo(timestamp);
+      assertThat(targetAgain.getSomeDate().getTime()).isEqualTo(ms);
+   }
+
+   @Test
+   public void fromRawClause() {
+      long timestamp = Timestamp.valueOf("1970-01-01 10:00:00.0").getTime();
+      String string = "first";
+      Date date = new Date(timestamp);
+      TargetClass2 original = new TargetClass2(date, string);
+      TargetClass2 insertedObj = insert(original);
+
+      timestamp = Timestamp.valueOf("1970-01-01 11:00:00.0").getTime();
+      string = "second";
+      Date date2 = new Date(timestamp);
+      TargetClass2 original2 = new TargetClass2(date2, string);
+      TargetClass2 insertedObj2 = insert(original2);
+
+      List<TargetClass2> targetClasses = Q2ObjList.fromRawClause(TargetClass2.class, "ORDER BY somedate DESC");
+      assertThat(targetClasses).hasSize(2);
+      assertThat(insertedObj2).isEqualToComparingFieldByField(targetClasses.get(0));
    }
 
    @Test

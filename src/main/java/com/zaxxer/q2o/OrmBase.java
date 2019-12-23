@@ -42,6 +42,30 @@ class OrmBase
       // protected constructor
    }
 
+   /*
+Callers:
+   Q2Obj.byId(DataTypesNullable.class, dataTypes.getId())
+   Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT1_TABLE, LEFT1_TABLE, MIDDLE1_TABLE where LEFT1_TABLE.id = MIDDLE1_TABLE.id and MIDDLE1_TABLE.RIGHTID = RIGHT1_TABLE.ID and LEFT1_TABLE.id = ?", 1);
+   SqlClosure.sqlExecute(c -> {
+            Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "1");
+
+   SqlClosure<User> userByIdProvider = new SqlClosure<User>(){
+      ...
+   }
+   User user = userByIdProvider.executeWith(1);
+   User user = (User) sqlClosure.exec(userByIdProvider, 1);
+
+   OrmReader.refresh(con, obj);
+   Q2Obj.delete(left1.getMiddle().getRight());
+   Q2ObjList.fromClause(TargetClass2.class, "string = ?", string);
+   Q2Obj.fromStatement(pstmnt, CaseSensitiveDatabasesClass.class, "xyz");
+   OrmWriter.deleteObject(con, new TestClass())
+   OrmWriter.deleteObjectById(con, TestClass.class, "xyz")
+   OrmReader.objectById(con, CaseSensitiveDatabasesClass.class, "xyz");
+   Q2ObjList.deleteByWhereClause(MyTest.class, "id = ?", 1);
+   Q2Sql.executeQuery(dataSource.getConnection(),"SELECT * FROM MY_TABLE where id > ?", 0);
+   Q2Sql.numberFromSql("SELECT string_from_number + 1 FROM target_class1 where id = ?", target.getId());
+    */
    protected static void populateStatementParameters(final PreparedStatement stmt, final Object... args) throws SQLException
    {
       final ParameterMetaData parameterMetaData = stmt.getParameterMetaData();

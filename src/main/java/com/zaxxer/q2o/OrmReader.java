@@ -16,6 +16,9 @@
 
 package com.zaxxer.q2o;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,26 +30,26 @@ import java.util.*;
  * OrmReader
  */
 // MULTIPLESTRINGS:OFF
-class OrmReader extends OrmBase
-{
+class OrmReader extends OrmBase {
    private static final int CACHE_SIZE = Integer.getInteger("com.zaxxer.sansorm.statementCacheSize", 500);
+   private static Logger LOGGER = LoggerFactory.getLogger(OrmBase.class);
 
    private static final Map<String, String> fromClauseStmtCache;
 
    static {
-      fromClauseStmtCache = Collections.synchronizedMap(new LinkedHashMap<String, String>(CACHE_SIZE) {
-         private static final long serialVersionUID = 6259942586093454872L;
+      fromClauseStmtCache = Collections.synchronizedMap(
+         new LinkedHashMap<String, String>(CACHE_SIZE) {
+            private static final long serialVersionUID = 6259942586093454872L;
 
-         @Override
-         protected boolean removeEldestEntry(java.util.Map.Entry<String, String> eldest)
-         {
-            return this.size() > CACHE_SIZE;
-         }
+            @Override
+            protected boolean removeEldestEntry(java.util.Map.Entry<String, String> eldest) {
+               return this.size() > CACHE_SIZE;
+            }
       });
    }
 
-   static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException
-   {
+   static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException {
+      LOGGER.debug("{}", stmt);
       try (final PreparedStatement closeStmt = stmt) {
          ResultSet rs = statementToResultSet(stmt, args);
          boolean next = rs.next();
@@ -78,7 +81,7 @@ class OrmReader extends OrmBase
    private static <T> T statementToObject(final PreparedStatement stmt, final T target, final Object... args) throws SQLException
    {
       populateStatementParameters(stmt, args);
-
+      LOGGER.debug("{}", stmt);
       try (final ResultSet resultSet = stmt.executeQuery()) {
          return resultSet.next() ? resultSetToObject(resultSet, target) : null;
       }
@@ -139,7 +142,7 @@ class OrmReader extends OrmBase
    static <T> T refresh(final Connection connection, final T target) throws SQLException {
       final Introspected introspected = Introspected.getInstance(target.getClass());
       final String where = getWhereIdClause(introspected);
-      final String sql = generateSelectFromClause(target.getClass(), where);
+      final String sql = generateSelectFromWhereClause(target.getClass(), where, true);
       final PreparedStatement stmt = connection.prepareStatement(sql);
       return statementToObject(stmt, target, introspected.getActualIds(target));
    }
@@ -160,7 +163,15 @@ class OrmReader extends OrmBase
 
    static <T> List<T> listFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
-      final String sql = generateSelectFromClause(clazz, clause);
+      final String sql = generateSelectFromWhereClause(clazz, clause, true);
+      final PreparedStatement stmt = connection.prepareStatement(sql);
+
+      return statementToList(stmt, clazz, args);
+   }
+
+   static <T> List<T> listFromRawClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
+   {
+      final String sql = generateSelectFromWhereClause(clazz, clause, false);
       final PreparedStatement stmt = connection.prepareStatement(sql);
 
       return statementToList(stmt, clazz, args);
@@ -168,14 +179,20 @@ class OrmReader extends OrmBase
 
    static <T> T objectFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
-      final String sql = generateSelectFromClause(clazz, clause);
+      final String sql = generateSelectFromWhereClause(clazz, clause, true);
       final PreparedStatement stmt = connection.prepareStatement(sql);
       return statementToObject(stmt, clazz, args);
    }
 
-   static <T> T objectFromClause(final Connection connection, final T target, final String clause, final Object... args) throws SQLException
+   static <T> T objectFromRawClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
-      final String sql = generateSelectFromClause(target.getClass(), clause);
+      final String sql = generateSelectFromWhereClause(clazz, clause, false);
+      final PreparedStatement stmt = connection.prepareStatement(sql);
+      return statementToObject(stmt, clazz, args);
+   }
+
+   static <T> T objectFromClause(final Connection connection, final T target, final String clause, final Object... args) throws SQLException {
+      final String sql = generateSelectFromWhereClause(target.getClass(), clause, true);
       final PreparedStatement stmt = connection.prepareStatement(sql);
       return statementToObject(stmt, target, args);
    }
@@ -217,10 +234,7 @@ class OrmReader extends OrmBase
       }
    }
 
-   /**
-    * package private for testing.
-    */
-   static <T> String generateSelectFromClause(final Class<T> clazz, final String clause)
+   static <T> String generateSelectFromWhereClause(final Class<T> clazz, final String clause, final boolean addLackingWhere)
    {
       final String cacheKey = clazz.getName() + clause;
 
@@ -228,20 +242,24 @@ class OrmReader extends OrmBase
         final Introspected introspected = Introspected.getInstance(clazz);
         final String tableName = introspected.getDelimitedTableName();
 
-        final StringBuilder sqlSB = new StringBuilder()
+        final StringBuilder s = new StringBuilder()
           .append("SELECT ").append(getColumnsCsv(clazz, tableName))
           .append(" FROM ").append(tableName).append(' ').append(tableName);
 
-        if (clause != null && !clause.isEmpty()) {
-           final String upper = clause.toUpperCase();
-           if (!upper.contains("WHERE") && !upper.contains("JOIN")) {
-              sqlSB.append(" WHERE ");
-           }
-           sqlSB.append(' ').append(clause);
-        }
+         generateWhereClause(clause, s, addLackingWhere);
 
-        return sqlSB.toString();
+         return s.toString();
       });
+   }
+
+   private static void generateWhereClause(final String selectFromClause, final StringBuilder s, final boolean addLackingWhere) {
+      if (selectFromClause != null && !selectFromClause.isEmpty()) {
+         final String upper = selectFromClause.toUpperCase();
+         if (addLackingWhere && !upper.contains("WHERE") && !upper.contains("JOIN")) {
+            s.append(" WHERE ");
+         }
+         s.append(' ').append(selectFromClause);
+      }
    }
 
 }

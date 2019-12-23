@@ -1,10 +1,13 @@
 package com.zaxxer.q2o;
 
+import com.zaxxer.q2o.converters.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.AttributeConverter;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
@@ -33,73 +36,14 @@ class DatabaseValueToFieldType {
       Class<?> fieldType = null;
       try {
          fieldType = fcInfo.getType();
-         Object typeCorrectedValue = null;
+         Object typeCorrectedValue;
          columnTypeName = metaData.getColumnTypeName(colIdx);
 
-         if (fcInfo.getConverter() != null) {
-            typeCorrectedValue = fcInfo.getConverter().convertToEntityAttribute(value);
+         if (value != null && fcInfo.getConverter() != null) {
+            typeCorrectedValue = applyConverter(fcInfo, value, introspected, columnTypeName, fieldType);
          }
-         else if (value != null) {
-            Class<?> valueType = value.getClass();
-            if (fieldType != valueType) {
-               // Fix-up column value for enums, integer as boolean, etc.
-               if (Integer.class == valueType) {
-                  typeCorrectedValue = convertInteger(columnTypeName, fieldType, value, introspected);
-               }
-               else if (Long.class == valueType) {
-                  typeCorrectedValue = convertLong(columnTypeName, fieldType, value);
-               }
-               else if (Double.class == valueType) {
-                  typeCorrectedValue = convertDouble(columnTypeName, fieldType, value);
-               }
-               else if (BigInteger.class == valueType) {
-                  typeCorrectedValue = convertBigInteger(columnTypeName, fieldType, value);
-               }
-               // With Sybase ASE it is SybBigDecimal
-               // IMPROVE Is getColumnClassName() check more reliable?
-               else if (BigDecimal.class.isAssignableFrom(valueType)) {
-                  typeCorrectedValue = convertBigDecimal(columnTypeName, fieldType, value);
-               }
-               // With Sybase ASE it is SybTimestamp
-               else if (Timestamp.class.isAssignableFrom(valueType)) {
-                  typeCorrectedValue = convertTimestamp(columnTypeName, fieldType, value);
-               }
-               else if (Time.class == valueType) {
-                  typeCorrectedValue = convertTime(columnTypeName, fieldType, value);
-               }
-               else if (java.sql.Date.class == valueType) {
-                  typeCorrectedValue = convertSqlDate(columnTypeName, fieldType, value);
-               }
-               else if (Boolean.class == valueType) {
-                  typeCorrectedValue = value;
-               }
-               else if (byte[].class == valueType) {
-                  typeCorrectedValue = convertByteArray(columnTypeName, fieldType, value);
-               }
-               else if (UUID.class == valueType && String.class == fieldType) {
-                  typeCorrectedValue = value.toString();
-               }
-               else if (fieldType.isEnum()) {
-                  if (!q2o.isMySqlMode()) {
-                     typeCorrectedValue = fcInfo.getEnumConstant(value);
-                  }
-                  else {
-                     // With ENUM fields MySQL returns always the value, not the ordinal, even when the ordinal was stored.
-                     //noinspection unchecked
-                     typeCorrectedValue = Enum.valueOf((Class) fieldType, (String) value);
-                  }
-               }
-               else if (value instanceof Clob) {
-                  typeCorrectedValue = readClob((Clob) value);
-               }
-               else if ("PGobject".equals(valueType.getSimpleName())
-                  && "citext".equalsIgnoreCase(((PGobject) value).getType())) {
-                  typeCorrectedValue = ((PGobject) value).getValue();
-               }
-            }
-            else {
-               typeCorrectedValue = value;
-            }
+         else {
+            typeCorrectedValue = adaptByTypeInspection(fcInfo, value, introspected, columnTypeName, fieldType);
          }
          return typeCorrectedValue;
       }
@@ -109,9 +53,139 @@ class DatabaseValueToFieldType {
       }
    }
 
+   private Object applyConverter(final @NotNull AttributeInfo fcInfo, final Object value, final Introspected introspected, final String columnTypeName, final Class<?> fieldType) throws IOException, SQLException {
+      final Object typeCorrectedValue;
+      AttributeConverter converter = fcInfo.getConverter();
+      if (converter.getClass() == DateTimestampConverter.class) {
+         // Hack for SQLite, providing Integer not Timestamp.
+         if (Timestamp.class.isAssignableFrom(value.getClass())) {
+            typeCorrectedValue = converter.convertToEntityAttribute(value);
+         }
+         else {
+            typeCorrectedValue = adaptByTypeInspection(fcInfo, value, introspected, columnTypeName, fieldType);
+         }
+      }
+      else if (converter.getClass() == CalendarTimestampConverter.class) {
+         // Hack for SQLite, providing Long not Timestamp.
+         if (Timestamp.class.isAssignableFrom(value.getClass())) {
+            typeCorrectedValue = converter.convertToEntityAttribute(value);
+         }
+         else {
+            typeCorrectedValue = adaptByTypeInspection(fcInfo, value, introspected, columnTypeName, fieldType);
+         }
+      }
+      else if (converter.getClass() == CalenderTimeConverter.class) {
+         // Hack for SQLite, providing Long not Time.
+         if (Time.class.isAssignableFrom(value.getClass())) {
+            typeCorrectedValue = converter.convertToEntityAttribute(value);
+         }
+         else {
+            typeCorrectedValue = adaptByTypeInspection(fcInfo, value, introspected, columnTypeName, fieldType);
+         }
+      }
+      else if (converter.getClass() == CalendarDateConverter.class) {
+         // Hack for SQLite, providing Long not Date.
+         if (Date.class.isAssignableFrom(value.getClass())) {
+            typeCorrectedValue = converter.convertToEntityAttribute(value);
+         }
+         else {
+            typeCorrectedValue = adaptByTypeInspection(fcInfo, value, introspected, columnTypeName, fieldType);
+         }
+      }
+      else if (converter.getClass() == UtilDateDateConverter.class) {
+         // Hack for SQLite, providing Long not Date.
+         if (java.sql.Date.class.isAssignableFrom(value.getClass())) {
+            typeCorrectedValue = converter.convertToEntityAttribute(value);
+         }
+         else {
+            typeCorrectedValue = adaptByTypeInspection(fcInfo, value, introspected, columnTypeName, fieldType);
+         }
+      }
+      // TODO Deal also with util.Date > TIME converter?
+      else {
+         typeCorrectedValue = converter.convertToEntityAttribute(value);
+      }
+      return typeCorrectedValue;
+   }
+
+   private Object adaptByTypeInspection(final @NotNull AttributeInfo fcInfo, @Nullable final Object value, final Introspected introspected, final String columnTypeName, final Class<?> fieldType) throws IOException, SQLException {
+      Object typeCorrectedValue = null;
+      if (value != null) {
+         Class<?> valueType = value.getClass();
+         if (fieldType != valueType) {
+            // Fix-up column value for enums, integer as boolean, etc.
+            if (Integer.class == valueType) {
+               typeCorrectedValue = convertInteger(columnTypeName, fieldType, value, introspected);
+            }
+            else if (Long.class == valueType) {
+               typeCorrectedValue = convertLong(columnTypeName, fieldType, value);
+            }
+            else if (Double.class == valueType) {
+               typeCorrectedValue = convertDouble(columnTypeName, fieldType, value);
+            }
+            else if (BigInteger.class == valueType) {
+               typeCorrectedValue = convertBigInteger(columnTypeName, fieldType, value);
+            }
+            // With Sybase ASE it is SybBigDecimal
+            // IMPROVE Is getColumnClassName() check more reliable?
+            else if (BigDecimal.class.isAssignableFrom(valueType)) {
+               typeCorrectedValue = convertBigDecimal(columnTypeName, fieldType, value);
+            }
+            // With Sybase ASE it is SybTimestamp
+            else if (Timestamp.class.isAssignableFrom(valueType)) {
+               typeCorrectedValue = convertTimestamp(columnTypeName, fieldType, value);
+            }
+            else if (Time.class == valueType) {
+               typeCorrectedValue = convertTime(columnTypeName, fieldType, value);
+            }
+            else if (java.sql.Date.class == valueType) {
+               typeCorrectedValue = convertSqlDate(columnTypeName, fieldType, value);
+            }
+            else if (Boolean.class == valueType) {
+               typeCorrectedValue = value;
+            }
+            else if (byte[].class == valueType) {
+               typeCorrectedValue = convertByteArray(columnTypeName, fieldType, value);
+            }
+            else if (UUID.class == valueType && String.class == fieldType) {
+               typeCorrectedValue = value.toString();
+            }
+            else if (fieldType.isEnum()) {
+               if (!q2o.isMySqlMode()) {
+                  typeCorrectedValue = fcInfo.getEnumConstant(value);
+               }
+               else {
+                  // With ENUM fields MySQL returns always the value, not the ordinal, even when the ordinal was stored.
+                  //noinspection unchecked
+                  typeCorrectedValue = Enum.valueOf((Class) fieldType, (String) value);
+               }
+            }
+            else if (value instanceof Clob) {
+               typeCorrectedValue = readClob((Clob) value);
+            }
+            else if ("PGobject".equals(valueType.getSimpleName())
+               && "citext".equalsIgnoreCase(((PGobject) value).getType())) {
+               typeCorrectedValue = ((PGobject) value).getValue();
+            }
+         }
+         else {
+            typeCorrectedValue = value;
+         }
+      }
+      return typeCorrectedValue;
+   }
+
    private Object convertInteger(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue, final Introspected introspected) {
       if (fieldType == Boolean.class || fieldType == boolean.class) {
          columnValue = (((Integer) columnValue) != 0);
+      }
+      else if (fieldType == Timestamp.class) {
+         // SQLite TIMESTAMP yields Integer.
+         columnValue = new Timestamp((Integer) columnValue);
+      }
+      else if (fieldType == Time.class) {
+         // SQLite TIME yields Integer.
+         columnValue = new Time((Integer) columnValue);
       }
       else if (fieldType == Date.class) {
          columnValue = new Date((Integer) columnValue);
@@ -127,6 +201,10 @@ class DatabaseValueToFieldType {
       }
       else if (fieldType.isEnum()) {
          columnValue = enumFromNumber(fieldType, (Integer) columnValue);
+      }
+      else if (fieldType == String.class) {
+         // SQLite YEAR yields Integer
+         columnValue = Integer.toString((Integer) columnValue);
       }
       return columnValue;
    }
@@ -165,8 +243,18 @@ class DatabaseValueToFieldType {
       else if (fieldType == Date.class) {
          columnValue = new Date((Long) columnValue);
       }
+      else if (fieldType == java.sql.Date.class) {
+         // SQLite DATE yields Long
+         columnValue = new java.sql.Date((Long) columnValue);
+      }
       else if (fieldType == Timestamp.class) {
          columnValue = new Timestamp((Long) columnValue);
+      }
+      else if (Calendar.class.isAssignableFrom(fieldType)) {
+         // SQLite TIMESTAMP yields Long
+         Calendar cal = Calendar.getInstance();
+         cal.setTimeInMillis((Long) columnValue);
+         columnValue = cal;
       }
       return columnValue;
    }

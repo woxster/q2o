@@ -38,11 +38,12 @@ public class MySQLDataTypesNullTest {
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-         {false, GeneralTestConfigurator.Database.h2}, {true, GeneralTestConfigurator.Database.h2} , {false, GeneralTestConfigurator.Database.mysql} , {true, GeneralTestConfigurator.Database.mysql}
+            {false, GeneralTestConfigurator.Database.h2}, {true, GeneralTestConfigurator.Database.h2} , {false, GeneralTestConfigurator.Database.mysql} , {true, GeneralTestConfigurator.Database.mysql}, {false, GeneralTestConfigurator.Database.sqlite}, {true, GeneralTestConfigurator.Database.sqlite}
 
 //         {false, GeneralTestConfigurator.Database.mysql}
 //         {false, GeneralTestConfigurator.Database.mysql}, {false, GeneralTestConfigurator.Database.h2}
 //         {false, GeneralTestConfigurator.Database.h2}
+//         {false, GeneralTestConfigurator.Database.sqlite}
       });
    }
 
@@ -84,7 +85,9 @@ public class MySQLDataTypesNullTest {
 
       Q2Sql.executeUpdate("drop table if exists DataTypes");
       String sql = "CREATE TABLE DataTypes ("
-         + " id INTEGER NOT NULL AUTO_INCREMENT"
+
+         + (database == GeneralTestConfigurator.Database.sqlite ? "id INTEGER PRIMARY KEY"
+            : " id INTEGER NOT NULL AUTO_INCREMENT")
 
          + ", myInteger INTEGER"
 
@@ -163,11 +166,15 @@ public class MySQLDataTypesNullTest {
          : database == GeneralTestConfigurator.Database.h2 ?
             ", enumToENUMString varchar(8)"
             + ", enumToENUMOrdinal int"
+         // No enum type in SQLite
+         : database == GeneralTestConfigurator.Database.sqlite ?
+            ", enumToENUMString  VARCHAR(5)"
+            + ", enumToENUMOrdinal  int"
          : "")
          + ", enumToINTOrdinal INT"
          + ", enumToVARCHARString VARCHAR(5)"
 
-         + ", PRIMARY KEY (id)"
+         + (database == GeneralTestConfigurator.Database.sqlite ? ""  : ", PRIMARY KEY (id)")
          + " )";
 //      System.out.println(sql);
       Q2Sql.executeUpdate(sql);
@@ -213,6 +220,8 @@ public class MySQLDataTypesNullTest {
             expected = "2019-04-01 00:00:00.000";
             break;
          case sqlite:
+            expected = "2019-04-01 23:59:59.999";
+            break;
          default:
             expected = "";
 
@@ -247,9 +256,9 @@ public class MySQLDataTypesNullTest {
             expected = "2019-04-01 23:30:31.000";
             break;
          case h2:
+         case sqlite:
             expected = "2019-04-01 23:30:30.555";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -286,6 +295,8 @@ public class MySQLDataTypesNullTest {
             expected = "1970-01-01 00:00:00.999999999";
             break;
          case sqlite:
+            expected = "1970-01-01 00:00:00.999";
+            break;
          default:
             expected = "";
       }
@@ -329,9 +340,9 @@ public class MySQLDataTypesNullTest {
             expected = "02:00:00"; // "02:00:00";
             break;
          case h2:
+         case sqlite:
             expected = "11:10:11";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -363,9 +374,9 @@ public class MySQLDataTypesNullTest {
             expected = "2019-04-01 22:00:00.000";
             break;
          case h2:
+         case sqlite:
             expected = "2019-04-01 21:59:59.999";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -402,6 +413,8 @@ public class MySQLDataTypesNullTest {
             expected = "2019-04-01 21:50:59.999";
             break;
          case sqlite:
+            expected = "2019-04-01 21:50:59.999";
+            break;
          default:
             expected = "";
       }
@@ -429,6 +442,8 @@ public class MySQLDataTypesNullTest {
             expected = "2019-12-20 15:38:39.413";
             break;
          case sqlite:
+            expected = "2019-12-20 15:38:39.413";
+            break;
          default:
             expected = "";
       }
@@ -455,6 +470,8 @@ public class MySQLDataTypesNullTest {
             expected = "2019-12-20 00:00:00.000";
             break;
          case sqlite:
+            expected = "2019-12-20 15:38:39.413";
+            break;
          default:
             expected = "";
       }
@@ -481,6 +498,8 @@ public class MySQLDataTypesNullTest {
             expected = "1970-01-01 16:38:48.437";
             break;
          case sqlite:
+            expected = "2019-12-20 16:38:48.437";
+            break;
          default:
             expected = "";
       }
@@ -511,9 +530,9 @@ public class MySQLDataTypesNullTest {
             expected = "2019-03-31 01:00:00.000";
             break;
          case h2:
+         case sqlite:
             expected = "2019-04-01 00:00:00.000";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -544,9 +563,9 @@ public class MySQLDataTypesNullTest {
             expected = "2019-03-31 01:00:00.000";
             break;
          case h2:
+         case sqlite:
             expected = "2019-04-01 00:00:00.000";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -577,9 +596,9 @@ public class MySQLDataTypesNullTest {
             expected = "2019-03-31 01:00:00.000";
             break;
          case h2:
+         case sqlite:
             expected = "2019-04-01 00:00:00.000";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -615,6 +634,8 @@ public class MySQLDataTypesNullTest {
             expected = 0;
             break;
          case sqlite:
+            expected = 2019;
+            break;
          default:
             expected = 1234;
       }
@@ -675,6 +696,8 @@ public class MySQLDataTypesNullTest {
             expected = null;
             break;
          case sqlite:
+            expected = "2019";
+            break;
          default:
             expected = "";
       }
@@ -707,6 +730,8 @@ public class MySQLDataTypesNullTest {
             expected = null;
             break;
          case sqlite:
+            expected = "19";
+            break;
          default:
             expected = "";
       }
@@ -748,9 +773,9 @@ public class MySQLDataTypesNullTest {
             expected = "11:59:59";
             break;
          case h2:
+         case sqlite:
             expected = "10:59:59";
             break;
-         case sqlite:
          default:
             expected = "";
       }
@@ -778,7 +803,10 @@ public class MySQLDataTypesNullTest {
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
       // CLARIFY
-      assertEquals("11:59:59", dataTypes1.getStringToTIME());
+      String expected = database == GeneralTestConfigurator.Database.mysql
+         ? "11:59:59"
+         : "105959";
+      assertEquals(expected, dataTypes1.getStringToTIME());
       assertNull(dataTypes1.getIntToTIME());
    }
 
@@ -816,7 +844,7 @@ public class MySQLDataTypesNullTest {
             expected = "1970-01-01 21:59:59.999";
             break;
          case sqlite:
-            expected = "";
+            expected = "1970-01-01 21:59:59.999";
             break;
          default:
             expected = "";
@@ -834,18 +862,16 @@ public class MySQLDataTypesNullTest {
       String expected;
       switch (database) {
          case mysql:
-            expected = "22:00:00";
+            expected = "1970-01-01 22:00:00.000";
             break;
          case h2:
-            expected = "21:59:59";
-            break;
          case sqlite:
-            expected = "";
+            expected = "1970-01-01 21:59:59.999";
             break;
          default:
             expected = "";
       }
-      assertEquals(expected, dataTypes1.getUtilDateToTIME().toString());
+      assertEquals(expected, formatter.format(dataTypes1.getUtilDateToTIME()));
    }
 
    /**
@@ -867,7 +893,7 @@ public class MySQLDataTypesNullTest {
       String expected =
          database == GeneralTestConfigurator.Database.mysql ? "1970-01-01 01:00:00.0"
          : database == GeneralTestConfigurator.Database.h2 ? "1970-01-01 00:00:00.0"
-         : database == GeneralTestConfigurator.Database.sqlite ? ""
+         : database == GeneralTestConfigurator.Database.sqlite ? "1970-01-01 21:59:59.999"
          : "";
       assertEquals(expected, dataTypes1.getTimestampToDATE().toString());
    }
@@ -906,6 +932,8 @@ public class MySQLDataTypesNullTest {
             expected = "\u00124";
             break;
          case sqlite:
+            expected = "1234";
+            break;
          default:
             expected = "";
       }
@@ -929,6 +957,8 @@ public class MySQLDataTypesNullTest {
             expected = "\u00124";
             break;
          case sqlite:
+            expected = "1234";
+            break;
          default:
             expected = "";
       }
@@ -947,9 +977,9 @@ public class MySQLDataTypesNullTest {
       switch (database) {
          case mysql:
          case h2:
+         case sqlite:
             expected = dataTypes.getByteArrayToVARBINARY();
             break;
-         case sqlite:
          default:
             expected = null;
       }
@@ -1002,16 +1032,26 @@ public class MySQLDataTypesNullTest {
       }
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
-      byte[] expected = new byte[]{
-            (byte)0,
-            (byte)0,
-            (byte)0,
-            (byte)0,
-            (byte)1,
-            (byte)2,
-            (byte)3,
-            (byte)4
+
+      byte[] expected = new byte[0];
+      if (database == GeneralTestConfigurator.Database.mysql) {
+         expected = new byte[]{
+               (byte)0,
+               (byte)0,
+               (byte)0,
+               (byte)0,
+               (byte)1,
+               (byte)2,
+               (byte)3,
+               (byte)4
+            };
+      }
+      else if (database == GeneralTestConfigurator.Database.sqlite){
+         expected = new byte[]{
+            1, 2, 3, 4
          };
+
+      }
       Assertions.assertThat(dataTypes1.getByteArrayToBIT64()).containsExactly(expected);
    }
 
@@ -1343,6 +1383,7 @@ public class MySQLDataTypesNullTest {
          case h2:
             break;
          case sqlite:
+            break;
          default:
             assertNotNull(dataTypes.getEnumToENUMString());
       }

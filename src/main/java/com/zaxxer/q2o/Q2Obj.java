@@ -16,6 +16,8 @@
 
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -67,13 +69,18 @@ public final class Q2Obj {
    }
 
    /**
-    * Load an object using the specified clause.  If the specified clause contains the text
+    * <p>Load an object using the specified clause.
+    * </p><p>
+    *    If the specified clause contains the text
     * "WHERE" or "JOIN", the clause is appended directly to the generated "SELECT .. FROM" SQL.
     * However, if the clause contains neither "WHERE" nor "JOIN", it is assumed to be
     * just be the conditional portion that would normally appear after the "WHERE", and therefore
-    * the clause "WHERE" is automatically appended to the generated "SELECT .. FROM" SQL, followed
-    * by the specified clause.  For example:<p>
+    * the clause "WHERE" is automatically appended to the generated "SELECT .. FROM" SQL, followed by the specified clause. For example:
+    * </p><p>
     * {@code User user = Q2Obj.objectFromClause(connection, User.class, "username=?", userName);}
+    * </p><p>
+    *    There is also a method without any clause processing. See {@link #fromRawClause(Connection, Class, String, Object...)}.
+    * </p>
     *
     * @param connection a SQL Connection object
     * @param clazz the class of the object to load
@@ -83,9 +90,16 @@ public final class Q2Obj {
     * @return the populated object
     * @throws SQLException if a {@link SQLException} occurs
     */
-   public static <T> T fromClause(Connection connection, Class<T> clazz, String clause, Object... args) throws SQLException
+   public static <T> T fromClause(Connection connection, Class<T> clazz, @Nullable String clause, Object... args) throws SQLException
    {
       return OrmReader.objectFromClause(connection, clazz, clause, args);
+   }
+
+   /**
+    * @param clause Is used as is. No lacking "where" is added. See also {@link #fromClause(Connection, Class, String, Object...)}).
+    */
+   public static <T> T fromRawClause(Connection connection, Class<T> clazz, @Nullable String clause, Object... args) throws SQLException {
+      return OrmReader.objectFromRawClause(connection, clazz, clause, args);
    }
 
    /**
@@ -279,17 +293,25 @@ public final class Q2Obj {
    }
 
    /**
-    * Gets an object using a where clause.
+    * See {@link #fromClause(Connection, Class, String, Object...)}).
+    *
     * @param type The type of the desired object.
     * @param clause The WHERE clause.
     * @param args The arguments for the WHERE clause.
     * @param <T> The type of the object.
     * @return The object or {@code null}
-    * @see #fromClause(Connection, Class, String, Object...)
     */
-   public static <T> T fromClause(Class<T> type, String clause, Object... args)
+   public static <T> T fromClause(Class<T> type, @Nullable String clause, Object... args)
    {
       return SqlClosure.sqlExecute(connection -> fromClause(connection, type, clause, args));
+   }
+
+   /**
+    * See {@link #fromClause(Connection, Class, String, Object...)}
+    */
+   public static <T> T fromRawClause(Class<T> type, @Nullable String clause, Object... args)
+   {
+      return SqlClosure.sqlExecute(connection -> fromRawClause(connection, type, clause, args));
    }
 
    /**
