@@ -18,7 +18,7 @@ Spring Transaction Support.
 
 MySQL Support (New in 3.13)
 
-Automatic type conversion between java.util.Date or java.util.Calender and DATE, TIME and TIMESTAMP fields via JPA's @Temporal annotation (New in 3.14)
+Automatic type conversion between java.util.Date or java.util.Calendar and DATE, TIME and TIMESTAMP fields via JPA's @Temporal annotation (New in 3.14)
 
 More convenient methods.
 
