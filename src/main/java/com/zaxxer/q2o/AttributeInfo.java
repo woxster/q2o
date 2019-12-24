@@ -14,8 +14,7 @@ import java.util.*;
 /**
  * Column information about a field
  */
-abstract class AttributeInfo
-{
+abstract class AttributeInfo {
    private final Class<?> ownerClazz;
    private String ownerClassTableName;
    protected String name;
@@ -57,7 +56,8 @@ abstract class AttributeInfo
    private boolean isTemporalAnnotated;
    private TemporalType temporalType;
 
-   AttributeInfo(final Field field, final Class<?> ownerClazz) {
+   AttributeInfo(final Field field, final Class<?> ownerClazz)
+   {
       this.field = field;
       this.ownerClazz = ownerClazz;
       extractFieldName(field);
@@ -75,7 +75,8 @@ abstract class AttributeInfo
       }
    }
 
-   private void extractTableName() {
+   private void extractTableName()
+   {
       if (!joinWithSecondTable) {
          delimitedTableName = "";
 
@@ -109,13 +110,14 @@ abstract class AttributeInfo
          }
 
          tableName = !isNotDelimited(delimitedTableName) ?
-             delimitedTableName.substring(1, delimitedTableName.length() - 1)
+            delimitedTableName.substring(1, delimitedTableName.length() - 1)
             : delimitedTableName;
       }
    }
 
    // IMPROVE Is duplicate of com.zaxxer.q2o.Introspected.extractClassTableName().
-   private void extractOwnerClassTableName() {
+   private void extractOwnerClassTableName()
+   {
       Entity entity = ownerClazz.getAnnotation(Entity.class);
       if (entity != null) {
          ownerClassTableName = entity.name();
@@ -135,9 +137,11 @@ abstract class AttributeInfo
    protected abstract void extractFieldName(final Field field);
 
    /**
-    * CLARIFY How does it relate to {@link DatabaseValueToFieldType#adaptValueToFieldType(AttributeInfo, Object, java.sql.ResultSetMetaData, Introspected, int)}
+    * CLARIFY How does it relate to {@link DatabaseValueToFieldType#adaptValueToFieldType(AttributeInfo,
+    * Object, java.sql.ResultSetMetaData, Introspected, int)}
     */
-   private void adjustType(final Class<?> type) {
+   private void adjustType(final Class<?> type)
+   {
       if (type == null) {
          throw new IllegalArgumentException("AccessibleObject has to be of type Field or Method.");
       }
@@ -158,7 +162,7 @@ abstract class AttributeInfo
       if (isColumnAnnotated) {
          processColumnAnnotation();
       }
-      else  {
+      else {
          if (isJoinColumn) {
             processJoinColumnAnnotation();
          }
@@ -175,7 +179,7 @@ abstract class AttributeInfo
          }
       }
       if (isTemporalAnnotated) {
-         // TODO Set only converter when no @Converter was specified.
+         // No check, whether there is another converter annotated, needed: "The Temporal annotation must be specified for persistent fields or properties of type java.util.Date and java.util.Calendar unless a converter is being applied".
          if (temporalType.equals(TemporalType.TIMESTAMP)) {
             if (Calendar.class.isAssignableFrom(type)) {
                converter = new CalendarTimestampConverter();
@@ -206,9 +210,11 @@ abstract class AttributeInfo
    }
 
    /**
-    * First ONLY extract every annotation then deal with it in {@link #processFieldAnnotations()}.
+    * First ONLY extract every annotation then deal with it in {@link
+    * #processFieldAnnotations()}.
     */
-   private void extractAnnotations() {
+   private void extractAnnotations()
+   {
       final Id idAnnotation = extractIdAnnotation();
       if (idAnnotation != null) {
          isIdField = true;
@@ -251,7 +257,8 @@ abstract class AttributeInfo
 
    protected abstract Temporal extractTemporalAnnotation();
 
-   private void extractRelationship() {
+   private void extractRelationship()
+   {
       final OneToMany oneToMany = extractOneToManyAnnotation();
       if (oneToMany != null) {
          if (oneToMany.mappedBy().isEmpty()) {
@@ -291,7 +298,8 @@ abstract class AttributeInfo
    /**
     * Sets {@link #joinWithSecondTable}
     */
-   private void initializeJoinWithSecondTable() {
+   private void initializeJoinWithSecondTable()
+   {
       // Is also true with @OneToMany fields. Type is Collection then.
       if (type != ownerClazz) {
          if (!Collection.class.isAssignableFrom(type)) {
@@ -316,7 +324,8 @@ abstract class AttributeInfo
       }
    }
 
-   private void extractTableNameFromJoinedTable(final Class<?> c) {
+   private void extractTableNameFromJoinedTable(final Class<?> c)
+   {
       actualType = c;
       delimitedTableName = "";
       Table tableAnnotation = c.getAnnotation(Table.class);
@@ -357,7 +366,8 @@ abstract class AttributeInfo
 
    protected abstract Id extractIdAnnotation();
 
-   private void processConvertAnnotation()  {
+   private void processConvertAnnotation()
+   {
       final Convert convertAnnotation = extractConvertAnnotation();
       if (convertAnnotation != null) {
          final Class<?> converterClass = convertAnnotation.converter();
@@ -379,7 +389,8 @@ abstract class AttributeInfo
    /**
     * Processes &#64;Column annotated fields.
     */
-   private void processColumnAnnotation() {
+   private void processColumnAnnotation()
+   {
       columnAnnotation = extractColumnAnnotation();
       final String columnName = columnAnnotation.name();
       setColumnName(columnName);
@@ -390,7 +401,8 @@ abstract class AttributeInfo
 
    protected abstract Column extractColumnAnnotation();
 
-   protected void processJoinColumnAnnotation() {
+   protected void processJoinColumnAnnotation()
+   {
       final JoinColumn joinColumnAnnotation = extractJoinColumnAnnotation();
       if (isSelfJoinField()) {
          setColumnName(joinColumnAnnotation.name());
@@ -404,11 +416,13 @@ abstract class AttributeInfo
       updatable = joinColumnAnnotation.updatable();
    }
 
-   private boolean isNotDelimited(final String columnName) {
+   private boolean isNotDelimited(final String columnName)
+   {
       return !columnName.startsWith("\"") || !columnName.endsWith("\"");
    }
 
-   private void setColumnName(final String columnName) {
+   private void setColumnName(final String columnName)
+   {
       final String colName = columnName.isEmpty()
          ? name // as per EJB specification, empty name in Column "defaults to the property or field name"
          : columnName;
@@ -429,8 +443,7 @@ abstract class AttributeInfo
    {
       this.enumType = enumType;
       enumConstants = new HashMap<>();
-      @SuppressWarnings("unchecked")
-      final T[] enums = (T[]) this.type.getEnumConstants();
+      @SuppressWarnings("unchecked") final T[] enums = (T[]) this.type.getEnumConstants();
       for (T enumConst : enums) {
          Object key = (this.enumType == EnumType.ORDINAL ? enumConst.ordinal() : enumConst.name());
          enumConstants.put(key, enumConst);
@@ -438,7 +451,8 @@ abstract class AttributeInfo
    }
 
    @Override
-   public String toString() {
+   public String toString()
+   {
       return "AttributeInfo{" +
          "ownerClazz=" + ownerClazz +
          ", ownerClassTableName='" + ownerClassTableName + '\'' +
@@ -476,68 +490,81 @@ abstract class AttributeInfo
          '}';
    }
 
-   void setConverter(final AttributeConverter converter) {
+   void setConverter(final AttributeConverter converter)
+   {
       this.converter = converter;
    }
 
    /**
     * Also internally set on @Temporal annotated fields.
     */
-   AttributeConverter getConverter() {
+   AttributeConverter getConverter()
+   {
       return converter;
    }
 
-   boolean isSelfJoinField() {
+   boolean isSelfJoinField()
+   {
       return isJoinColumn && type == ownerClazz;
    }
 
-   /** name without delimiter: lower cased; delimited name: name as is without delimiters */
-   String getColumnName() {
+   /**
+    * name without delimiter: lower cased; delimited name: name as is without delimiters
+    */
+   String getColumnName()
+   {
       return columnName;
    }
 
-   String getName() {
+   String getName()
+   {
       return name;
    }
 
    /**
-    * @return If set &#64;Column name value else property name. In case of delimited fields without delimiters.
+    * @return If set &#64;Column name value else property name. In case of delimited
+    * fields without delimiters.
     */
-   String getCaseSensitiveColumnName() {
+   String getCaseSensitiveColumnName()
+   {
       return caseSensitiveColumnName;
    }
 
    /**
-    *
-    * @return case sensitive column name. In case of delimited fields surrounded by delimiters.
+    * @return case sensitive column name. In case of delimited fields surrounded by
+    * delimiters.
     */
-   String getDelimitedColumnName() {
+   String getDelimitedColumnName()
+   {
       return delimitedName;
    }
 
    /**
-    *
     * @param tablePrefix Ignored when field has a non empty table element.
     */
-   String getFullyQualifiedDelimitedFieldName(final String... tablePrefix) {
+   String getFullyQualifiedDelimitedFieldName(final String... tablePrefix)
+   {
       return delimitedTableName.isEmpty() && tablePrefix.length > 0
          ? tablePrefix[0] + "." + fullyQualifiedDelimitedName
          : fullyQualifiedDelimitedName;
    }
 
-   boolean isDelimited() {
+   boolean isDelimited()
+   {
       return isDelimited;
    }
 
-   boolean isEnumerated() {
+   boolean isEnumerated()
+   {
       return isEnumerated;
    }
 
    /**
-    *
-    * @return null: no @Column annotation. true: @Column annotation. false @Column with updatable = false or join with second table.
+    * @return null: no @Column annotation. true: @Column annotation. false @Column with
+    * updatable = false or join with second table.
     */
-   Boolean isUpdatable() {
+   Boolean isUpdatable()
+   {
       // Not as ternary expression or a NPE is thrown?!?
       if (!joinWithSecondTable) {
          return updatable;
@@ -548,10 +575,11 @@ abstract class AttributeInfo
    }
 
    /**
-    *
-    * @return null: no @Column annotation. true: @Column annotation. false @Column with insertable = false or join with second table.
+    * @return null: no @Column annotation. true: @Column annotation. false @Column with
+    * insertable = false or join with second table.
     */
-   Boolean isInsertable() {
+   Boolean isInsertable()
+   {
       // Not as ternary expression or a NPE is thrown?!?
       if (!joinWithSecondTable) {
          return insertable;
@@ -564,7 +592,8 @@ abstract class AttributeInfo
    abstract Object getValue(final Object target) throws IllegalAccessException, InvocationTargetException;
 
 
-   protected Object idValueFromEntity(final Object obj) throws IllegalAccessException, InvocationTargetException {
+   protected Object idValueFromEntity(final Object obj) throws IllegalAccessException, InvocationTargetException
+   {
       if (obj != null) {
          final Introspected introspected = Introspected.getInstance(obj.getClass());
          final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
@@ -577,15 +606,18 @@ abstract class AttributeInfo
 
    abstract void setValue(final Object target, final Object value) throws IllegalAccessException;
 
-   boolean isTransient() {
+   boolean isTransient()
+   {
       return isTransient;
    }
 
-   protected Object idValueToParentEntity(final Class<?> clazz, final Object value) throws IllegalAccessException, InstantiationException {
+   protected Object idValueToParentEntity(final Class<?> clazz, final Object value) throws IllegalAccessException, InstantiationException
+   {
       return idValueToParentEntity(clazz.newInstance(), value);
    }
 
-   protected Object idValueToParentEntity(final Object target, @NotNull final Object value) throws InstantiationException, IllegalAccessException {
+   protected Object idValueToParentEntity(final Object target, @NotNull final Object value) throws InstantiationException, IllegalAccessException
+   {
       final Object obj = target.getClass().newInstance();
       final Introspected introspected = Introspected.getInstance(obj.getClass());
       final AttributeInfo generatedIdFcInfo = introspected.getGeneratedIdFcInfo();
@@ -596,63 +628,74 @@ abstract class AttributeInfo
    /**
     * Can be overridden.
     */
-   boolean isToBeConsidered() {
+   boolean isToBeConsidered()
+   {
       return !isTransient && toBeConsidered;
    }
 
-   boolean isJoinFieldWithSecondTable() {
+   boolean isJoinFieldWithSecondTable()
+   {
       return joinWithSecondTable;
    }
 
    /**
     * name without delimiter: name as is; delimited name: name as is with delimiters
+    *
     * @return empty string if field is member of mapped superclass.
     */
-   String getDelimitedTableName() {
+   String getDelimitedTableName()
+   {
       return delimitedTableName;
    }
 
    /**
-    *
     * @return Declared field type
     */
-   Class<?> getActualType() {
+   Class<?> getActualType()
+   {
       return actualType;
    }
 
-   String getTableName() {
+   String getTableName()
+   {
       return tableName;
    }
 
-   String getOwnerClassTableName() {
+   String getOwnerClassTableName()
+   {
       return ownerClassTableName;
    }
 
-   Class<?> getOwnerClazz() {
+   Class<?> getOwnerClazz()
+   {
       return ownerClazz;
    }
 
-   public Class<?> getType() {
+   public Class<?> getType()
+   {
       return type;
    }
 
-   public boolean isTemporalAnnotated() {
+   public boolean isTemporalAnnotated()
+   {
       return isTemporalAnnotated;
    }
 
-   public TemporalType getTemporalType() {
+   public TemporalType getTemporalType()
+   {
       return temporalType;
    }
 
    /**
-    *
     * @param value In case of EnumType.ORDINAL the ordinal or else the value.
     */
-   public Object getEnumConstant(Object value) {
+   public Object getEnumConstant(Object value)
+   {
       return enumConstants.get(value);
    }
 
-   public EnumType getEnumType() {
+   public EnumType getEnumType()
+   {
       return enumType;
    }
 }
