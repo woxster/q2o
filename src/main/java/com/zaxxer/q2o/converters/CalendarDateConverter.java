@@ -1,6 +1,7 @@
 package com.zaxxer.q2o.converters;
 
 import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -8,6 +9,7 @@ import java.util.Date;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 20.12.19
  */
+@Converter
 public class CalendarDateConverter<X,Y> implements AttributeConverter<Calendar, Date> {
    @Override
    public Date convertToDatabaseColumn(final Calendar attribute) {

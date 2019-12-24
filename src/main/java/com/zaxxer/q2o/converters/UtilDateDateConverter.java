@@ -1,12 +1,14 @@
 package com.zaxxer.q2o.converters;
 
 import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 import java.util.Date;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 21.12.19
  */
+@Converter
 public class UtilDateDateConverter<X,Y> implements AttributeConverter<Date, java.sql.Date> {
    @Override
    public java.sql.Date convertToDatabaseColumn(final Date attribute) {

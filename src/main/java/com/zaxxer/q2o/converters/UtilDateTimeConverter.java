@@ -1,6 +1,7 @@
 package com.zaxxer.q2o.converters;
 
 import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 import java.sql.Time;
 import java.util.Date;
 
@@ -8,6 +9,7 @@ import java.util.Date;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 21.12.19
  */
+@Converter
 public class UtilDateTimeConverter<X,Y> implements AttributeConverter<Date, Time> {
    @Override
    public Time convertToDatabaseColumn(final Date attribute) {
