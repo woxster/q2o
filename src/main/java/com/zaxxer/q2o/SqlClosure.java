@@ -265,19 +265,19 @@ public class SqlClosure<T> {
    }
 
    private T executeWithoutSpringSupport() {
-      boolean isTxSimpleMode = TransactionHelper.shouldQ2oManageTransactions();
+      boolean isManagedTransaction = TransactionHelper.hasTransactionManager();
       Connection connection = null;
       boolean isNewTransaction = false;
       Boolean origAutoCommit = null;
       try {
-         if (isTxSimpleMode) {
+         if (isManagedTransaction) {
             isNewTransaction = TransactionHelper.beginOrJoinTransaction();
             connection = dataSource.getConnection();
          }
          else {
             connection = dataSource.getConnection();
             origAutoCommit = connection.getAutoCommit();
-            if (!origAutoCommit && !TransactionHelper.hasTransactionManager()) {
+            if (!origAutoCommit) {
                connection.setAutoCommit(true);
             }
          }
@@ -290,28 +290,32 @@ public class SqlClosure<T> {
          if (e.getNextException() != null) {
             e = e.getNextException();
          }
-         if (isTxSimpleMode) {
-            // set the isTxSimpleMode to false as we no longer own the transaction and we shouldn't try to commit it later
-            isTxSimpleMode = false;
+         if (isManagedTransaction) {
+            // set the isManagedTransaction to false as we no longer own the transaction and we shouldn't try to commit it later
+            isManagedTransaction = false;
             TransactionHelper.rollback();
          }
          else {
+            // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
+//            rollback(connection);
             releaseLocksOnError(connection, e);
          }
          throw new RuntimeException(e);
       }
       catch (Throwable e) {
-         if (isTxSimpleMode) {
-            isTxSimpleMode = false;
+         if (isManagedTransaction) {
+            isManagedTransaction = false;
             TransactionHelper.rollback();
          }
          else {
+            // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
+//            rollback(connection);
             releaseLocksOnError(connection, e);
          }
          throw e;
       }
       finally {
-         if (isTxSimpleMode && isNewTransaction) {
+         if (isManagedTransaction && isNewTransaction) {
             TransactionHelper.commit();
          }
          else {
@@ -419,6 +423,18 @@ public class SqlClosure<T> {
             resultSet.close();
          }
          catch (SQLException ignored) {
+         }
+      }
+   }
+
+   private static void rollback(final Connection connection)
+   {
+      if (connection != null) {
+         try {
+            connection.rollback();
+         }
+         catch (SQLException e) {
+            throw new RuntimeException(e);
          }
       }
    }
