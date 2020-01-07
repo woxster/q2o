@@ -16,13 +16,12 @@
 
 package com.zaxxer.q2o.transaction;
 
+import javax.sql.DataSource;
+import javax.transaction.Status;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
-
-import javax.sql.DataSource;
-import javax.transaction.Status;
 
 class TxDataSource implements InvocationHandler
 {
@@ -52,7 +51,9 @@ class TxDataSource implements InvocationHandler
          }
          else
          {
-            final Connection wrappedConnection = ConnectionProxy.getWrappedConnection(delegate.getConnection());
+            Connection connection = delegate.getConnection();
+            connection.setAutoCommit(false);
+            final Connection wrappedConnection = ConnectionProxy.getWrappedConnection(connection);
             if (transaction != null) {
                transaction.setConnection(wrappedConnection);
             }

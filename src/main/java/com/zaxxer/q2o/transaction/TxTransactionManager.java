@@ -17,16 +17,7 @@
 package com.zaxxer.q2o.transaction;
 
 import javax.sql.DataSource;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
+import javax.transaction.*;
 
 public class TxTransactionManager implements TransactionManager, UserTransaction
 {
@@ -50,6 +41,9 @@ public class TxTransactionManager implements TransactionManager, UserTransaction
       context.setTransaction(newTransaction);
    }
 
+   /**
+    * Connection is closed too.
+    */
    @Override
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException
    {

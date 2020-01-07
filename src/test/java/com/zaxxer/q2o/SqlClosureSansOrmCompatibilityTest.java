@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static com.zaxxer.sansorm.SansOrm.deinitialize;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,20 +47,20 @@ public class SqlClosureSansOrmCompatibilityTest {
       else {
          SansOrm.initializeTxNone(dataSource);
       }
-      executeUpdate(
+      Q2Sql.executeUpdate(
          "CREATE TABLE tx_test (string VARCHAR(128))");
    }
 
    @After // not @AfterClass to have fresh table in each test
    public void tearDown() {
-      executeUpdate(
-         "DROP TABLE tx_test");
+      Q2Sql.executeUpdate("DROP TABLE tx_test");
       deinitialize();
    }
 
    @Test
    public void shouldSupportNestedCalls() {
       final Set<String> insertedValues = SqlClosure.sqlExecute(c -> {
+
          Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "1");
 
          // here goes nested SqlClosure
@@ -69,6 +68,7 @@ public class SqlClosureSansOrmCompatibilityTest {
 
          return getStrings(c);
       });
+
       assertThat(insertedValues).containsOnly("1", "2");
    }
 
@@ -87,12 +87,18 @@ public class SqlClosureSansOrmCompatibilityTest {
       })).isInstanceOf(RuntimeException.class).hasMessage("boom!");
 
       final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureSansOrmCompatibilityTest::getStrings);
-      assertThat(insertedValues).isEmpty();
+      if (withUserTx) {
+         assertThat(insertedValues).isEmpty();
+      }
+      else {
+         assertThat(insertedValues).containsOnly("3", "4");
+      }
    }
 
    @Test
    public void shouldRollbackNestedClosuresWithUserTransaction() {
       assertThatThrownBy(() -> SqlClosure.sqlExecute(c -> {
+
          Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "6");
 
          // here goes nested SqlClosure
@@ -100,13 +106,15 @@ public class SqlClosureSansOrmCompatibilityTest {
 
          Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "8");
          throw new Error("boom!"); // ie something not or type SQLException or RuntimeException
+
       })).isInstanceOf(Error.class).hasMessage("boom!");
 
       final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureSansOrmCompatibilityTest::getStrings);
       if (withUserTx) {
          assertThat(insertedValues).containsOnly().as("With UserTransaction nested closures share same tx scope");
-      } else {
-         assertThat(insertedValues).containsOnly("7").as("Without UserTransaction every closure defines it's own tx scope");
+      }
+      else {
+         assertThat(insertedValues).containsOnly("6", "7", "8").as("Without UserTransaction every closure defines it's own tx scope");
       }
    }
 
@@ -118,4 +126,5 @@ public class SqlClosureSansOrmCompatibilityTest {
       }
       return result;
    }
+
 }

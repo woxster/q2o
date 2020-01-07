@@ -16,8 +16,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
-import static com.zaxxer.q2o.q2o.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.sansorm.DataSources.getH2DataSource;
@@ -29,6 +27,10 @@ public class SqlClosureTransactionsTest {
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
          { true, true }, { true, false }, { false, true }, { false, false }
+//         { true, true }
+//         { true, false }
+//         { true, true }, { true, false }
+//         { false, false }
       });
    }
 
@@ -42,25 +44,25 @@ public class SqlClosureTransactionsTest {
    public void setUp() throws IOException {
       final JdbcDataSource dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
-         initializeTxSimple(dataSource);
+         q2o.initializeTxSimple(dataSource);
       }
       else {
-         initializeTxNone(dataSource);
+         q2o.initializeTxNone(dataSource);
       }
-      executeUpdate(
+      Q2Sql.executeUpdate(
          "CREATE TABLE tx_test (string VARCHAR(128))");
    }
 
    @After // not @AfterClass to have fresh table in each test
    public void tearDown() {
-      executeUpdate(
-         "DROP TABLE tx_test");
-      deinitialize();
+      Q2Sql.executeUpdate("DROP TABLE tx_test");
+      q2o.deinitialize();
    }
 
    @Test
    public void shouldSupportNestedCalls() {
       final Set<String> insertedValues = SqlClosure.sqlExecute(c -> {
+
          Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "1");
 
          // here goes nested SqlClosure
@@ -68,6 +70,7 @@ public class SqlClosureTransactionsTest {
 
          return getStrings(c);
       });
+
       assertThat(insertedValues).containsOnly("1", "2");
    }
 
@@ -83,15 +86,22 @@ public class SqlClosureTransactionsTest {
          });
 
          return Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "5");
+
       })).isInstanceOf(RuntimeException.class).hasMessage("boom!");
 
       final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureTransactionsTest::getStrings);
-      assertThat(insertedValues).isEmpty();
+      if (withUserTx) {
+         assertThat(insertedValues).isEmpty();
+      }
+      else {
+         assertThat(insertedValues).containsOnly("3", "4");
+      }
    }
 
    @Test
    public void shouldRollbackNestedClosuresWithUserTransaction() {
       assertThatThrownBy(() -> SqlClosure.sqlExecute(c -> {
+
          Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "6");
 
          // here goes nested SqlClosure
@@ -99,13 +109,16 @@ public class SqlClosureTransactionsTest {
 
          Q2Sql.executeUpdate(c, "INSERT INTO tx_test VALUES (?)", "8");
          throw new Error("boom!"); // ie something not or type SQLException or RuntimeException
+
       })).isInstanceOf(Error.class).hasMessage("boom!");
 
       final Set<String> insertedValues = SqlClosure.sqlExecute(SqlClosureTransactionsTest::getStrings);
+
       if (withUserTx) {
          assertThat(insertedValues).containsOnly().as("With UserTransaction nested closures share same tx scope");
-      } else {
-         assertThat(insertedValues).containsOnly("7").as("Without UserTransaction every closure defines it's own tx scope");
+      }
+      else {
+         assertThat(insertedValues).containsOnly("6", "7", "8").as("Without UserTransaction every closure defines it's own tx scope");
       }
    }
 

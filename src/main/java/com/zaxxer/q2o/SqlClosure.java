@@ -17,6 +17,8 @@
 package com.zaxxer.q2o;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 import javax.sql.DataSource;
@@ -42,6 +44,8 @@ public class SqlClosure<T> {
     */
    private SQLExceptionTranslator exceptionTranslator;
    private Object[] args;
+
+   private static Logger logger = LoggerFactory.getLogger(SqlClosure.class);
 
    /**
     * Default constructor using the default DataSource, set with one of the methods in {@link q2o}.
@@ -261,13 +265,21 @@ public class SqlClosure<T> {
    }
 
    private T executeWithoutSpringSupport() {
-      boolean isTxOwner = !TransactionHelper.hasTransactionManager() || TransactionHelper.beginOrJoinTransaction();
+      boolean isTxSimpleMode = TransactionHelper.shouldQ2oManageTransactions();
       Connection connection = null;
+      boolean isNewTransaction = false;
+      Boolean origAutoCommit = null;
       try {
-         connection = ConnectionProxy.wrapConnection(dataSource.getConnection());
-         if (isTxOwner) {
-            // disable autoCommit mode as we are going to handle transaction by ourselves
-            connection.setAutoCommit(false);
+         if (isTxSimpleMode) {
+            isNewTransaction = TransactionHelper.beginOrJoinTransaction();
+            connection = dataSource.getConnection();
+         }
+         else {
+            connection = dataSource.getConnection();
+            origAutoCommit = connection.getAutoCommit();
+            if (!origAutoCommit && !TransactionHelper.hasTransactionManager()) {
+               connection.setAutoCommit(true);
+            }
          }
          return (args == null)
             ? execute(connection)
@@ -278,29 +290,54 @@ public class SqlClosure<T> {
          if (e.getNextException() != null) {
             e = e.getNextException();
          }
-         if (isTxOwner) {
-            // set the isTxOwner to false as we no longer own the transaction and we shouldn't try to commit it later
-            isTxOwner = false;
-            rollback(connection);
+         if (isTxSimpleMode) {
+            // set the isTxSimpleMode to false as we no longer own the transaction and we shouldn't try to commit it later
+            isTxSimpleMode = false;
+            TransactionHelper.rollback();
+         }
+         else {
+            releaseLocksOnError(connection, e);
          }
          throw new RuntimeException(e);
-      } catch (Throwable e) {
-         e.printStackTrace();
-         if (isTxOwner) {
-            isTxOwner = false;
-            rollback(connection);
+      }
+      catch (Throwable e) {
+         if (isTxSimpleMode) {
+            isTxSimpleMode = false;
+            TransactionHelper.rollback();
+         }
+         else {
+            releaseLocksOnError(connection, e);
          }
          throw e;
       }
       finally {
-         try {
-            if (isTxOwner) {
-               commit(connection);
-            }
+         if (isTxSimpleMode && isNewTransaction) {
+            TransactionHelper.commit();
          }
-         finally {
+         else {
+            if (origAutoCommit != null) {
+               try {
+                  connection.setAutoCommit(origAutoCommit);
+               }
+               catch (SQLException e) {
+                  logger.error("", e);
+               }
+            }
             quietClose(connection);
          }
+      }
+   }
+
+   private void releaseLocksOnError(final Connection connection, final Throwable e)
+   {
+      try {
+         // releases any database locks currently held by this Connection object
+         if (connection != null && !connection.getAutoCommit()) {
+            connection.commit();
+         }
+      }
+      catch (SQLException ex) {
+         logger.error("", e);
       }
    }
 
@@ -382,36 +419,6 @@ public class SqlClosure<T> {
             resultSet.close();
          }
          catch (SQLException ignored) {
-         }
-      }
-   }
-
-   private static void rollback(final Connection connection)
-   {
-      if (TransactionHelper.hasTransactionManager()) {
-         TransactionHelper.rollback();
-      }
-      else if (connection != null) {
-         try {
-            connection.rollback();
-         }
-         catch (SQLException e) {
-            throw new RuntimeException(e);
-         }
-      }
-   }
-
-   private static void commit(final Connection connection)
-   {
-      if (TransactionHelper.hasTransactionManager()) {
-         TransactionHelper.commit();
-      }
-      else if (connection != null) {
-         try {
-            connection.commit();
-         }
-         catch (SQLException e) {
-            throw new RuntimeException(e);
          }
       }
    }

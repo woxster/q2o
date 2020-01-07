@@ -16,18 +16,11 @@
 
 package com.zaxxer.q2o.transaction;
 
+import javax.transaction.*;
+import javax.transaction.xa.XAResource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.xa.XAResource;
 
 public class TxTransaction implements Transaction
 {
@@ -50,6 +43,9 @@ public class TxTransaction implements Transaction
       return status;
    }
 
+   /**
+    * Connection is closed too.
+    */
    @Override
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException
    {
@@ -145,6 +141,8 @@ public class TxTransaction implements Transaction
    private void cleanup()
    {
       try {
+         // Auto commit is set to false in TxDataSource.invoke(). "By default, new connections are in auto-commit mode." (see Connection#setAutoCommit(boolean)). Because this connection may be reused outside a transaction we must restore the standard behaviour.
+         connection.setAutoCommit(true);
          connection.close();
       }
       catch (SQLException e) {

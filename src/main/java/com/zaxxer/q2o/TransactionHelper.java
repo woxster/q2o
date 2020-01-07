@@ -16,9 +16,11 @@
 
 package com.zaxxer.q2o;
 
+import com.zaxxer.q2o.transaction.TxTransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import javax.transaction.*;
 
 public final class TransactionHelper
@@ -78,7 +80,7 @@ public final class TransactionHelper
    }
 
    /**
-    * Commit the current transaction.
+    * Commit the current transaction. When q2o has been initilaized with {@link q2o#initializeTxSimple(DataSource)} the connection is closed too.
     */
    public static void commit()
    {
@@ -165,5 +167,10 @@ public final class TransactionHelper
          return true;
       }
       return false;
+   }
+
+   static boolean shouldQ2oManageTransactions()
+   {
+      return transactionManager != null && transactionManager.getClass() == (TxTransactionManager.class);
    }
 }
