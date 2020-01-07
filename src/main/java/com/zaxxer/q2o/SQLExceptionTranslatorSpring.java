@@ -1,5 +1,6 @@
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 
@@ -14,7 +15,7 @@ class SQLExceptionTranslatorSpring implements SQLExceptionTranslator<DataAccessE
 
    SQLErrorCodeSQLExceptionTranslator translator;
 
-   public SQLExceptionTranslatorSpring(DataSource dataSource) {
+   public SQLExceptionTranslatorSpring(@NotNull DataSource dataSource) {
       translator = new SQLErrorCodeSQLExceptionTranslator(dataSource);
    }
 

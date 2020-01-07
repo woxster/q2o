@@ -16,6 +16,7 @@
 
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 import javax.sql.DataSource;
@@ -31,8 +32,14 @@ public class SqlClosure<T> {
 
    static volatile boolean isSpringTxAware;
    private static volatile DataSource defaultDataSource;
+   /**
+    * Only set with Spring Support activated.
+    */
    private static volatile SQLExceptionTranslator defaultExceptionTranslator;
    private DataSource dataSource;
+   /**
+    * Only set with Spring Support activated.
+    */
    private SQLExceptionTranslator exceptionTranslator;
    private Object[] args;
 
@@ -78,6 +85,11 @@ public class SqlClosure<T> {
       initialize(ds);
    }
 
+   static void unsetDefaultExceptionTranslator()
+   {
+      defaultExceptionTranslator = null;
+   }
+
    private void initialize(final DataSource dataSource) {
       if (defaultDataSource == null && dataSource == null) {
          throw new RuntimeException("You must have initialized q2o with one of the methods in com.zaxxer.q2o.q2o.");
@@ -91,12 +103,13 @@ public class SqlClosure<T> {
       else {
          this.dataSource = dataSource;
          if (isSpringTxAware) {
-            exceptionTranslator = newExceptionTranslator(dataSource);
+            exceptionTranslator = newSpringExceptionTranslator(dataSource);
          }
       }
    }
 
-   private static SQLExceptionTranslator newExceptionTranslator(final DataSource dataSource) {
+   @NotNull
+   private static SQLExceptionTranslator newSpringExceptionTranslator(@NotNull final DataSource dataSource) {
       return new SQLExceptionTranslatorSpring(dataSource);
    }
 
@@ -121,8 +134,8 @@ public class SqlClosure<T> {
       defaultDataSource = ds;
    }
 
-   public static void setDefaultExceptionTranslator(DataSource dataSource) {
-      defaultExceptionTranslator = dataSource != null ? newExceptionTranslator(dataSource) : null;
+   static void activateSpringDefaultExceptionTranslator(@NotNull DataSource dataSource) {
+      defaultExceptionTranslator = newSpringExceptionTranslator(dataSource);
    }
 
    /**

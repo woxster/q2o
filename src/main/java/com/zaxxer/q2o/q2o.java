@@ -65,7 +65,7 @@ public final class q2o {
       deinitialize();
       SqlClosure.isSpringTxAware = true;
       SqlClosure.setDefaultDataSource(dataSource);
-      SqlClosure.setDefaultExceptionTranslator(dataSource);
+      SqlClosure.activateSpringDefaultExceptionTranslator(dataSource);
       return dataSource;
    }
 
@@ -77,7 +77,7 @@ public final class q2o {
       TransactionHelper.setTransactionManager(null);
       SqlClosure.setDefaultDataSource(null);
       SqlClosure.isSpringTxAware = false;
-      SqlClosure.setDefaultExceptionTranslator(null);
+      SqlClosure.unsetDefaultExceptionTranslator();
       setMySqlMode(false);
    }
 
