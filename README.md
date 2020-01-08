@@ -29,10 +29,10 @@ Numerous tests added to stabilize further development.
 First of all we need a datasource. Once you get it, call one of ```q2o.initializeXXX``` methods:
 ```Java
 DataSource ds = ...;
-q2o.initializeTxNone(ds);
-
-// or if you want to use embedded TransactionManager implementation
 q2o.initializeTxSimple(ds);
+
+// or if you do not want to use Transactions
+q2o.initializeTxNone(ds);
 
 // or if you have your own TransactionManager and UserTransaction
 TransactionManager tm = ...;
