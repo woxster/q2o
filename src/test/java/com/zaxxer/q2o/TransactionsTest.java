@@ -52,7 +52,7 @@ public class TransactionsTest {
          dataSource = q2o.initializeTxNone(dataSource);
       }
       Q2Sql.executeUpdate(
-         "CREATE TABLE MyObj (string VARCHAR(128))");
+         "CREATE TABLE MyObj (stringField VARCHAR(128))");
    }
 
    @After // not @AfterClass to have fresh table in each test
@@ -63,7 +63,7 @@ public class TransactionsTest {
 
    @Entity
    static class MyObj {
-      String string;
+      String stringField;
    }
 
    @Test
@@ -71,11 +71,11 @@ public class TransactionsTest {
    {
       try {
          MyObj o = new MyObj();
-         o.string = "1";
+         o.stringField = "1";
          MyObj oInserted = Q2Obj.insert(o);
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (string, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
       }
       catch (Exception ignored) { }
 
@@ -88,12 +88,12 @@ public class TransactionsTest {
    {
       try {
          MyObj o = new MyObj();
-         o.string = "1";
+         o.stringField = "1";
          MyObj oInserted = Q2Obj.insert(o);
 
          MyObj o2 = new MyObj();
-         o2.string = "2";
-         // Its a transactional connection. If you retrieve connections from datasource you have to manage them on your own, e. g. commit, close or rollback it.
+         o2.stringField = "2";
+         // Its a transactional connection. If you retrieve connections from a datasource outside of a transaction you have to manage them on your own, e. g. commit, close or rollback it.
          Connection connection = dataSource.getConnection();
          try {
             Q2Obj.insert(connection, o2);
@@ -107,13 +107,13 @@ public class TransactionsTest {
          }
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (string, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
       }
       catch (Exception ignored) {
       }
 
       List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
-      assertThat(objs).hasSize(2);
+      assertThat(objs).extracting("stringField").containsOnly("1", "2");
    }
 
    @Test
@@ -123,16 +123,16 @@ public class TransactionsTest {
          TransactionHelper.beginOrJoinTransaction();
 
          MyObj o = new MyObj();
-         o.string = "1";
+         o.stringField = "1";
          MyObj oInserted = Q2Obj.insert(o);
 
          MyObj o2 = new MyObj();
-         o2.string = "2";
-         // dataSource returns transactional connections
+         o2.stringField = "2";
+         // Do not manage this connection on your own because you are in a transaction. Compare with notEnclosedInTransaction2().
          Q2Obj.insert(dataSource.getConnection(), o2);
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (string, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (3, 3)");
 
          TransactionHelper.commit();
 
@@ -154,16 +154,16 @@ public class TransactionsTest {
             public Void execute(final Connection transactionalConnection) throws SQLException
             {
                MyObj o = new MyObj();
-               o.string = "1";
+               o.stringField = "1";
                MyObj oInserted = Q2Obj.insert(o);
 
                MyObj o2 = new MyObj();
-               o2.string = "2";
+               o2.stringField = "2";
                // This connection is managed by q2o. Compare with notEnclosedInTransaction2().
                Q2Obj.insert(transactionalConnection, o2);
 
                // throws exception
-               Q2Sql.executeUpdate("insert into MyObj (string, noSuchColumn) values (2, 2)");
+               Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
                return null;
             }
          });
@@ -182,21 +182,20 @@ public class TransactionsTest {
          TransactionHelper.beginOrJoinTransaction();
 
          MyObj o = new MyObj();
-         o.string = "1";
+         o.stringField = "1";
          MyObj oInserted = Q2Obj.insert(o);
 
          Transaction tx = TransactionHelper.suspend();
 
-         // This object will be stored.
+         // This object will be stored immediately.
          o2 = new MyObj();
-         o2.string = "2";
-//         Q2Obj.insert(dataSource.getConnection(), o2);
+         o2.stringField = "2";
          Q2Obj.insert(o2);
 
          TransactionHelper.resume(tx);
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (string, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
 
          TransactionHelper.commit();
 
@@ -210,19 +209,97 @@ public class TransactionsTest {
       assertThat(objs).hasSize(1).first().isEqualToComparingFieldByField(o2);
    }
 
-//   @Test
-//   public void suspendTransaction()
-//   {
-//      try {
-//         TransactionHelper.beginOrJoinTransaction();
-//         Transaction tx = TransactionHelper.suspend();
-//         TransactionHelper.resume(tx);
-//         TransactionHelper.commit();
-//      }
-//      catch (Exception e) {
-//         e.printStackTrace();
-//         TransactionHelper.rollback();
-//      }
-//
-//   }
+   @Test
+   public void suspendTransaction2()
+   {
+      MyObj o2 = null;
+      try {
+         TransactionHelper.beginOrJoinTransaction();
+
+         MyObj o = new MyObj();
+         o.stringField = "1";
+         MyObj oInserted = Q2Obj.insert(o);
+
+         Transaction tx = TransactionHelper.suspend();
+
+         // This object will be stored immediately.
+         o2 = new MyObj();
+         o2.stringField = "2";
+         // Its a transactional connection. If you retrieve connections from a datasource outside of a transaction you have to manage them on your own, e. g. commit, close or rollback it.
+         Connection connection = dataSource.getConnection();
+         try {
+            Q2Obj.insert(connection, o2);
+            connection.commit();
+         }
+         catch (Exception e) {
+            connection.rollback();
+         }
+         finally {
+            connection.close();
+         }
+
+         TransactionHelper.resume(tx);
+
+         // throws exception
+         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
+
+         TransactionHelper.commit();
+
+      }
+      catch (Exception ignored) {
+         ignored.printStackTrace();
+         TransactionHelper.rollback();
+      }
+
+      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
+      assertThat(objs).hasSize(1).first().isEqualToComparingFieldByField(o2);
+   }
+
+   @Test
+   public void suspendTransaction3()
+   {
+      try {
+         TransactionHelper.beginOrJoinTransaction();
+
+         MyObj o = new MyObj();
+         o.stringField = "1";
+         MyObj oInserted = Q2Obj.insert(o);
+
+         Transaction tx = TransactionHelper.suspend();
+
+         // This object will be stored immediately.
+         MyObj o2 = new MyObj();
+         o2.stringField = "2";
+         // Its a transactional connection. If you retrieve connections from datasource you have to manage them on your own, e. g. commit, close or rollback it.
+         Connection connection = dataSource.getConnection();
+         try {
+            Q2Obj.insert(connection, o2);
+            connection.commit();
+         }
+         catch (Exception e) {
+            connection.rollback();
+         }
+         finally {
+            connection.close();
+         }
+
+         List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
+         assertThat(objs).extracting("stringField").containsOnly("2");
+
+         TransactionHelper.resume(tx);
+
+         Q2Sql.executeUpdate("insert into MyObj (stringField) values ('3')");
+
+         TransactionHelper.commit();
+
+      }
+      catch (Exception ignored) {
+         ignored.printStackTrace();
+         TransactionHelper.rollback();
+      }
+
+      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
+      assertThat(objs).extracting("stringField").containsOnly("1", "2", "3");
+   }
+
 }
