@@ -1,12 +1,12 @@
 package com.zaxxer.q2o;
 
-import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -33,6 +33,7 @@ public class SqlClosureTransactionsTest {
 //         { false, false }
       });
    }
+   private DataSource dataSource;
 
    @Parameterized.Parameter(0)
    public boolean withAutoCommit;
@@ -42,12 +43,12 @@ public class SqlClosureTransactionsTest {
 
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException {
-      final JdbcDataSource dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
+      dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
-         q2o.initializeTxSimple(dataSource);
+         dataSource = q2o.initializeTxSimple(dataSource);
       }
       else {
-         q2o.initializeTxNone(dataSource);
+         dataSource = q2o.initializeTxNone(dataSource);
       }
       Q2Sql.executeUpdate(
          "CREATE TABLE tx_test (string VARCHAR(128))");

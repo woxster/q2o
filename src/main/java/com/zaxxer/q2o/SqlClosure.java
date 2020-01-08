@@ -233,13 +233,18 @@ public class SqlClosure<T> {
    }
 
    /**
-    * Execute the closure.
+    * <p>Execute the closure.</p>
     *
     * @return the template return type of the closure
     */
    public final T execute() {
       if (!isSpringTxAware) {
-         return executeWithoutSpringSupport();
+         if (TransactionHelper.hasTransactionManager()) {
+            return executeInTx();
+         }
+         else {
+            return executeAutoCommit();
+         }
       }
       else {
          return executeWithSpringSupport();
@@ -264,70 +269,144 @@ public class SqlClosure<T> {
       }
    }
 
-   private T executeWithoutSpringSupport() {
-      boolean isManagedTransaction = TransactionHelper.hasTransactionManager();
+//   private T executeWithoutSpringSupport() {
+//      boolean isManagedTransaction = TransactionHelper.hasTransactionManager();
+//      Connection connection = null;
+//      boolean isNewTransaction = false;
+//      Boolean origAutoCommit = null;
+//      try {
+//         if (isManagedTransaction) {
+//            isNewTransaction = TransactionHelper.beginOrJoinTransaction();
+//            connection = dataSource.getConnection();
+//         }
+//         else {
+//            connection = dataSource.getConnection();
+//            origAutoCommit = connection.getAutoCommit();
+//            if (!origAutoCommit) {
+//               connection.setAutoCommit(true);
+//            }
+//         }
+//         return (args == null)
+//            ? execute(connection)
+//            : execute(connection, args);
+//      }
+//      catch (SQLException e) {
+//         logger.error(", e");
+//         if (e.getNextException() != null) {
+//            e = e.getNextException();
+//         }
+//         if (isManagedTransaction) {
+//            // set the isManagedTransaction to false as we no longer own the transaction and we shouldn't try to commit it later
+//            isManagedTransaction = false;
+//            TransactionHelper.rollback();
+//         }
+//         else {
+//            // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
+////            rollback(connection);
+//            releaseLocksOnError(connection, e);
+//         }
+//         throw new RuntimeException(e);
+//      }
+//      catch (Throwable e) {
+//         if (isManagedTransaction) {
+//            isManagedTransaction = false;
+//            TransactionHelper.rollback();
+//         }
+//         else {
+//            // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
+////            rollback(connection);
+//            releaseLocksOnError(connection, e);
+//         }
+//         throw e;
+//      }
+//      finally {
+//         if (isManagedTransaction && isNewTransaction) {
+//            TransactionHelper.commit();
+//         }
+//         else {
+//            if (origAutoCommit != null) {
+//               try {
+//                  connection.setAutoCommit(origAutoCommit);
+//               }
+//               catch (SQLException e) {
+//                  logger.error("", e);
+//               }
+//            }
+//            quietClose(connection);
+//         }
+//      }
+//   }
+
+   private T executeAutoCommit() {
       Connection connection = null;
-      boolean isNewTransaction = false;
       Boolean origAutoCommit = null;
       try {
-         if (isManagedTransaction) {
-            isNewTransaction = TransactionHelper.beginOrJoinTransaction();
-            connection = dataSource.getConnection();
-         }
-         else {
-            connection = dataSource.getConnection();
-            origAutoCommit = connection.getAutoCommit();
-            if (!origAutoCommit) {
-               connection.setAutoCommit(true);
-            }
+         connection = dataSource.getConnection();
+         origAutoCommit = connection.getAutoCommit();
+         if (!origAutoCommit) {
+            connection.setAutoCommit(true);
          }
          return (args == null)
             ? execute(connection)
             : execute(connection, args);
       }
       catch (SQLException e) {
-         e.printStackTrace();
+         logger.error("", e);
          if (e.getNextException() != null) {
             e = e.getNextException();
          }
-         if (isManagedTransaction) {
-            // set the isManagedTransaction to false as we no longer own the transaction and we shouldn't try to commit it later
-            isManagedTransaction = false;
-            TransactionHelper.rollback();
-         }
-         else {
-            // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
+         // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
 //            rollback(connection);
-            releaseLocksOnError(connection, e);
-         }
+         releaseLocksOnError(connection, e);
          throw new RuntimeException(e);
       }
       catch (Throwable e) {
-         if (isManagedTransaction) {
-            isManagedTransaction = false;
-            TransactionHelper.rollback();
-         }
-         else {
-            // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
+         // Not rollback(connection) or MySQL throws java.sql.SQLNonTransientConnectionException: Can''t call rollback when autocommit=true
 //            rollback(connection);
-            releaseLocksOnError(connection, e);
-         }
+         releaseLocksOnError(connection, e);
          throw e;
       }
       finally {
-         if (isManagedTransaction && isNewTransaction) {
-            TransactionHelper.commit();
-         }
-         else {
-            if (origAutoCommit != null) {
-               try {
-                  connection.setAutoCommit(origAutoCommit);
-               }
-               catch (SQLException e) {
-                  logger.error("", e);
-               }
+         if (origAutoCommit != null) {
+            try {
+               connection.setAutoCommit(origAutoCommit);
             }
-            quietClose(connection);
+            catch (SQLException e) {
+               logger.error("", e);
+            }
+         }
+         quietClose(connection);
+      }
+   }
+
+   private T executeInTx() {
+      boolean failed = false;
+      Connection connection;
+      boolean isNewTransaction = false;
+      try {
+         isNewTransaction = TransactionHelper.beginOrJoinTransaction();
+         connection = dataSource.getConnection();
+         return (args == null)
+            ? execute(connection)
+            : execute(connection, args);
+      }
+      catch (SQLException e) {
+         logger.error("", e);
+         if (e.getNextException() != null) {
+            e = e.getNextException();
+         }
+         failed = true;
+         TransactionHelper.rollback();
+         throw new RuntimeException(e);
+      }
+      catch (Throwable e) {
+         failed = true;
+         TransactionHelper.rollback();
+         throw e;
+      }
+      finally {
+         if (isNewTransaction && !failed) {
+            TransactionHelper.commit();
          }
       }
    }

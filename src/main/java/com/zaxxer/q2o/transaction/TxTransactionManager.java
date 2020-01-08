@@ -91,13 +91,30 @@ public class TxTransactionManager implements TransactionManager, UserTransaction
    @Override
    public Transaction suspend() throws SystemException
    {
-      throw new SystemException("suspend() operation is not supported");
+      final TxThreadContext threadContext = TxThreadContext.getThreadContext();
+
+      final TxTransaction currentTx = threadContext.getTransaction();
+      if (currentTx != null) {
+         threadContext.clearTransaction();
+      }
+      else {
+         throw new IllegalStateException("TransactionManager.suspend() called from a thread that is not joined with a transaction");
+      }
+      return currentTx;
    }
 
    @Override
-   public void resume(final Transaction tobj) throws InvalidTransactionException, IllegalStateException, SystemException
+   public void resume(final Transaction tx) throws InvalidTransactionException, IllegalStateException, SystemException
    {
-      throw new SystemException("resume() operation is not supported");
+      final TxThreadContext context = TxThreadContext.getThreadContext();
+      final TxTransaction currentTx = context.getTransaction();
+      if (currentTx != null) {
+         throw new IllegalStateException("The thread is already associated with another transaction.");
+      }
+      // TODO InvalidTransactionException – Thrown if the parameter transaction object contains an invalid transaction
+//      else if (tx.getStatus() == Status.) {
+//      }
+      context.setTransaction((TxTransaction) tx);
    }
 
    @Override

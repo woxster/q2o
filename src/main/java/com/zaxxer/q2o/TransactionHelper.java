@@ -16,7 +16,6 @@
 
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.transaction.TxTransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,8 +168,4 @@ public final class TransactionHelper
       return false;
    }
 
-   static boolean shouldQ2oManageTransactions()
-   {
-      return transactionManager != null && transactionManager.getClass() == (TxTransactionManager.class);
-   }
 }
