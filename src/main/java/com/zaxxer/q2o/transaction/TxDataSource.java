@@ -52,7 +52,6 @@ class TxDataSource implements InvocationHandler
          else
          {
             Connection connection = delegate.getConnection();
-            connection.setAutoCommit(false);
             final Connection wrappedConnection = ConnectionProxy.getWrappedConnection(connection);
             if (transaction != null) {
                transaction.setConnection(wrappedConnection);

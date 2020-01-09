@@ -66,6 +66,9 @@ public class TransactionsTest {
       String stringField;
    }
 
+   /**
+    * Eception is thrown. No surrounding transaction.
+    */
    @Test
    public void notEnclosedInTransaction()
    {
@@ -83,6 +86,9 @@ public class TransactionsTest {
       assertThat(objs).hasSize(1);
    }
 
+   /**
+    * Eception is thrown. No surrounding transaction.
+    */
    @Test
    public void notEnclosedInTransaction2()
    {
@@ -93,18 +99,9 @@ public class TransactionsTest {
 
          MyObj o2 = new MyObj();
          o2.stringField = "2";
-         // Its a transactional connection. If you retrieve connections from a datasource outside of a transaction you have to manage them on your own, e. g. commit, close or rollback it. Alternatively see suspendTransaction2a().
          Connection connection = dataSource.getConnection();
-         try {
-            Q2Obj.insert(connection, o2);
-            connection.commit();
-         }
-         catch (Exception e) {
-            connection.rollback();
-         }
-         finally {
-            connection.close();
-         }
+         Q2Obj.insert(connection, o2);
+         connection.close();
 
          // throws exception
          Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
@@ -116,6 +113,9 @@ public class TransactionsTest {
       assertThat(objs).extracting("stringField").containsOnly("1", "2");
    }
 
+   /**
+    * Eception is thrown in transaction.
+    */
    @Test
    public void enclosedInTransaction()
    {
@@ -128,8 +128,9 @@ public class TransactionsTest {
 
          MyObj o2 = new MyObj();
          o2.stringField = "2";
-         // Do not manage this connection on your own because you are in a transaction. Compare with notEnclosedInTransaction2().
-         Q2Obj.insert(dataSource.getConnection(), o2);
+         Connection connection = dataSource.getConnection();
+         Q2Obj.insert(connection, o2);
+         connection.close();
 
          // throws exception
          Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (3, 3)");
@@ -145,6 +146,9 @@ public class TransactionsTest {
       assertThat(objs).isEmpty();
    }
 
+   /**
+    * Eception is thrown in transaction.
+    */
    @Test
    public void enclosedInTransaction2()
    {
@@ -159,7 +163,6 @@ public class TransactionsTest {
 
                MyObj o2 = new MyObj();
                o2.stringField = "2";
-               // This connection is managed by q2o. Compare with notEnclosedInTransaction2().
                Q2Obj.insert(transactionalConnection, o2);
 
                // throws exception
@@ -174,6 +177,9 @@ public class TransactionsTest {
       assertThat(objs).isEmpty();
    }
 
+   /**
+    * Eception is thrown in transaction.
+    */
    @Test
    public void suspendTransaction()
    {
@@ -209,6 +215,9 @@ public class TransactionsTest {
       assertThat(objs).hasSize(1).first().isEqualToComparingFieldByField(o2);
    }
 
+   /**
+    * Eception is thrown in transaction.
+    */
    @Test
    public void suspendTransaction2()
    {
@@ -225,55 +234,7 @@ public class TransactionsTest {
          // This object will be stored immediately.
          o2 = new MyObj();
          o2.stringField = "2";
-         // Its a transactional connection. If you retrieve connections from a datasource outside of a transaction you have to manage them on your own, e. g. commit, close or rollback it. Alternatively see suspendTransaction2a().
          Connection connection = dataSource.getConnection();
-         try {
-            Q2Obj.insert(connection, o2);
-            connection.commit();
-         }
-         catch (Exception e) {
-            connection.rollback();
-         }
-         finally {
-            connection.close();
-         }
-
-         TransactionHelper.resume(tx);
-
-         // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
-
-         TransactionHelper.commit();
-
-      }
-      catch (Exception ignored) {
-         ignored.printStackTrace();
-         TransactionHelper.rollback();
-      }
-
-      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
-      assertThat(objs).hasSize(1).first().isEqualToComparingFieldByField(o2);
-   }
-
-   @Test
-   public void suspendTransaction2a()
-   {
-      MyObj o2 = null;
-      try {
-         TransactionHelper.beginOrJoinTransaction();
-
-         MyObj o = new MyObj();
-         o.stringField = "1";
-         MyObj oInserted = Q2Obj.insert(o);
-
-         Transaction tx = TransactionHelper.suspend();
-
-         // This object will be stored immediately.
-         o2 = new MyObj();
-         o2.stringField = "2";
-         Connection connection = dataSource.getConnection();
-         // Its a transactional connection. Let the server manage the connection. Compare with suspendTransaction2().
-         connection.setAutoCommit(true);
          Q2Obj.insert(connection, o2);
          connection.close();
 
@@ -294,6 +255,9 @@ public class TransactionsTest {
       assertThat(objs).hasSize(1).first().isEqualToComparingFieldByField(o2);
    }
 
+   /**
+    * Like {@link #suspendTransaction2()}, but no exception is thrown.
+    */
    @Test
    public void suspendTransaction3()
    {
@@ -309,56 +273,7 @@ public class TransactionsTest {
          // This object will be stored immediately.
          MyObj o2 = new MyObj();
          o2.stringField = "2";
-         // Its a transactional connection. If you retrieve connections from datasource you have to manage them on your own, e. g. commit, close or rollback it. Alternatively see suspendTransaction4().
          Connection connection = dataSource.getConnection();
-         try {
-            Q2Obj.insert(connection, o2);
-            connection.commit();
-         }
-         catch (Exception e) {
-            connection.rollback();
-         }
-         finally {
-            connection.close();
-         }
-
-         List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
-         assertThat(objs).extracting("stringField").containsOnly("2");
-
-         TransactionHelper.resume(tx);
-
-         Q2Sql.executeUpdate("insert into MyObj (stringField) values ('3')");
-
-         TransactionHelper.commit();
-
-      }
-      catch (Exception ignored) {
-         ignored.printStackTrace();
-         TransactionHelper.rollback();
-      }
-
-      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
-      assertThat(objs).extracting("stringField").containsOnly("1", "2", "3");
-   }
-
-   @Test
-   public void suspendTransaction4()
-   {
-      try {
-         TransactionHelper.beginOrJoinTransaction();
-
-         MyObj o = new MyObj();
-         o.stringField = "1";
-         MyObj oInserted = Q2Obj.insert(o);
-
-         Transaction tx = TransactionHelper.suspend();
-
-         // This object will be stored immediately.
-         MyObj o2 = new MyObj();
-         o2.stringField = "2";
-         Connection connection = dataSource.getConnection();
-         // Its a transactional connection. Let the server manage the connection. Compare with suspendTransaction3().
-         connection.setAutoCommit(true);
          Q2Obj.insert(connection, o2);
          connection.close();
 
@@ -372,8 +287,8 @@ public class TransactionsTest {
          TransactionHelper.commit();
 
       }
-      catch (Exception ignored) {
-         ignored.printStackTrace();
+      catch (Exception e) {
+         e.printStackTrace();
          TransactionHelper.rollback();
       }
 

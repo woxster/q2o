@@ -386,6 +386,7 @@ public class SqlClosure<T> {
       try {
          isNewTransaction = TransactionHelper.beginOrJoinTransaction();
          connection = dataSource.getConnection();
+         connection.setAutoCommit(false);
          return (args == null)
             ? execute(connection)
             : execute(connection, args);

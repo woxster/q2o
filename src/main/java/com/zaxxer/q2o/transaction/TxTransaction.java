@@ -141,7 +141,7 @@ public class TxTransaction implements Transaction
    private void cleanup()
    {
       try {
-         // Auto commit is set to false in TxDataSource.invoke(). "By default, new connections are in auto-commit mode." (see Connection#setAutoCommit(boolean)). Because this connection may be reused outside a transaction we must restore the standard behaviour.
+         // Auto commit is set to false in SqlClosure.executeInTx. "By default, new connections are in auto-commit mode." (see Connection#setAutoCommit(boolean)). Because this connection may be reused outside a transaction we must restore the standard behaviour.
          connection.setAutoCommit(true);
          connection.close();
       }
