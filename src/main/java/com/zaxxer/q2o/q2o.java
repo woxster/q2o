@@ -18,12 +18,10 @@ public final class q2o {
     * Use this one if you don't need {@link TransactionManager} tx handling.
     *
     * @param dataSource the {@link DataSource} to use by the default
-    * @return dataSource that will be used for queries
     */
-   public static DataSource initializeTxNone(DataSource dataSource) {
+   public static void initializeTxNone(DataSource dataSource) {
       deinitialize();
       SqlClosure.setDefaultDataSource(dataSource);
-      return dataSource;
    }
 
    /**
@@ -50,23 +48,21 @@ public final class q2o {
     * @param userTx the {@link UserTransaction} to use for tx management together with txManager
     * @return dataSource that will be used for queries
     */
-   public static DataSource initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
+   public static void initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
       deinitialize();
       TransactionHelper.setTransactionManager(txManager);
       TransactionHelper.setUserTransaction(userTx);
       SqlClosure.setDefaultDataSource(dataSource);
-      return dataSource;
    }
 
    /**
     * To make q2o support spring managed transactions, if available.
     */
-   public static DataSource initializeWithSpringTxSupport(DataSource dataSource) {
+   public static void initializeWithSpringTxSupport(DataSource dataSource) {
       deinitialize();
       SqlClosure.isSpringTxAware = true;
       SqlClosure.setDefaultDataSource(dataSource);
       SqlClosure.activateSpringDefaultExceptionTranslator(dataSource);
-      return dataSource;
    }
 
    /**
