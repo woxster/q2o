@@ -46,6 +46,8 @@ q2o.initializeWithSpringTxSupport(ds);
 // one of the q2o.initialize* methods and activate MySQL mode:
 q2o.setMySqlMode(true);
 ```
+For better understanding of these methods see also [Transaction Management](https://github.com/h-thurow/q2o/wiki/Transaction-Management).
+
 Even without initialization there is support for some q2o methods. This means all methods taking a Connection, PreparedStatement or ResultSet as an argument can be called without q2o having been initialized.
 
 ### Object Mapping
