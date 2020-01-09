@@ -93,7 +93,7 @@ public class TransactionsTest {
 
          MyObj o2 = new MyObj();
          o2.stringField = "2";
-         // Its a transactional connection. If you retrieve connections from a datasource outside of a transaction you have to manage them on your own, e. g. commit, close or rollback it.
+         // Its a transactional connection. If you retrieve connections from a datasource outside of a transaction you have to manage them on your own, e. g. commit, close or rollback it. Alternatively see suspendTransaction2a().
          Connection connection = dataSource.getConnection();
          try {
             Q2Obj.insert(connection, o2);
@@ -275,6 +275,7 @@ public class TransactionsTest {
          // Its a transactional connection. Let the server manage the connection. Compare with suspendTransaction2().
          connection.setAutoCommit(true);
          Q2Obj.insert(connection, o2);
+         connection.close();
 
          TransactionHelper.resume(tx);
 
@@ -359,6 +360,7 @@ public class TransactionsTest {
          // Its a transactional connection. Let the server manage the connection. Compare with suspendTransaction3().
          connection.setAutoCommit(true);
          Q2Obj.insert(connection, o2);
+         connection.close();
 
          List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
          assertThat(objs).extracting("stringField").containsOnly("2");
