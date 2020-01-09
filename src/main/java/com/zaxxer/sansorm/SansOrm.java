@@ -21,7 +21,8 @@ public final class SansOrm {
     * @deprecated
     */
    public static DataSource initializeTxNone(DataSource dataSource) {
-      return q2o.initializeTxNone(dataSource);
+      q2o.initializeTxNone(dataSource);
+      return dataSource;
    }
 
    /**
@@ -45,7 +46,8 @@ public final class SansOrm {
     * @deprecated
     */
    public static DataSource initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
-      return q2o.initializeTxCustom(dataSource, txManager, userTx);
+      q2o.initializeTxCustom(dataSource, txManager, userTx);
+      return dataSource;
    }
 
    /**

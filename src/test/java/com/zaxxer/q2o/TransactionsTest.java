@@ -49,7 +49,7 @@ public class TransactionsTest {
          dataSource = q2o.initializeTxSimple(dataSource);
       }
       else {
-         dataSource = q2o.initializeTxNone(dataSource);
+         q2o.initializeTxNone(dataSource);
       }
       Q2Sql.executeUpdate(
          "CREATE TABLE MyObj (stringField VARCHAR(128))");
