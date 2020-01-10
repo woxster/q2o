@@ -26,10 +26,12 @@ import static org.sansorm.DataSources.getH2DataSource;
 @RunWith(Parameterized.class)
 public class TransactionsTest {
 
+   /**
+    * With autocommit: false {@link #suspendTransaction2()}, {@link #suspendTransaction3()} and {@link #suspendTransaction5()} will fail because JDBC requires connections to be in autocommit mode. To make them succeed, the directly accessed connections provided by the dataSource must be switched to autocommit mode.
+    */
    @Parameterized.Parameters(name = "autocommit={0}, userTx={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-//         {true, true}, {false, true}
          {true, true}
       });
    }
@@ -122,7 +124,10 @@ public class TransactionsTest {
    }
 
    /**
-    * Multiple Operations surrounded by implicitly started transaction. Exception is thrown.
+    * <p>Multiple Operations surrounded by implicitly started transaction. Exception is thrown.
+    * </p><p>
+    * Compare with {@link AutoCommitTest#multipleOps()}.
+    * </p>
     */
    @Test
    public void enclosedInTransaction2()
@@ -233,6 +238,12 @@ public class TransactionsTest {
    @Test
    public void suspendTransaction5()
    {
+      /*
+       * With autocommit: false suspendTransaction2(), suspendTransaction3() and suspendTransaction5() will fail because JDBC requires connections to be in autocommit mode. To make them succeed, the connections provided by the dataSource must be switched to autocommit mode.
+       */
+      if (!withAutoCommit) {
+         return;
+      }
       final MyObj[] o2 = new MyObj[1];
       final MyObj[] o3 = new MyObj[1];
       try {
