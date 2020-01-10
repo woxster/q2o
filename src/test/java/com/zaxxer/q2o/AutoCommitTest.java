@@ -40,7 +40,7 @@ public class AutoCommitTest {
    }
 
    /**
-    * Compare with {@link TransactionsTest#enclosedInTransaction2()}. Here {@link SqlClosure#sqlExecute(SqlFunction)} does not encapsulate nested operations in a transaction.
+    * Compare with {@link TransactionsTest#enclosedInTransaction2()}. Here {@link SqlClosure#sqlExecute(SqlFunction)} does not encapsulate nested operations in a transaction because q2o was initialized with {@link q2o#initializeTxNone(DataSource)}.
     */
    @Test
    public void multipleOps()
