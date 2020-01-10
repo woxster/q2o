@@ -46,7 +46,6 @@ public final class q2o {
     * @param dataSource the {@link DataSource} to use by the default
     * @param txManager the {@link TransactionManager} to use for tx management
     * @param userTx the {@link UserTransaction} to use for tx management together with txManager
-    * @return dataSource that will be used for queries
     */
    public static void initializeTxCustom(DataSource dataSource, TransactionManager txManager, UserTransaction userTx) {
       deinitialize();

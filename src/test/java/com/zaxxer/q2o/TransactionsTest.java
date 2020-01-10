@@ -67,7 +67,7 @@ public class TransactionsTest {
    }
 
    /**
-    * Eception is thrown. No surrounding transaction.
+    * Multiple Operations. No surrounding transaction. Exception is thrown.
     */
    @Test
    public void notEnclosedInTransaction()
@@ -77,44 +77,21 @@ public class TransactionsTest {
          o.stringField = "1";
          MyObj oInserted = Q2Obj.insert(o);
 
+         MyObj o2 = new MyObj();
+         o2.stringField = "2";
+         Q2Obj.insert(o2);
+
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('3')");
       }
       catch (Exception ignored) { }
 
       List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
-      assertThat(objs).hasSize(1);
+      assertThat(objs).hasSize(2);
    }
 
    /**
-    * Eception is thrown. No surrounding transaction.
-    */
-   @Test
-   public void notEnclosedInTransaction2()
-   {
-      try {
-         MyObj o = new MyObj();
-         o.stringField = "1";
-         MyObj oInserted = Q2Obj.insert(o);
-
-         MyObj o2 = new MyObj();
-         o2.stringField = "2";
-         Connection connection = dataSource.getConnection();
-         Q2Obj.insert(connection, o2);
-         connection.close();
-
-         // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
-      }
-      catch (Exception ignored) {
-      }
-
-      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
-      assertThat(objs).extracting("stringField").containsOnly("1", "2");
-   }
-
-   /**
-    * Eception is thrown in transaction.
+    * Multiple Operations surrounded by transaction explicitly managed with TransactionHelper. Exception is thrown.
     */
    @Test
    public void enclosedInTransaction()
@@ -128,12 +105,10 @@ public class TransactionsTest {
 
          MyObj o2 = new MyObj();
          o2.stringField = "2";
-         Connection connection = dataSource.getConnection();
-         Q2Obj.insert(connection, o2);
-         connection.close();
+         Q2Obj.insert(o2);
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (3, 3)");
+         Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('3')");
 
          TransactionHelper.commit();
 
@@ -147,7 +122,7 @@ public class TransactionsTest {
    }
 
    /**
-    * Eception is thrown in transaction.
+    * Multiple Operations surrounded by implicitly started transaction. Exception is thrown.
     */
    @Test
    public void enclosedInTransaction2()
@@ -155,7 +130,7 @@ public class TransactionsTest {
       try {
          SqlClosure.sqlExecute(new SqlFunction<Void>() {
             @Override
-            public Void execute(final Connection transactionalConnection) throws SQLException
+            public Void execute(final Connection q2oManagedConnection) throws SQLException
             {
                MyObj o = new MyObj();
                o.stringField = "1";
@@ -163,10 +138,10 @@ public class TransactionsTest {
 
                MyObj o2 = new MyObj();
                o2.stringField = "2";
-               Q2Obj.insert(transactionalConnection, o2);
+               Q2Obj.insert(q2oManagedConnection, o2);
 
                // throws exception
-               Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
+               Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('3')");
                return null;
             }
          });
@@ -178,10 +153,10 @@ public class TransactionsTest {
    }
 
    /**
-    * Eception is thrown in transaction.
+    * Explicitly started Transaction is explicitly suspended to do some independent operation. Exception is thrown after transaction is resumed.
     */
    @Test
-   public void suspendTransaction()
+   public void suspendTransaction1()
    {
       MyObj o2 = null;
       try {
@@ -201,7 +176,7 @@ public class TransactionsTest {
          TransactionHelper.resume(tx);
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('3')");
 
          TransactionHelper.commit();
 
@@ -216,7 +191,89 @@ public class TransactionsTest {
    }
 
    /**
-    * Eception is thrown in transaction.
+    * Implicitly started Transaction is explicitly suspended to do some independent operation. Exception is thrown after transaction is resumed.
+    */
+   @Test
+   public void suspendTransaction1a()
+   {
+      final MyObj[] o2 = new MyObj[1];
+      try {
+         SqlClosure.sqlExecute(new SqlFunction<Void>() {
+            @Override
+            public Void execute(final Connection q2oManagedConnection) throws SQLException
+            {
+               MyObj o = new MyObj();
+               o.stringField = "1";
+               MyObj oInserted = Q2Obj.insert(o);
+
+               Transaction tx = TransactionHelper.suspend();
+
+               // This object will be stored immediately.
+               o2[0] = new MyObj();
+               o2[0].stringField = "2";
+               Q2Obj.insert(o2[0]);
+
+               TransactionHelper.resume(tx);
+
+               // throws exception
+               Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('3')");
+               return null;
+            }
+         });
+      }
+      catch (Exception ignored) { }
+
+      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
+      assertThat(objs).hasSize(1).first().isEqualToComparingFieldByField(o2[0]);
+   }
+
+   /**
+    * Behaviour of connections in implicitly started transaction, when used after suspending the transaction.
+    */
+   @Test
+   public void suspendTransaction5()
+   {
+      final MyObj[] o2 = new MyObj[1];
+      final MyObj[] o3 = new MyObj[1];
+      try {
+         SqlClosure.sqlExecute(new SqlFunction<Void>() {
+            @Override
+            public Void execute(final Connection q2oManagedConnection) throws SQLException
+            {
+               MyObj o = new MyObj();
+               o.stringField = "1";
+               MyObj oInserted = Q2Obj.insert(o);
+
+               Transaction tx = TransactionHelper.suspend();
+
+               o2[0] = new MyObj();
+               o2[0].stringField = "2";
+               // This connection is still part of the suspended transaction.
+               Q2Obj.insert(q2oManagedConnection, o2[0]);
+
+               o3[0] = new MyObj();
+               o3[0].stringField = "3";
+               // This connection is not part of the suspended transaction
+               Connection serverManagedConnection = dataSource.getConnection();
+               Q2Obj.insert(serverManagedConnection, o3[0]);
+               serverManagedConnection.close();
+
+               TransactionHelper.resume(tx);
+
+               // throws exception
+               Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('4')");
+               return null;
+            }
+         });
+      }
+      catch (Exception ignored) { }
+
+      List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
+      assertThat(objs).extracting("stringField").containsOnly("3");
+   }
+
+   /**
+    * Behaviour of connections in explicitly started transaction, when used after suspending the transaction.
     */
    @Test
    public void suspendTransaction2()
@@ -234,20 +291,20 @@ public class TransactionsTest {
          // This object will be stored immediately.
          o2 = new MyObj();
          o2.stringField = "2";
-         Connection connection = dataSource.getConnection();
-         Q2Obj.insert(connection, o2);
-         connection.close();
+         Connection serverManagedConnection = dataSource.getConnection();
+         Q2Obj.insert(serverManagedConnection, o2);
+         serverManagedConnection.close();
 
          TransactionHelper.resume(tx);
 
          // throws exception
-         Q2Sql.executeUpdate("insert into MyObj (stringField, noSuchColumn) values (2, 2)");
+         Q2Sql.executeUpdate("insert into MyObj (noSuchColumn) values ('3')");
 
          TransactionHelper.commit();
 
       }
-      catch (Exception ignored) {
-         ignored.printStackTrace();
+      catch (Exception e) {
+         e.printStackTrace();
          TransactionHelper.rollback();
       }
 
@@ -273,9 +330,9 @@ public class TransactionsTest {
          // This object will be stored immediately.
          MyObj o2 = new MyObj();
          o2.stringField = "2";
-         Connection connection = dataSource.getConnection();
-         Q2Obj.insert(connection, o2);
-         connection.close();
+         Connection serverManagedConnection = dataSource.getConnection();
+         Q2Obj.insert(serverManagedConnection, o2);
+         serverManagedConnection.close();
 
          List<MyObj> objs = Q2ObjList.fromSelect(MyObj.class, "select * from MyObj");
          assertThat(objs).extracting("stringField").containsOnly("2");
