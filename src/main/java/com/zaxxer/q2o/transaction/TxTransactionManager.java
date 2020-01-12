@@ -18,6 +18,8 @@ package com.zaxxer.q2o.transaction;
 
 import javax.sql.DataSource;
 import javax.transaction.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class TxTransactionManager implements TransactionManager, UserTransaction
 {
@@ -38,6 +40,14 @@ public class TxTransactionManager implements TransactionManager, UserTransaction
 
       final TxTransaction newTransaction = new TxTransaction();
       newTransaction.setActive();
+      try {
+         Connection con = dataSource.getConnection();
+         con.setAutoCommit(false);
+         newTransaction.setConnection(con);
+      }
+      catch (SQLException e) {
+         throw new RuntimeException(e);
+      }
       context.setTransaction(newTransaction);
    }
 
