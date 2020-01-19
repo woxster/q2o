@@ -48,8 +48,9 @@ public final class q2o {
       if (mySqlBlobSupport) {
          dataSource = Q2ODataSource.wrap(dataSource);
       }
+      dataSource = initializeTxSimple(dataSource);
       setMySqlMode(true);
-      return initializeTxSimple(dataSource);
+      return dataSource;
    }
 
    /**

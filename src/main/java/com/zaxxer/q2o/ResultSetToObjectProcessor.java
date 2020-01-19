@@ -1,5 +1,7 @@
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
@@ -168,24 +170,7 @@ class ResultSetToObjectProcessor<T> {
          fcInfo = introspected.getFieldColumnInfo(columnName);
       }
 
-      // TODO Im Fall von MySQL muss hier resultSet.getBlob(colIdx) gerufen werden, sonst wird nur der column name als String geliefert.
-      Object columnValue = null;
-      // fcInfo is null in case of a database field but no corresponding entity field.
-      if (fcInfo != null) {
-         if (!q2o.isMySqlMode() || !Blob.class.isAssignableFrom(fcInfo.getType())) {
-            if (!Clob.class.isAssignableFrom(fcInfo.getType())) {
-               columnValue = resultSet.getObject(colIdx);
-            }
-            else {
-               // Sybase: In case of the value is null resultSet.getObject(colIdx) returns the string "null".
-               columnValue = resultSet.getClob(colIdx);
-            }
-         }
-         else {
-            // MySQL: resultSet.getObject(colIdx) returns column name only.
-            columnValue = resultSet.getBlob(colIdx);
-         }
-      }
+      Object columnValue = getObject(colIdx, fcInfo);
 
       // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
       if (tableName.isEmpty() || tableName.equalsIgnoreCase(introspected.getTableName())) {
@@ -214,6 +199,29 @@ class ResultSetToObjectProcessor<T> {
       else {
          processColumnOfJoinedTable(columnName, columnValue, tableName);
       }
+   }
+
+   @Nullable
+   private Object getObject(final int colIdx, final AttributeInfo fcInfo) throws SQLException
+   {
+      Object columnValue = null;
+      // fcInfo is null in case of a database field but no corresponding entity field.
+      if (fcInfo != null) {
+         if (!q2o.isMySqlMode() || !Blob.class.isAssignableFrom(fcInfo.getType())) {
+            if (!Clob.class.isAssignableFrom(fcInfo.getType())) {
+               columnValue = resultSet.getObject(colIdx);
+            }
+            else {
+               // Sybase: In case of the value is null resultSet.getObject(colIdx) returns the string "null".
+               columnValue = resultSet.getClob(colIdx);
+            }
+         }
+         else {
+            // MySQL: resultSet.getObject(colIdx) returns column name as String only.
+            columnValue = resultSet.getBlob(colIdx);
+         }
+      }
+      return columnValue;
    }
 
    /**

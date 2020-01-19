@@ -174,7 +174,7 @@ class DatabaseValueToFieldType {
                typeCorrectedValue = value;
             }
             else {
-               // TODO Not set or H2 throws "Can not set java.lang.Byte field com.zaxxer.q2o.entities.DataTypesNullable.byteToSMALLINT to java.lang.Short".
+               // TODO Do not set or H2 throws "Can not set java.lang.Byte field com.zaxxer.q2o.entities.DataTypesNullable.byteToSMALLINT to java.lang.Short".
             }
          }
          else {

@@ -35,12 +35,13 @@ public class LobTest {
    @Rule
    public ExpectedException thrown = ExpectedException.none();
 
+   // TODO Test MySQL with emulateLocators=false (default) too.
    @Parameterized.Parameters(name = "autocommit={0}, userTx={1} database={2}")
    public static Collection<Object[]> data() {
       Object[][] params = {
 //         {true, true, Database.h2Server}, {true, true, Database.mysql}
-         {true, true, Database.h2Server}, {true, true, Database.mysql}, {true, true, Database.sybase}
-//         {true, true, Database.mysql}
+//         {true, true, Database.h2Server}, {true, true, Database.mysql}, {true, true, Database.sybase}
+         {true, true, Database.mysql}
 //         {true, true, Database.sybase}
 //         {true, true, Database.h2Server}
 //         {true, true, Database.sqlite} // java.sql.Blob not supported.
@@ -181,11 +182,11 @@ public class LobTest {
          MyLob myLob = new MyLob();
          myLob.myBlob = blob;
 
-         // Must be executed before the insert statement is executed or data will not be stored.
          if (database == Database.sybase) {
             // To circumvent Bug: SQLException: JZ037: Value of offset/position/start should be in the range [1, len] where len is length of Large Object[LOB].
             blob.setBytes(1, new byte[]{0});
          }
+         // Must be executed before the insert statement is executed or data will not be stored.
          // MySQL: Not a real Locator Object: Data are hold in-memory, what is not the aim.
          OutputStream outputStream = blob.setBinaryStream(1);
          File img = new File("src/test/resources/image.png");
@@ -210,9 +211,8 @@ public class LobTest {
       try {
          TransactionHelper.beginOrJoinTransaction();
 
-         // TODO Auch das Schließen von ResultSets muss verhindert werden. Siehe try (final ResultSet resultSet = stmt.executeQuery()) in com.zaxxer.q2o.OrmReader.statementToObject(java.sql.PreparedStatement, T, java.lang.Object...).
          MyLob myLobRetrieved = Q2Obj.byId(MyLob.class, 1);
-         // MySQL: no locator object but instead all data are already transfered over the net.
+         // MySQL with emulateLocators=false (default): no locator object but instead all data are already transfered over the net. With emulateLocators=true a real locator object.
          // H2: locator object.
          length = myLobRetrieved.myBlob.length();
          retrievedImg = myLobRetrieved.myBlob.getBytes(1, (int) length);
