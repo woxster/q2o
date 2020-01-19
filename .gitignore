@@ -7,3 +7,4 @@ target
 *.ipr
 *.iws
 /src/test/java/org/sansorm/DataSourcesPrivate.java
+/Test results/

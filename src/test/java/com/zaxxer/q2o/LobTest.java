@@ -9,6 +9,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.sansorm.DataSources;
+import org.sansorm.DataSourcesPrivate;
 import org.sansorm.testutils.Database;
 
 import javax.persistence.*;
@@ -23,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.sansorm.DataSourcesPrivate.getSybaseDataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -38,7 +38,8 @@ public class LobTest {
    @Parameterized.Parameters(name = "autocommit={0}, userTx={1} database={2}")
    public static Collection<Object[]> data() {
       Object[][] params = {
-         {true, true, Database.h2Server}, {true, true, Database.mysql}
+//         {true, true, Database.h2Server}, {true, true, Database.mysql}
+         {true, true, Database.h2Server}, {true, true, Database.mysql}, {true, true, Database.sybase}
 //         {true, true, Database.mysql}
 //         {true, true, Database.sybase}
 //         {true, true, Database.h2Server}
@@ -71,19 +72,20 @@ public class LobTest {
             dataSource = DataSources.getSqLiteDataSource(null);
             break;
          case sybase:
-            dataSource = getSybaseDataSource();
+            dataSource = DataSourcesPrivate.getSybaseDataSource();
             break;
       }
 
       if (withUserTx) {
-         dataSource = q2o.initializeTxSimple(dataSource);
+         if (database == Database.mysql) {
+            dataSource = q2o.initializeTxSimple(dataSource, true);
+         }
+         else {
+            dataSource = q2o.initializeTxSimple(dataSource);
+         }
       }
       else {
          q2o.initializeTxNone(dataSource);
-      }
-
-      if (database == Database.mysql) {
-         q2o.setMySqlMode(true);
       }
 
       dropTable();
@@ -196,7 +198,7 @@ public class LobTest {
 
          TransactionHelper.commit();
       }
-      catch (SQLException | IOException e) {
+      catch (Exception e) {
          TransactionHelper.rollback();
          throw e;
       }
@@ -208,6 +210,7 @@ public class LobTest {
       try {
          TransactionHelper.beginOrJoinTransaction();
 
+         // TODO Auch das Schließen von ResultSets muss verhindert werden. Siehe try (final ResultSet resultSet = stmt.executeQuery()) in com.zaxxer.q2o.OrmReader.statementToObject(java.sql.PreparedStatement, T, java.lang.Object...).
          MyLob myLobRetrieved = Q2Obj.byId(MyLob.class, 1);
          // MySQL: no locator object but instead all data are already transfered over the net.
          // H2: locator object.
@@ -216,7 +219,7 @@ public class LobTest {
 
          TransactionHelper.commit();
       }
-      catch (SQLException e) {
+      catch (Exception e) {
          TransactionHelper.rollback();
          throw e;
       }
@@ -230,10 +233,11 @@ public class LobTest {
    public void blobRawJdbc() throws SQLException, IOException
    {
       int rows = 0;
-      try {
-         TransactionHelper.beginOrJoinTransaction();
+      PreparedStatement stmnt = null;
 
-         Connection con = dataSource.getConnection();
+      TransactionHelper.beginOrJoinTransaction();
+      try (Connection con = dataSource.getConnection()) {
+
          Blob blob = con.createBlob();
          MyLob myLob = new MyLob();
          myLob.myBlob = blob;
@@ -251,13 +255,16 @@ public class LobTest {
          outputStream.close();
          imgInputStream.close();
 
-         PreparedStatement stmnt = con.prepareStatement("insert into MYLOB (MYBLOB) values (?)");
+         stmnt = con.prepareStatement("insert into MYLOB (MYBLOB) values (?)");
          stmnt.setBlob(1, blob);
          rows = stmnt.executeUpdate();
 
          TransactionHelper.commit();
       }
-      catch (SQLException | IOException e) {
+      catch (Exception e) {
+         if (stmnt != null) {
+            stmnt.close();
+         }
          TransactionHelper.rollback();
          throw e;
       }
@@ -265,32 +272,54 @@ public class LobTest {
       assertEquals(1, rows);
 
       long length = 0;
-      try {
-         TransactionHelper.beginOrJoinTransaction();
+
+      TransactionHelper.beginOrJoinTransaction();
+      PreparedStatement ps = null;
+      try (Connection con = dataSource.getConnection()) {
 
          ResultSet rs;
+         String lobQuery = null;
          if (database == Database.mysql) {
             // select ID, sonst in MySQL: SQLException: Emulated BLOB locators must come from a ResultSet with only one table selected, and all primary keys selected
             // "'MYBLOB' MYBLOB": "you must use a column alias with the value of the column to the actual name of the Blob", connector-j-8.0-en.a4.pdf, 35.
-            rs = Q2Sql.executeQuery("select ID, 'MYBLOB' MYBLOB from MYLOB where ID = 1");
+            // MySQL with "... MYBLOB MYBLOB ..." instead of "... 'MYBLOB' MYBLOB ..." and emulateLocators=true: "SQLException: Not a valid escape sequence". when the Blob is read.
+            lobQuery = "select ID, 'MYBLOB' MYBLOB from MYLOB where ID = 1";
+//            rs = Q2Sql.executeQuery(lobQuery);
    //         rs = Q2Sql.executeQuery("SELECT MyLob.id,'myblob' myblob,MyLob.myClob FROM MyLob MyLob WHERE  id=1");
+            ps = con.prepareStatement(lobQuery);
+            rs = ps.executeQuery();
          }
          else {
-            rs = Q2Sql.executeQuery("select MYBLOB from MYLOB where ID = 1");
+            lobQuery = "select MYBLOB from MYLOB where ID = 1";
+//            rs = Q2Sql.executeQuery(lobQuery);
+            ps = con.prepareStatement(lobQuery);
+            rs = ps.executeQuery();
          }
          rs.next();
          // MySQL without emulateLocators=true: not a real locator object but instead all data are already transfered over the net. With emulateLocators=true a locator object.
          // H2: locator object.
          Blob blobRetrieved = rs.getBlob("MYBLOB");
-         // MySQL with "... MYBLOB myBlobAliasName ..." instead of "... 'MYBLOB' myBlobAliasName ..." and emulateLocators=true: "SQLException: Not a valid escape sequence".
-         // MySQL Blob is only valid until ResultSet is closed.
-         length = blobRetrieved.length();
 
-         rs.close();
+         // MySQL: Detaches the locator object
+//         ResultSet rs2 = ps.executeQuery();
+//         rs2.next();
+
+         // Executing more Statements in the transaction does not detach the Lob.
+//         PreparedStatement ps2 = con.prepareStatement(lobQuery);
+//         ResultSet rs2 = ps2.executeQuery();
+//         rs2.next();
+
+         // MySQL: Solved: Blob is only valid until ResultSet or PreparedStatement is closed.
+         ps.close();
+
+         length = blobRetrieved.length();
 
          TransactionHelper.commit();
       }
-      catch (SQLException e) {
+      catch (Exception e) {
+         if (ps != null) {
+            ps.close();
+         }
          TransactionHelper.rollback();
          throw e;
       }

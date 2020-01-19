@@ -325,6 +325,8 @@ public class RefreshTest {
          Right1 rightToDelete = left1.getMiddle().getRight();
          left1.getMiddle().setRight(null);
          left1.getMiddle().setRightId(null);
+         // Middle1.rightId must be annotated as updatable = false to make it work with Hibernate. So q2o does not set this field to null and an exeption is thrown with Q2Obj.delete(rightToDelete): 
+         // java.lang.RuntimeException: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: Referential integrity constraint violation: "MIDDLE1_TABLE_CNST1: PUBLIC.MIDDLE1_TABLE FOREIGN KEY(RIGHTID) REFERENCES PUBLIC.RIGHT1_TABLE(ID) (1)"; SQL statement:
          Q2Obj.update(left1.getMiddle());
          Q2Obj.delete(rightToDelete);
          Q2Sql.executeUpdate("update MIDDLE1_TABLE set rightId = 0 where id = 1");

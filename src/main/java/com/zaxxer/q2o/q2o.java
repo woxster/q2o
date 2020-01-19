@@ -43,6 +43,15 @@ public final class q2o {
       return txDataSource;
    }
 
+   public static DataSource initializeTxSimple(DataSource dataSource, boolean mySqlBlobSupport)
+   {
+      if (mySqlBlobSupport) {
+         dataSource = Q2ODataSource.wrap(dataSource);
+      }
+      setMySqlMode(true);
+      return initializeTxSimple(dataSource);
+   }
+
    /**
     * Use this one if you have custom/provided {@link TransactionManager}, e.g. to run within web app container.
     *

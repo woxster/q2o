@@ -20,18 +20,19 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
 
 /**
- * Closes all statements, created or prepared on this connection.
+ * Closes all statements created or prepared on this connection when Connection#close() is called.
  */
 class ConnectionProxy implements InvocationHandler
 {
    private final ArrayList<Statement> statements;
    private final Connection connection;
 
-   private ConnectionProxy(Connection connection)
+   ConnectionProxy(Connection connection)
    {
       this.connection = connection;
       this.statements = new ArrayList<>();
@@ -48,19 +49,34 @@ class ConnectionProxy implements InvocationHandler
          }
          finally {
             statements.clear();
+            connection.close();
          }
       }
 
-      final Object ret = method.invoke(connection, args);
-      if (ret instanceof Statement) {
+      Object ret = method.invoke(connection, args);
+      if (ret instanceof PreparedStatement) {
          statements.add((Statement) ret);
+         ret = PreparedStatementProxy.wrap((PreparedStatement) ret);
+      }
+      else if (ret instanceof Statement) {
+         statements.add((Statement) ret);
+         ret = StatementProxy.wrap((Statement) ret);
       }
 
       return ret;
    }
 
-   static Connection wrapConnection(final Connection connection) {
+   static Connection wrap(final Connection connection) {
       ConnectionProxy handler = new ConnectionProxy(connection);
       return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(), new Class[] { Connection.class }, handler);
+   }
+
+   /**
+    *
+    * @return The unproxied connection.
+    */
+   Connection getConnection()
+   {
+      return connection;
    }
 }
