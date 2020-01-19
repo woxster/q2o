@@ -18,16 +18,12 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class GeneralTestConfigurator {
 
-   public enum Database {
-      mysql, sqlite, h2
-   }
-
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-         {false, Database.h2}, {true, Database.h2}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
+         {false, Database.h2Server}, {true, Database.h2Server}, {false, Database.mysql}, {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
 //         {false, Database.mysql}
-//         {false, Database.h2}
+//         {false, Database.h2Server}
 //         {true, Database.sqlite}
       });
    }
@@ -44,8 +40,8 @@ public class GeneralTestConfigurator {
    public void setUp() throws Exception {
 
       switch (database) {
-         case h2:
-            dataSource = DataSources.getH2DataSource();
+         case h2Server:
+            dataSource = DataSources.getH2ServerDataSource();
             break;
          case mysql:
             dataSource = DataSources.getMySqlDataSource("q2o", "root", "yxcvbnm");

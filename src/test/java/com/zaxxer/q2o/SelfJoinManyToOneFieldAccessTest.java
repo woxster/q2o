@@ -40,7 +40,7 @@ public class SelfJoinManyToOneFieldAccessTest {
    @Test
    public void selfJoinColumnH2() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -92,7 +92,7 @@ public class SelfJoinManyToOneFieldAccessTest {
    @Test
    public void listFromClause() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(
@@ -126,7 +126,7 @@ public class SelfJoinManyToOneFieldAccessTest {
    @Test
    public void insertListNotBatched() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          executeUpdate(

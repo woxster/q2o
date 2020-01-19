@@ -1,9 +1,6 @@
 package com.zaxxer.q2o.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -15,7 +12,7 @@ public class FarRight1 {
    private int id;
    private String type;
 
-   @Id
+   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
       return id;
    }

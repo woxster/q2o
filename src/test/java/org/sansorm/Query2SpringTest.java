@@ -21,12 +21,12 @@ public class Query2SpringTest
 {
    @BeforeClass
    public static void beforeClass() throws Throwable {
-      q2o.initializeWithSpringTxSupport(DataSources.getH2DataSource());
+      q2o.initializeWithSpringTxSupport(DataSources.getH2ServerDataSource());
       Q2Sql.executeUpdate(
          "CREATE TABLE TargetClass2 ("
-            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"
-            + " string VARCHAR(128),"
-            + " someDate TIMESTAMP," // H2 is case-insensitive to column case, ResultSet::getMetaData will return it as SOMEDATE
+            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+            + ", string VARCHAR(128)"
+            + ", someDate TIMESTAMP" // H2 is case-insensitive to column case, ResultSet::getMetaData will return it as SOMEDATE
             + " )");
    }
 

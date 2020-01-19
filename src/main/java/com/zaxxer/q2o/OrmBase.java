@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Blob;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -31,11 +32,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class OrmBase
 {
-   private static final Map<String, String> csvCache;
+   private static final Map<String, String> columnsCsvCache;
    private static Logger logger = LoggerFactory.getLogger(OrmBase.class.getName());
 
    static {
-      csvCache = new ConcurrentHashMap<>();
+      columnsCsvCache = new ConcurrentHashMap<>();
    }
 
    protected OrmBase() {
@@ -90,14 +91,19 @@ Callers:
    protected static <T> String getColumnsCsv(final Class<T> clazz, final String... tablePrefix)
    {
       final String cacheKey = (tablePrefix == null || tablePrefix.length == 0 ? clazz.getName() : tablePrefix[0] + clazz.getName());
-      return csvCache.computeIfAbsent(cacheKey, key -> {
+      return columnsCsvCache.computeIfAbsent(cacheKey, key -> {
         final StringBuilder sb = new StringBuilder();
 
         final Introspected introspected = Introspected.getInstance(clazz);
         final AttributeInfo[] selectableFields = introspected.getSelectableFcInfos();
         for (AttributeInfo selectableField : selectableFields) {
            if (!selectableField.isJoinFieldWithSecondTable()) {
-              sb.append(selectableField.getFullyQualifiedDelimitedFieldName(tablePrefix)).append(',');
+              String name = selectableField.getFullyQualifiedDelimitedFieldName(tablePrefix);
+              if (Blob.class.isAssignableFrom(selectableField.getType()) && q2o.isMySqlMode()) {
+                  // TODO delimited column names unterstützen
+                 name = "'" + selectableField.getColumnName() + "' " + selectableField.getColumnName();
+              }
+              sb.append(name).append(',');
            }
         }
 

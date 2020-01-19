@@ -23,7 +23,7 @@ public class Q2ObjListTest extends GeneralTestConfigurator {
    public void deleteByWhereClause() {
       try {
          switch (database) {
-            case h2:
+            case h2Server:
                Q2Sql.executeUpdate(
                   "CREATE TABLE mytest ("
                      + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"

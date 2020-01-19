@@ -10,6 +10,7 @@ import javax.transaction.UserTransaction;
 public final class q2o {
 
    private static volatile boolean mySqlMode;
+   static volatile DataSource dataSource;
 
    private q2o() {
    }
@@ -22,6 +23,7 @@ public final class q2o {
    public static void initializeTxNone(DataSource dataSource) {
       deinitialize();
       SqlClosure.setDefaultDataSource(dataSource);
+      q2o.dataSource = dataSource;
    }
 
    /**
@@ -37,6 +39,7 @@ public final class q2o {
       TransactionHelper.setUserTransaction(txManager);
       DataSource txDataSource = txManager.getTxDataSource();
       SqlClosure.setDefaultDataSource(txDataSource);
+      q2o.dataSource = txDataSource;
       return txDataSource;
    }
 
@@ -52,6 +55,7 @@ public final class q2o {
       TransactionHelper.setTransactionManager(txManager);
       TransactionHelper.setUserTransaction(userTx);
       SqlClosure.setDefaultDataSource(dataSource);
+      q2o.dataSource = dataSource;
    }
 
    /**
@@ -62,6 +66,7 @@ public final class q2o {
       SqlClosure.isSpringTxAware = true;
       SqlClosure.setDefaultDataSource(dataSource);
       SqlClosure.activateSpringDefaultExceptionTranslator(dataSource);
+      q2o.dataSource = dataSource;
    }
 
    /**
@@ -74,6 +79,7 @@ public final class q2o {
       SqlClosure.isSpringTxAware = false;
       SqlClosure.unsetDefaultExceptionTranslator();
       setMySqlMode(false);
+      q2o.dataSource = null;
    }
 
    static boolean isMySqlMode() {

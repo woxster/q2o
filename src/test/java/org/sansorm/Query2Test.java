@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.sansorm.testutils.Database;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.sql.Timestamp;
@@ -28,7 +29,7 @@ public class Query2Test extends GeneralTestConfigurator {
 
       super.setUp();
 
-      if (database == Database.h2) {
+      if (database == Database.h2Server) {
          Q2Sql.executeUpdate(
             "CREATE TABLE TargetClass2 ("
                + " id INTEGER NOT NULL IDENTITY PRIMARY KEY,"

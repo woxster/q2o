@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sansorm.DataSources;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -20,7 +21,6 @@ import java.util.Set;
 import static com.zaxxer.sansorm.SansOrm.deinitialize;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.sansorm.DataSources.getH2DataSource;
 
 @RunWith(Parameterized.class)
 public class SqlClosureSansOrmCompatibilityTest {
@@ -40,7 +40,7 @@ public class SqlClosureSansOrmCompatibilityTest {
 
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException {
-      final JdbcDataSource dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
+      final JdbcDataSource dataSource = DataSources.getH2ServerDataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
          SansOrm.initializeTxSimple(dataSource);
       }

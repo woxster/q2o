@@ -403,7 +403,8 @@ abstract class AttributeInfo {
 
    protected void processJoinColumnAnnotation()
    {
-      final JoinColumn joinColumnAnnotation = extractJoinColumnAnnotation();
+      final JoinColumn joinColumnAnnotation;
+      joinColumnAnnotation = extractJoinColumnAnnotation();
       if (isSelfJoinField()) {
          setColumnName(joinColumnAnnotation.name());
       }

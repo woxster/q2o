@@ -23,13 +23,16 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 
+/**
+ * A transaction aware datasource.
+ */
 class TxDataSource implements InvocationHandler
 {
-   private final DataSource delegate;
+   private final DataSource dataSource;
 
-   private TxDataSource(final DataSource delegate)
+   private TxDataSource(final DataSource dataSource)
    {
-      this.delegate = delegate;
+      this.dataSource = dataSource;
    }
 
    static DataSource getWrappedDataSource(final DataSource dataSource)
@@ -51,8 +54,8 @@ class TxDataSource implements InvocationHandler
          }
          else
          {
-            Connection connection = delegate.getConnection();
-            final Connection wrappedConnection = ConnectionProxy.getWrappedConnection(connection);
+            Connection connection = dataSource.getConnection();
+            final Connection wrappedConnection = TxConnection.getWrappedConnection(connection);
             if (transaction != null) {
                transaction.setConnection(wrappedConnection);
             }
@@ -61,21 +64,24 @@ class TxDataSource implements InvocationHandler
          }
       }
 
-      return method.invoke(delegate, args);
+      return method.invoke(dataSource, args);
    }
 
-   static class ConnectionProxy implements InvocationHandler
+   /**
+    * A transaction aware connection throwing exceptions when rollback() or commit() is called on it while there is a transaction running.
+    */
+   static class TxConnection implements InvocationHandler
    {
-      private final Connection delegate;
+      private final Connection connection;
 
-      private ConnectionProxy(final Connection delegate)
+      private TxConnection(final Connection connection)
       {
-         this.delegate = delegate;
+         this.connection = connection;
       }
 
       static Connection getWrappedConnection(final Connection delegate) {
-         final ConnectionProxy handler = new ConnectionProxy(delegate);
-         return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(), new Class[] { Connection.class }, handler);
+         final TxConnection handler = new TxConnection(delegate);
+         return (Connection) Proxy.newProxyInstance(TxConnection.class.getClassLoader(), new Class[] { Connection.class }, handler);
       }
 
       @Override
@@ -91,11 +97,11 @@ class TxDataSource implements InvocationHandler
             case "commit":
                throw new IllegalStateException("Calling Connection.commit() is not legal during a transaction.");
             case "rollback":
-               throw new IllegalStateException("Calling Connection.commit() is not legal during a transaction.");
+               throw new IllegalStateException("Calling Connection.rollback() is not legal during a transaction.");
             }
          }
 
-         return method.invoke(delegate, args);
+         return method.invoke(connection, args);
       }
    }
 }

@@ -169,6 +169,8 @@ final class Introspected {
    }
 
    private boolean initialized;
+   private Introspected joinedEntity;
+   private List<AttributeInfo> oneToOneAnnotatedFcInfos;
 
    /**
     * Constructor. Introspect the specified class and cache various annotation data about it.
@@ -184,6 +186,7 @@ final class Introspected {
       this.updatableFcInfos = new ArrayList<>();
       this.allFcInfos = new ArrayList<>();
       this.idFcInfos = new ArrayList<>();
+      this.oneToOneAnnotatedFcInfos = new ArrayList<>();
    }
 
    static Introspected getInstance(@NotNull Class<?> clazz) {
@@ -219,6 +222,7 @@ final class Introspected {
                   if (fcInfo.isJoinFieldWithSecondTable()) {
                      actualTypeToFieldColumnInfo.put(fcInfo.getActualType(), fcInfo);
                      tableNameToClassCaseInsensitive.putIfAbsent(fcInfo.getTableName(), fcInfo.getActualType());
+                     joinedEntity = new Introspected(fcInfo.getActualType()).introspect();
                   }
 
                   if (fcInfo.isIdField) {
@@ -246,6 +250,9 @@ final class Introspected {
                      }
                      if (fcInfo.isUpdatable() == null || fcInfo.isUpdatable()) {
                         updatableFcInfos.add(fcInfo);
+                     }
+                     if (fcInfo.isOneToOneAnnotated) {
+                        oneToOneAnnotatedFcInfos.add(fcInfo);
                      }
                   }
                }
@@ -296,9 +303,12 @@ final class Introspected {
    AttributeInfo getFieldColumnInfo(String tableName, String columnName) {
       logger.debug("tableName={} columnName={}", tableName, columnName);
       Class<?> cls = tableNameToClassCaseInsensitive.get(tableName);
-      if (cls == null) {
-         logger.error("{} is not reachable from {}", tableName, getTableName());
-         throw new RuntimeException(tableName + " is not reachable from " + getTableName());
+      if (cls == null && joinedEntity != null) {
+         return joinedEntity.getFieldColumnInfo(tableName, columnName);
+      }
+      else if (cls == null) {
+         logger.warn("{} is not reachable from {}", tableName, getTableName());
+         return null;
       }
       else {
          Introspected introspected = getInstance(cls);
@@ -831,5 +841,14 @@ final class Introspected {
          ", selectableFcInfos=" + Arrays.toString(selectableFcInfos) +
          ", initialized=" + initialized +
          '}';
+   }
+
+   boolean isForeignKeyField(AttributeInfo fcInfo)
+   {
+      oneToOneAnnotatedFcInfos.forEach(attributeInfo -> {
+//         if (attributeInfo.joinC) {
+//         }
+      });
+      return false;
    }
 }

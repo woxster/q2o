@@ -20,7 +20,7 @@ public class SQLExceptionTranslatorSpringTest {
 
    @BeforeClass
    public static void beforeClass() throws Exception {
-      dataSource = DataSources.getH2DataSource();
+      dataSource = DataSources.getH2ServerDataSource();
    }
 
    @AfterClass

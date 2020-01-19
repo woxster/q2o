@@ -267,7 +267,8 @@ class OrmWriter extends OrmBase
     *
     * @return newly created statement
     */
-   private static String createSqlForUpdate(final Introspected introspected, final AttributeInfo[] fieldColumnInfos, final Set<String> excludedColumns) {
+   private static String createSqlForUpdate(final Introspected introspected, final AttributeInfo[] fieldColumnInfos, final Set<String> excludedColumns)
+   {
       final StringBuilder sqlSB = new StringBuilder("UPDATE ").append(introspected.getDelimitedTableName()).append(" SET ");
       for (final AttributeInfo fcInfo : fieldColumnInfos) {
 //         if (excludedColumns == null || !excludedColumns.contains(column)) {
@@ -309,6 +310,7 @@ class OrmWriter extends OrmBase
       }
 
       try {
+         logger.debug("{}", stmt);
          stmt.executeUpdate();
       }
       catch (Exception e) {
@@ -351,7 +353,12 @@ class OrmWriter extends OrmBase
             else if (object != null) {
                try {
                   if (!fcInfo.isSelfJoinField()) {
-                     stmt.setObject(parameterIndex, object, sqlType);
+                     if (!(object instanceof Blob)) {
+                        stmt.setObject(parameterIndex, object, sqlType);
+                     }
+                     else {
+                        stmt.setBlob(parameterIndex, (Blob) object);
+                     }
                   }
                   else {
                      stmt.setObject(parameterIndex, fcInfo.getValue(item), sqlType);

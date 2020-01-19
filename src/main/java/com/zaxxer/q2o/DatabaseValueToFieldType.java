@@ -163,9 +163,18 @@ class DatabaseValueToFieldType {
             else if (value instanceof Clob) {
                typeCorrectedValue = readClob((Clob) value);
             }
+//            else if (Blob.class.isAssignableFrom(fieldType)) {
+//               typeCorrectedValue =
+//            }
             else if ("PGobject".equals(valueType.getSimpleName())
                && "citext".equalsIgnoreCase(((PGobject) value).getType())) {
                typeCorrectedValue = ((PGobject) value).getValue();
+            }
+            else if (Blob.class.isAssignableFrom(fieldType)) {
+               typeCorrectedValue = value;
+            }
+            else {
+               // TODO Not set or H2 throws "Can not set java.lang.Byte field com.zaxxer.q2o.entities.DataTypesNullable.byteToSMALLINT to java.lang.Short".
             }
          }
          else {
@@ -376,6 +385,20 @@ class DatabaseValueToFieldType {
       }
       else if (fieldType == Long.class || fieldType == long.class) {
          columnValue = new BigInteger(v).longValue();
+      }
+      else if (Blob.class.isAssignableFrom(fieldType)) {
+         // MySQL, H2 provides byte[] for BLOB
+         try {
+            Connection con = q2o.dataSource.getConnection();
+            // createBlob: H2: SQLFeatureNotSupportedException
+            Blob blob = con.createBlob();
+            blob.setBytes(1, (byte[]) columnValue);
+            columnValue = blob;
+            con.close();
+         }
+         catch (SQLException e) {
+            logger.error("", e);
+         }
       }
       return columnValue;
    }

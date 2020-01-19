@@ -4,6 +4,7 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.h2.jdbcx.JdbcDataSource;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import javax.sql.DataSource;
@@ -13,18 +14,21 @@ public final class DataSources {
    private DataSources() {
    }
 
-   public static JdbcDataSource getH2DataSource() {
-      return getH2DataSource(true);
+   public static JdbcDataSource getH2ServerDataSource() {
+      return getH2ServerDataSource(true);
    }
 
-   public static JdbcDataSource getH2DataSource(boolean autoCommit) {
+   public static JdbcDataSource getH2ServerDataSource(boolean autoCommit) {
       final JdbcDataSource dataSource = new JdbcDataSource();
-      dataSource.setUrl(String.format("jdbc:h2:mem:q2o;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
-
       // Not "USER=root" or an exception is thrown: org.h2.jdbc.JdbcSQLException: Duplicate property "USER" [90066-191]
-//      dataSource.setUser("root");
-//      dataSource.setUrl(String.format("jdbc:h2:./h2/db:q2o;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;PASSWORD=yxcvbnm;autocommit=%s", autoCommit ? "on" : "off"));
+      dataSource.setUrl(String.format("jdbc:h2:./h2/db:q2o;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;PASSWORD=yxcvbnm;autocommit=%s", autoCommit ? "on" : "off"));
+      dataSource.setUser("root");
+      return dataSource;
+   }
 
+   public static JdbcDataSource getH2ImMemoryDataSource(boolean autoCommit) {
+      final JdbcDataSource dataSource = new JdbcDataSource();
+            dataSource.setUrl(String.format("jdbc:h2:mem:q2o;DB_CLOSE_DELAY=-1;autocommit=%s", autoCommit ? "on" : "off"));
       return dataSource;
    }
 
@@ -41,11 +45,11 @@ public final class DataSources {
 //      dataSource.setGenerateSimpleParameterMetadata(true);
 
       MysqlDataSource dataSource = new MysqlDataSource();
-      dataSource.setUrl(String.format("jdbc:mysql://localhost/%s?user=%s&password=%s&generateSimpleParameterMetadata=true&serverTimezone=UTC", dbName, user, password)); //
+      dataSource.setUrl(String.format("jdbc:mysql://localhost/%s?user=%s&password=%s&generateSimpleParameterMetadata=true&emulateLocators=true&serverTimezone=UTC", dbName, user, password)); //
       return dataSource;
    }
 
-   public static DataSource getSqLiteDataSource(final File db) {
+   public static DataSource getSqLiteDataSource(@Nullable final File db) {
       String url = db == null
          ? "jdbc:sqlite::memory:"
          : "jdbc:sqlite:" + db.getAbsolutePath();
@@ -64,4 +68,5 @@ public final class DataSources {
       hconfig.setMaximumPoolSize(1);
       return new HikariDataSource(hconfig);
    }
+
 }

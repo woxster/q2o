@@ -3,6 +3,7 @@ package com.zaxxer.q2o;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sansorm.DataSources;
 
 import javax.persistence.Entity;
 import javax.sql.DataSource;
@@ -11,7 +12,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sansorm.DataSources.getH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -22,7 +22,7 @@ public class AutoCommitTest {
    @Before
    public void setUp() throws Exception
    {
-      DataSource dataSource = getH2DataSource(true);
+      DataSource dataSource = DataSources.getH2ServerDataSource(true);
       q2o.initializeTxNone(dataSource);
       Q2Sql.executeUpdate(
          "CREATE TABLE MyObj (stringField VARCHAR(128))");

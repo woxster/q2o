@@ -70,6 +70,24 @@ public class AnnotationsCheckTest {
       entityTransaction.commit();
    }
 
+   /*
+create table LEFT_TABLE
+(
+    id      int auto_increment
+        primary key,
+    type    varchar(255) null,
+    rightId int          null,
+    constraint FK28xe8c39iar275kyt91787vn3
+        foreign key (rightId) references RIGHT_TABLE (id)
+);
+
+create table RIGHT_TABLE
+(
+    id   int auto_increment
+        primary key,
+    type varchar(255) null
+);
+    */
    @Test
    public void join2Tables() {
       Q2Sql.executeUpdate("insert into RIGHT_TABLE (type) values('right')");
@@ -80,11 +98,57 @@ public class AnnotationsCheckTest {
       Left left = entityManager.find(Left.class, 1);
       entityTransaction.commit();
       assertEquals("Left{id=1, type='left', right=Right{id=1, type='right'}}", left.toString());
+
+      entityTransaction.begin();
+      left = entityManager.find(Left.class, 1);
+      entityTransaction.commit();
+
+      assertEquals("Left{id=1, type='left', right=Right{id=1, type='right'}}", left.toString());
    }
 
+   /*
+create table LEFT1_TABLE
+(
+    id       int auto_increment
+        primary key,
+    type     varchar(255) null,
+    middleId int          null,
+    constraint FK1x56ye2wv8bxcgqx41ssl25ta
+        foreign key (middleId) references MIDDLE1_TABLE (id)
+);
+
+create table MIDDLE1_TABLE
+(
+    id      int auto_increment
+        primary key,
+    rightId int          null,
+    type    varchar(255) null,
+    constraint FK52q3vwcdjbqxgnbrob5wkiqld
+        foreign key (rightId) references RIGHT1_TABLE (id)
+);
+
+create table RIGHT1_TABLE
+(
+    id         int auto_increment
+        primary key,
+    farRightId int          null,
+    type       varchar(255) null,
+    constraint FKtg2lle9fkkvjh65u4x7j2k02k
+        foreign key (farRightId) references FAR_RIGHT1_TABLE (id)
+);
+
+create table FAR_RIGHT1_TABLE
+(
+    id   int auto_increment
+        primary key,
+    type varchar(255) null
+);
+    */
    @Test
    public void join3Tables() {
+
       entityTransaction.begin();
+
       Left1 left1 = new Left1();
       left1.setType("left1");
       Middle1 middle1 = new Middle1();
@@ -93,6 +157,16 @@ public class AnnotationsCheckTest {
 
       entityManager.persist(middle1);
       entityManager.persist(left1);
+
       entityTransaction.commit();
+
+      entityTransaction.begin();
+
+      left1 = entityManager.find(Left1.class, 1);
+
+      entityTransaction.commit();
+
+      assertEquals("Left1{id=1, type='left1', middle=Middle1{id=1, type='Middle1', rightId=null, right=null}}", left1.toString());
    }
+
 }

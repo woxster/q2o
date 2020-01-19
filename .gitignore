@@ -6,3 +6,4 @@ target
 *.iml
 *.ipr
 *.iws
+/src/test/java/org/sansorm/DataSourcesPrivate.java

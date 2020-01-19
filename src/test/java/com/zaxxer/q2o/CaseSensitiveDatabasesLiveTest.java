@@ -1,6 +1,6 @@
 package com.zaxxer.q2o;
 
-import com.zaxxer.q2o.entities.InsertObjectH2;
+import com.zaxxer.q2o.entities.DelimitedFields;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.DataSources;
@@ -23,7 +23,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
    @Test
    public void insertObject() {
 
-      q2o.initializeTxNone(DataSources.getH2DataSource());
+      q2o.initializeTxNone(DataSources.getH2ServerDataSource());
       try {
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
@@ -34,11 +34,11 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = Q2Obj.insert(new InsertObjectH2());
+         DelimitedFields obj = Q2Obj.insert(new DelimitedFields());
          assertEquals(1, obj.Id);
-         obj = Q2Obj.byId(InsertObjectH2.class, obj.Id);
+         obj = Q2Obj.byId(DelimitedFields.class, obj.Id);
          assertNotNull(obj);
-         int count = Q2Obj.countFromClause(InsertObjectH2.class, "\"Delimited field name\" = 'delimited field value'");
+         int count = Q2Obj.countFromClause(DelimitedFields.class, "\"Delimited field name\" = 'delimited field value'");
          assertEquals(1, count);
       }
       finally {
@@ -50,7 +50,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
    @Test
    public void updateObjectGeneratedId() {
 
-      q2o.initializeTxNone(DataSources.getH2DataSource());
+      q2o.initializeTxNone(DataSources.getH2ServerDataSource());
       try {
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("
@@ -61,7 +61,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
 
          String delimitedFieldValue = "delimited field value";
          String defaultCaseValue = "default case value";
-         InsertObjectH2 obj = new InsertObjectH2();
+         DelimitedFields obj = new DelimitedFields();
          obj = Q2Obj.insert(obj);
          obj.defaultCase = "changed";
          obj = Q2Obj.update(obj);
@@ -89,7 +89,7 @@ public class CaseSensitiveDatabasesLiveTest extends GeneralTestConfigurator {
       }
 
       try {
-         JdbcDataSource dataSource = DataSources.getH2DataSource();
+         JdbcDataSource dataSource = DataSources.getH2ServerDataSource();
          q2o.initializeTxNone(dataSource);
          Q2Sql.executeUpdate(
             " CREATE TABLE \"Test Class\" ("

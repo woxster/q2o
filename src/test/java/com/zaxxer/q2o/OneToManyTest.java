@@ -132,7 +132,7 @@ public class OneToManyTest {
 
    @Test
    public void twoLibrariesOneBookEach() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -180,7 +180,7 @@ public class OneToManyTest {
 
    @Test
    public void oneLibraryOneBookOneChapter() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -231,7 +231,7 @@ public class OneToManyTest {
 
    @Test
    public void oneLibraryTwoBooksOneOfThemTwoChapters() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -310,7 +310,7 @@ public class OneToManyTest {
 
    @Test
    public void oneLibraryOneBookTwoChapters() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -383,7 +383,7 @@ public class OneToManyTest {
 
    @Test
    public void twoLibrariesOneBookWitOneChapterEach() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -438,7 +438,7 @@ public class OneToManyTest {
 
    @Test
    public void oneToMany() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -474,7 +474,7 @@ public class OneToManyTest {
 
    @Test
    public void libraryTwoBooks() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(
@@ -516,7 +516,7 @@ public class OneToManyTest {
 
    @Test
    public void libraryTwoBooksAsList() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()){
          Q2Sql.executeUpdate(

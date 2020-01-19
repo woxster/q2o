@@ -23,15 +23,17 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-
+/**
+ * Closes all statements, created or prepared on this connection.
+ */
 class ConnectionProxy implements InvocationHandler
 {
    private final ArrayList<Statement> statements;
-   private final Connection delegate;
+   private final Connection connection;
 
-   private ConnectionProxy(Connection delegate)
+   private ConnectionProxy(Connection connection)
    {
-      this.delegate = delegate;
+      this.connection = connection;
       this.statements = new ArrayList<>();
    }
 
@@ -49,7 +51,7 @@ class ConnectionProxy implements InvocationHandler
          }
       }
 
-      final Object ret = method.invoke(delegate, args);
+      final Object ret = method.invoke(connection, args);
       if (ret instanceof Statement) {
          statements.add((Statement) ret);
       }
@@ -57,8 +59,8 @@ class ConnectionProxy implements InvocationHandler
       return ret;
    }
 
-   static Connection wrapConnection(final Connection delegate) {
-      ConnectionProxy handler = new ConnectionProxy(delegate);
+   static Connection wrapConnection(final Connection connection) {
+      ConnectionProxy handler = new ConnectionProxy(connection);
       return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(), new Class[] { Connection.class }, handler);
    }
 }

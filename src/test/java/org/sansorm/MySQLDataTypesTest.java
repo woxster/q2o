@@ -10,7 +10,7 @@ import org.assertj.core.api.Assertions;
 import org.hamcrest.CoreMatchers;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
-import org.sansorm.testutils.GeneralTestConfigurator;
+import org.sansorm.testutils.Database;
 
 import javax.sql.DataSource;
 import java.math.BigInteger;
@@ -53,7 +53,7 @@ public class MySQLDataTypesTest {
       dataSource = DataSources.getMySqlDataSource("q2o", "root", "yxcvbnm");
       q2o.initializeTxNone(dataSource);
       q2o.setMySqlMode(true);
-      GeneralTestConfigurator.Database database = GeneralTestConfigurator.Database.mysql;
+      Database database = Database.mysql;
 
       Q2Sql.executeUpdate("drop table if exists DataTypes");
       Q2Sql.executeUpdate(
@@ -130,10 +130,10 @@ public class MySQLDataTypesTest {
 
             + ", longToUnsignedInt INT UNSIGNED"
 
-            + (database == GeneralTestConfigurator.Database.mysql ?
+            + (database == Database.mysql ?
                   ", enumToEnumTypeString ENUM('one', 'two', 'three')"
                   + ", enumToEnumTypeOrdinal ENUM('one', 'two', 'three')"
-            : database == GeneralTestConfigurator.Database.h2 ?
+            : database == Database.h2Server ?
                ", enumToEnumTypeString varchar(8)"
                + ", enumToEnumTypeOrdinal int"
             : "")

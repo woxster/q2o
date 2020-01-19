@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sansorm.DataSources;
 
 import javax.persistence.Entity;
 import javax.sql.DataSource;
@@ -17,7 +18,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sansorm.DataSources.getH2DataSource;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -46,7 +46,7 @@ public class TransactionsTest {
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException
    {
-      dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
+      dataSource = DataSources.getH2ServerDataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
          dataSource = q2o.initializeTxSimple(dataSource);
       }

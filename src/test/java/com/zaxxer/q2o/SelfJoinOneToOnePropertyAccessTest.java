@@ -22,7 +22,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
    @Test
    public void selfJoinColumnH2() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -74,7 +74,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
    @Test
    public void listFromClause() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(
@@ -108,7 +108,7 @@ public class SelfJoinOneToOnePropertyAccessTest {
    @Test
    public void insertListNotBatched() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
          Q2Sql.executeUpdate(

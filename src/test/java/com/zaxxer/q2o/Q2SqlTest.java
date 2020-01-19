@@ -17,7 +17,7 @@ public class Q2SqlTest extends GeneralTestConfigurator {
    @Test
    public void executeQuery() throws SQLException {
       switch (database) {
-         case h2:
+         case h2Server:
             Q2Sql.executeUpdate(
                "CREATE TABLE MY_TABLE ("
                   + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"

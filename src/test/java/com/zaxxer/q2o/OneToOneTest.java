@@ -29,10 +29,14 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class OneToOneTest {
 
+   @Rule
+   public ExpectedException thrown = ExpectedException.none();
+
    @Parameterized.Parameters(name = "withSpringTxSupport={0}")
    public static Collection<Object[]> data() {
    	return Arrays.asList(new Object[][] {
-   		{false}, {true}
+//   		{false}, {true}
+   		{true}
    	});
    }
 
@@ -42,13 +46,14 @@ public class OneToOneTest {
 
    @Before
    public void setUp() throws Exception {
-      ds = DataSources.getH2DataSource();
+      ds = DataSources.getH2ServerDataSource();
       if (!withSpringTx) {
          q2o.initializeTxNone(ds);
       }
       else {
          q2o.initializeWithSpringTxSupport(ds);
       }
+      TableCreatorH2.dropTables();
    }
 
    @After
@@ -61,8 +66,22 @@ public class OneToOneTest {
       }
    }
 
-   @Rule
-   public ExpectedException thrown = ExpectedException.none();
+   private void createLeftAndRightTable() {
+      Q2Sql.executeUpdate(
+         "CREATE TABLE LEFT_TABLE ("
+            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+            + ", type VARCHAR(128)"
+            + ", rightId INTEGER NULL"
+            + ", CONSTRAINT cnst1 FOREIGN KEY(rightId) REFERENCES LEFT_TABLE (id)"
+
+            + ")");
+
+      Q2Sql.executeUpdate(
+         " CREATE TABLE RIGHT_TABLE ("
+            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
+            + ", type VARCHAR(128)"
+            + ")");
+   }
 
    @Test
    public void getValue() throws NoSuchFieldException, InvocationTargetException, IllegalAccessException {
@@ -172,23 +191,6 @@ public class OneToOneTest {
       }
    }
 
-   private void createLeftAndRightTable() {
-      Q2Sql.executeUpdate(
-         "CREATE TABLE LEFT_TABLE ("
-            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-            + ", type VARCHAR(128)"
-            + ", rightId INTEGER NULL"
-            + ", CONSTRAINT cnst1 FOREIGN KEY(rightId) REFERENCES LEFT_TABLE (id)"
-
-            + ")");
-
-      Q2Sql.executeUpdate(
-         " CREATE TABLE RIGHT_TABLE ("
-            + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-            + ", type VARCHAR(128)"
-            + ")");
-   }
-
    @Test
    public void join2TablesTwoRows() throws SQLException {
       try (Connection con = ds.getConnection()){
@@ -241,32 +243,14 @@ public class OneToOneTest {
    @Test
    public void join3Tables() throws SQLException {
       try (Connection con = ds.getConnection()) {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT1_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE MIDDLE1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", rightId INTEGER UNIQUE"
-               + ", CONSTRAINT MIDDLE1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT1_TABLE (id)"
-               + ")");
+         TableCreatorH2.createTables();
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", CONSTRAINT RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE1_TABLE (rightId)"
-               + ")");
+         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (type) values('type: right')");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type, rightId) values('type: middle', 1)");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
 
-         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type) values('type: left')");
-         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
-         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (id, type) values(1, 'type: right')");
-
-         Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE where LEFT1_TABLE.id = MIDDLE1_TABLE.id and MIDDLE1_TABLE.RIGHTID = RIGHT1_TABLE.ID and LEFT1_TABLE.id = ?", 1);
+         Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE where LEFT1_TABLE.middleId = MIDDLE1_TABLE.id and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.ID and LEFT1_TABLE.id = ?", 1);
 
          assertNotNull(left.getMiddle());
          assertNotNull(left.getMiddle().getRight());
@@ -277,41 +261,21 @@ public class OneToOneTest {
          throw e;
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE MIDDLE1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT1_TABLE");
+         TableCreatorH2.dropTables();
       }
    }
 
    @Test
    public void join3TablesSelectOrderChanged() throws SQLException {
       try (Connection con = ds.getConnection()) {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT1_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE MIDDLE1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", rightId INTEGER UNIQUE"
-               + ", CONSTRAINT MIDDLE1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT1_TABLE (id)"
-               + ")");
+         TableCreatorH2.createTables();
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", CONSTRAINT RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE1_TABLE (rightId)"
-               + ")");
+         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (type) values('type: right')");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type, rightId) values('type: middle', 1)");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
 
-         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type) values('type: left')");
-         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
-         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (id, type) values(1, 'type: right')");
-
-         Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT1_TABLE, LEFT1_TABLE, MIDDLE1_TABLE where LEFT1_TABLE.id = MIDDLE1_TABLE.id and MIDDLE1_TABLE.RIGHTID = RIGHT1_TABLE.ID and LEFT1_TABLE.id = ?", 1);
+         Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT1_TABLE, LEFT1_TABLE, MIDDLE1_TABLE where LEFT1_TABLE.middleId = MIDDLE1_TABLE.id and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.ID and LEFT1_TABLE.id = ?", 1);
 
          System.out.println(left);
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left.toString());
@@ -321,54 +285,32 @@ public class OneToOneTest {
          throw e;
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE MIDDLE1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT1_TABLE");
+         TableCreatorH2.dropTables();
       }
    }
 
    @Test
    public void leftJoin3Tables() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT1_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE MIDDLE1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", rightId INTEGER UNIQUE"
-               + ", CONSTRAINT MIDDLE1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT1_TABLE (id)"
-               + ")");
+         TableCreatorH2.createTables();
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", CONSTRAINT RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE1_TABLE (rightId)"
-               + ")");
-
-         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type) values('type: left')");
-         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (id, type) values(1, 'type: middle')");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type) values('type: middle')");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
          // No Right entity available.
 
          Left1 left1 = Q2ObjList.fromSelect(
             Left1.class,
             "select * from LEFT1_TABLE" +
-               " left join MIDDLE1_TABLE on LEFT1_TABLE.id = MIDDLE1_TABLE.id" +
+               " left join MIDDLE1_TABLE on LEFT1_TABLE.middleId = MIDDLE1_TABLE.id" +
                " left join RIGHT1_TABLE on MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
                " where LEFT1_TABLE.id = 1").get(0);
-         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left1.toString());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=null, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left1.toString());
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE MIDDLE1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT1_TABLE");
+         TableCreatorH2.dropTables();
       }
 
    }
@@ -376,39 +318,13 @@ public class OneToOneTest {
    @Test
    public void join4Tables() throws SQLException {
       try (Connection con = ds.getConnection()) {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT1_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE MIDDLE1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", rightId INTEGER UNIQUE"
-               + ", CONSTRAINT MIDDLE1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT1_TABLE (id)"
-               + ")");
+         TableCreatorH2.createTables();
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", farRightId INTEGER UNIQUE"
-               + ", CONSTRAINT RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE1_TABLE (rightId)"
-               + ")");
-
-         Q2Sql.executeUpdate(
-            " CREATE TABLE FAR_RIGHT1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", CONSTRAINT FAR_RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES RIGHT1_TABLE (farRightId)"
-               + ")");
-
-         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type) values('type: left')");
-         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
-         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (id, type, farRightId) values(1, 'type: right', 1)");
-         Q2Sql.executeUpdate("insert into FAR_RIGHT1_TABLE (id, type) values(1, 'type: far right')");
+         Q2Sql.executeUpdate("insert into FAR_RIGHT1_TABLE (type) values('type: far right')");
+         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (type, farRightId) values('type: right', 1)");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type, rightId) values('type: middle', 1)");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
 
          // Retrieve the whole graph with all values
          Left1 left = Q2Obj.fromSelect(Left1.class,
@@ -433,7 +349,7 @@ public class OneToOneTest {
             " LEFT1_TABLE.ID = MIDDLE1_TABLE.ID" +
             " AND MIDDLE1_TABLE.ID = 1");
 
-         assertEquals("Left1{id=1, type='null', middle=Middle1{id=1, type='null', rightId=0, right=null}}", left1.toString());
+         assertEquals("Left1{id=1, type='null', middle=Middle1{id=1, type='null', rightId=null, right=null}}", left1.toString());
 
 
       }
@@ -442,10 +358,7 @@ public class OneToOneTest {
          throw e;
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE MIDDLE1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE FAR_RIGHT1_TABLE");
+         TableCreatorH2.dropTables();
       }
    }
 
@@ -478,11 +391,11 @@ public class OneToOneTest {
    @Test
    public void flattenedTableJoin() {
       try {
-         Q2Sql.executeUpdate("CREATE TABLE customers (\n" +
-            " customer_id INTEGER NOT NULL GENERATED BY DEFAULT AS IDENTITY,\n" +
-            " last_name VARCHAR(255),\n" +
-            " first_name VARCHAR(255),\n" +
-            " email VARCHAR(255)\n" +
+         Q2Sql.executeUpdate("CREATE TABLE customers (" +
+            " customer_id INTEGER NOT NULL GENERATED BY DEFAULT AS IDENTITY," +
+            " last_name VARCHAR(255)," +
+            " first_name VARCHAR(255)," +
+            " email VARCHAR(255)" +
             ")");
 
          Q2Sql.executeUpdate("CREATE TABLE orders (" +
@@ -495,18 +408,22 @@ public class OneToOneTest {
             "   order_id INTEGER NOT NULL," +
             "   product_number VARCHAR(64)," +
             "   item_count INTEGER NOT NULL," +
-            "   CONSTRAINT item_order_fk FOREIGN KEY (order_id) REFERENCES orders (order_id)," +
+            "   CONSTRAINT item_order_fk FOREIGN KEY (order_id) REFERENCES orders (order_id)" +
             ")");
 
          Q2Sql.executeUpdate("insert into customers (last_name, first_name, email) values('last name', 'first name', 'email address')");
          Q2Sql.executeUpdate("insert into orders (customer_id) values(1)");
          Q2Sql.executeUpdate("insert into order_items (order_id, product_number, item_count) values(1, 'product number', 123)");
 
-         OrderSummary orderSummary = Q2Obj.fromSelect(OrderSummary.class, "SELECT o.order_id, first_name || ' ' || last_name AS full_name, cast (SUM(oi.item_count) as int) AS total_items " +
-            "FROM orders o, customers c, order_items oi " +
-            "WHERE c.customer_id = o.customer_id AND oi.order_id = o.order_id AND o.order_id = ?", 1);
+         OrderSummary orderSummary = Q2Obj.fromSelect(
+            OrderSummary.class,
+            "SELECT o.order_id" +
+               ", first_name || ' ' || last_name AS full_name" +
+               ", cast (SUM(oi.item_count) as int) AS total_items" +
+            " FROM orders o, customers c, order_items oi " +
+            " WHERE c.customer_id = o.customer_id AND oi.order_id = o.order_id AND o.order_id = ?", 1);
 
-         System.out.println(orderSummary);
+         assertEquals("OrderSummary{orderId=1, fullName='first name last name', itemCount=123}", orderSummary.toString());
 
       }
       catch (Exception e) {
@@ -514,6 +431,8 @@ public class OneToOneTest {
          throw e;
       }
       finally {
+         Q2Sql.executeUpdate("alter table if exists orders drop constraint if exists order_cust_fk");
+         Q2Sql.executeUpdate("alter table if exists order_items drop constraint if exists item_order_fk");
          Q2Sql.executeUpdate("DROP TABLE customers");
          Q2Sql.executeUpdate("DROP TABLE orders");
          Q2Sql.executeUpdate("DROP TABLE order_items");

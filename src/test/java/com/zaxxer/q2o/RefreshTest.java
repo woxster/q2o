@@ -2,6 +2,7 @@ package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
 import com.zaxxer.q2o.entities.Left1;
+import com.zaxxer.q2o.entities.Right1;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.sansorm.DataSources;
@@ -14,7 +15,6 @@ import javax.persistence.Table;
 import java.sql.*;
 
 import static com.zaxxer.q2o.Q2Obj.insert;
-import static com.zaxxer.q2o.Q2Sql.executeUpdate;
 import static org.junit.Assert.*;
 
 /**
@@ -179,10 +179,10 @@ public class RefreshTest {
    @Test
    public void refreshObjectH2() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE TestClass ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
                + "field1 VARCHAR(128), "
@@ -195,7 +195,7 @@ public class RefreshTest {
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "update TestClass set field1 = 'changed'");
 
          TestClass obj2 = Q2Obj.refresh(con, obj);
@@ -204,7 +204,7 @@ public class RefreshTest {
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE TestClass");
       }
    }
@@ -212,10 +212,10 @@ public class RefreshTest {
    @Test
    public void refreshObjectH2Null() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE TestClass ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
                + "field1 VARCHAR(128), "
@@ -228,7 +228,7 @@ public class RefreshTest {
          assertNotNull(obj);
          assertEquals("value1", obj.field1);
 
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "update TestClass set field1 = NULL");
 
          TestClass obj2 = Q2Obj.refresh(con, obj);
@@ -237,7 +237,7 @@ public class RefreshTest {
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE TestClass");
       }
    }
@@ -255,10 +255,10 @@ public class RefreshTest {
    @Test
    public void refreshObjectCompositePrimaryKeyH2() throws SQLException {
 
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             " CREATE TABLE TestClass2 ("
                + "id1 VARCHAR(128) NOT NULL, "
                + "id2 VARCHAR(128) NOT NULL, "
@@ -282,7 +282,7 @@ public class RefreshTest {
          assertNotNull(obj);
          assertNull(obj.field);
 
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "update TestClass2 set field = 'changed' where id1 = " + id1 + " and id2 = " + id2);
 
          TestClass2 obj2 = Q2Obj.refresh(con, obj);
@@ -291,7 +291,7 @@ public class RefreshTest {
 
       }
       finally {
-         executeUpdate(
+         Q2Sql.executeUpdate(
             "DROP TABLE TestClass2");
       }
    }
@@ -303,45 +303,30 @@ public class RefreshTest {
     */
    @Test
    public void refreshObjectLeftJoinedTables() throws SQLException {
-      JdbcDataSource ds = DataSources.getH2DataSource();
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
       q2o.initializeTxNone(ds);
       try (Connection con = ds.getConnection()) {
-         Q2Sql.executeUpdate(
-            "CREATE TABLE LEFT1_TABLE ("
-               + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
-               + ", type VARCHAR(128)"
-               + ")");
+         TableCreatorH2.createTables();
 
-         Q2Sql.executeUpdate(
-            " CREATE TABLE MIDDLE1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", rightId INTEGER UNIQUE"
-               + ", CONSTRAINT MIDDLE1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES LEFT1_TABLE (id)"
-               + ")");
-
-         Q2Sql.executeUpdate(
-            " CREATE TABLE RIGHT1_TABLE ("
-               + " id INTEGER UNIQUE"
-               + ", type VARCHAR(128)"
-               + ", CONSTRAINT RIGHT1_TABLE_cnst1 FOREIGN KEY(id) REFERENCES MIDDLE1_TABLE (rightId)"
-               + ")");
-
-         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type) values('type: left')");
-         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (id, type, rightId) values(1, 'type: middle', 1)");
-         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (id, type) values(1, 'type: right')");
+         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (type) values('type: right')");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type, rightId) values('type: middle', 1)");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
 
          // Load Left1
          Left1 left1 = Q2ObjList.fromSelect(
             Left1.class,
             "select * from LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE" +
-               " where LEFT1_TABLE.id = MIDDLE1_TABLE.id" +
+               " where LEFT1_TABLE.middleId = MIDDLE1_TABLE.id" +
                " and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
                " and LEFT1_TABLE.id = 1").get(0);
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left1.toString());
 
          // Delete Right entity
-         Q2Obj.delete(left1.getMiddle().getRight());
+         Right1 rightToDelete = left1.getMiddle().getRight();
+         left1.getMiddle().setRight(null);
+         left1.getMiddle().setRightId(null);
+         Q2Obj.update(left1.getMiddle());
+         Q2Obj.delete(rightToDelete);
          Q2Sql.executeUpdate("update MIDDLE1_TABLE set rightId = 0 where id = 1");
 
          // Reload Left1 to ensure reference on Right has gone
@@ -360,9 +345,7 @@ public class RefreshTest {
 
       }
       finally {
-         Q2Sql.executeUpdate("DROP TABLE LEFT1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE MIDDLE1_TABLE");
-         Q2Sql.executeUpdate("DROP TABLE RIGHT1_TABLE");
+         TableCreatorH2.dropTables();
       }
 
    }

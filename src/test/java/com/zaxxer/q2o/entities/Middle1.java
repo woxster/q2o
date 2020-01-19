@@ -12,7 +12,7 @@ public class Middle1 {
    private int id;
    private String type;
    private Right1 right;
-   private int rightId;
+   private Integer rightId;
 
    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
@@ -45,7 +45,7 @@ public class Middle1 {
 // org.hibernate.MappingException: Repeated column in mapping for entity: com.zaxxer.q2o.entities.Right1 column: farRightId (should be mapped with insert="false" update="false")
    //	at org.hibernate.mapping.PersistentClass.checkColumnDuplication(PersistentClass.java:862)
    @Column(updatable = false, insertable = false)
-   public int getRightId() {
+   public Integer getRightId() {
       return rightId;
    }
 
@@ -59,7 +59,7 @@ public class Middle1 {
          '}';
    }
 
-   public void setRightId(int rightId) {
+   public void setRightId(Integer rightId) {
       this.rightId = rightId;
    }
 

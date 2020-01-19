@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.sansorm.DataSources;
+import org.sansorm.testutils.Database;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.io.Closeable;
@@ -45,7 +46,7 @@ public class VariousTest extends GeneralTestConfigurator {
    }
 
    public HikariDataSource createTables(File db) {
-      if (database == Database.h2) {
+      if (database == Database.h2Server) {
          Q2Sql.executeUpdate(
             "CREATE TABLE IF NOT EXISTS TargetClassSQL ("
                + "id integer NOT NULL IDENTITY PRIMARY KEY,"

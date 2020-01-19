@@ -2,7 +2,6 @@ package com.zaxxer.q2o.entities;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
@@ -10,7 +9,7 @@ import javax.persistence.Table;
  * @since 19.05.18
  */
 @Table(name = "\"Test Class\"")
-public class InsertObjectH2 {
+public class DelimitedFields {
    @javax.persistence.Id
    @GeneratedValue
    public

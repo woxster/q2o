@@ -10,7 +10,7 @@ import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.sansorm.testutils.GeneralTestConfigurator;
+import org.sansorm.testutils.Database;
 
 import javax.sql.DataSource;
 import java.math.BigInteger;
@@ -31,19 +31,19 @@ import static org.junit.Assert.*;
  * @since 2019-03-27
  */
 @RunWith(Parameterized.class)
-public class MySQLDataTypesNullTest {
+public class DataTypesNullTest {
 
    private DataSource dataSource;
 
    @Parameterized.Parameters(name = "springTxSupport={0}, database={1}")
    public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-            {false, GeneralTestConfigurator.Database.h2}, {true, GeneralTestConfigurator.Database.h2} , {false, GeneralTestConfigurator.Database.mysql} , {true, GeneralTestConfigurator.Database.mysql}, {false, GeneralTestConfigurator.Database.sqlite}, {true, GeneralTestConfigurator.Database.sqlite}
+            {false, Database.h2Server}, {true, Database.h2Server} , {false, Database.mysql} , {true, Database.mysql}, {false, Database.sqlite}, {true, Database.sqlite}
 
-//         {false, GeneralTestConfigurator.Database.mysql}
-//         {false, GeneralTestConfigurator.Database.mysql}, {false, GeneralTestConfigurator.Database.h2}
-//         {false, GeneralTestConfigurator.Database.h2}
-//         {false, GeneralTestConfigurator.Database.sqlite}
+//         {false, Database.mysql}
+//         {false, GeneralTestConfigurator.Database.mysql}, {false, GeneralTestConfigurator.Database.h2Server}
+//         {false, Database.h2Server}
+//         {false, Database.sqlite}
       });
    }
 
@@ -51,7 +51,7 @@ public class MySQLDataTypesNullTest {
    public boolean withSpringTx;
 
    @Parameterized.Parameter(1)
-   public GeneralTestConfigurator.Database database;
+   public Database database;
 
    private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");;
    @Rule
@@ -61,8 +61,8 @@ public class MySQLDataTypesNullTest {
    public void setUp() throws Exception {
 
       switch (database) {
-         case h2:
-            dataSource = DataSources.getH2DataSource();
+         case h2Server:
+            dataSource = DataSources.getH2ServerDataSource();
             break;
          case mysql:
             dataSource = DataSources.getMySqlDataSource("q2o", "root", "yxcvbnm");
@@ -79,14 +79,14 @@ public class MySQLDataTypesNullTest {
          q2o.initializeWithSpringTxSupport(dataSource);
       }
 
-      if (database == GeneralTestConfigurator.Database.mysql) {
+      if (database == Database.mysql) {
          q2o.setMySqlMode(true);
       }
 
       Q2Sql.executeUpdate("drop table if exists DataTypes");
       String sql = "CREATE TABLE DataTypes ("
 
-         + (database == GeneralTestConfigurator.Database.sqlite ? "id INTEGER PRIMARY KEY"
+         + (database == Database.sqlite ? "id INTEGER PRIMARY KEY"
             : " id INTEGER NOT NULL AUTO_INCREMENT")
 
          + ", myInteger INTEGER"
@@ -160,21 +160,21 @@ public class MySQLDataTypesNullTest {
          + ", intToMEDIUMINT MEDIUMINT"
          + ", longToINT_UNSIGNED INT UNSIGNED"
 
-         + (database == GeneralTestConfigurator.Database.mysql ?
+         + (database == Database.mysql ?
             ", enumToENUMString ENUM('one', 'two', 'three')"
             + ", enumToENUMOrdinal ENUM('one', 'two', 'three')"
-         : database == GeneralTestConfigurator.Database.h2 ?
+         : database == Database.h2Server ?
             ", enumToENUMString varchar(8)"
             + ", enumToENUMOrdinal int"
          // No enum type in SQLite
-         : database == GeneralTestConfigurator.Database.sqlite ?
+         : database == Database.sqlite ?
             ", enumToENUMString  VARCHAR(5)"
             + ", enumToENUMOrdinal  int"
          : "")
          + ", enumToINTOrdinal INT"
          + ", enumToVARCHARString VARCHAR(5)"
 
-         + (database == GeneralTestConfigurator.Database.sqlite ? ""  : ", PRIMARY KEY (id)")
+         + (database == Database.sqlite ? ""  : ", PRIMARY KEY (id)")
          + " )";
 //      System.out.println(sql);
       Q2Sql.executeUpdate(sql);
@@ -216,7 +216,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-04-01 02:00:00.000";
             break;
-         case h2:
+         case h2Server:
             expected = "2019-04-01 00:00:00.000";
             break;
          case sqlite:
@@ -255,7 +255,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-04-01 23:30:31.000";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "2019-04-01 23:30:30.555";
             break;
@@ -291,7 +291,10 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "1970-01-01 00:00:01.0";
             break;
-         case h2:
+         case h2Server:
+            expected = "1970-01-01 00:00:01.0";
+            break;
+         case h2InMemory:
             expected = "1970-01-01 00:00:00.999999999";
             break;
          case sqlite:
@@ -339,7 +342,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "02:00:00"; // "02:00:00";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "11:10:11";
             break;
@@ -373,7 +376,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-04-01 22:00:00.000";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "2019-04-01 21:59:59.999";
             break;
@@ -409,7 +412,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-04-01 21:51:00.0";
             break;
-         case h2:
+         case h2Server:
             expected = "2019-04-01 21:50:59.999";
             break;
          case sqlite:
@@ -438,7 +441,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-12-20 15:38:39.000";
             break;
-         case h2:
+         case h2Server:
             expected = "2019-12-20 15:38:39.413";
             break;
          case sqlite:
@@ -466,7 +469,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-12-20 01:00:00.000";
             break;
-         case h2:
+         case h2Server:
             expected = "2019-12-20 00:00:00.000";
             break;
          case sqlite:
@@ -494,7 +497,10 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "1970-01-01 16:38:48.000";
             break;
-         case h2:
+         case h2Server:
+            expected = "1970-01-01 16:38:48.000";
+            break;
+         case h2InMemory:
             expected = "1970-01-01 16:38:48.437";
             break;
          case sqlite:
@@ -529,7 +535,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-03-31 01:00:00.000";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "2019-04-01 00:00:00.000";
             break;
@@ -562,7 +568,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-03-31 01:00:00.000";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "2019-04-01 00:00:00.000";
             break;
@@ -595,7 +601,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019-03-31 01:00:00.000";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "2019-04-01 00:00:00.000";
             break;
@@ -618,7 +624,7 @@ public class MySQLDataTypesNullTest {
     */
    @Test
    public void intToYEAR() {
-//      if (database ==GeneralTestConfigurator.Database.h2) {
+//      if (database ==GeneralTestConfigurator.Database.h2Server) {
 //         return;
 //      }
       DataTypesNullable dataTypes = new DataTypesNullable();
@@ -630,7 +636,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = 2019;
             break;
-         case h2:
+         case h2Server:
             expected = 0;
             break;
          case sqlite:
@@ -685,6 +691,7 @@ public class MySQLDataTypesNullTest {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setStringToYEAR("2019");
       Q2Obj.insert(dataTypes);
+      // TODO h2 in server/client Betrieb: Can not set java.lang.String field com.zaxxer.q2o.entities.DataTypesNullable.stringToYEAR to java.lang.Short
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
 
       String expected = "";
@@ -692,7 +699,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019";
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -726,7 +733,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "2019";
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -772,7 +779,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "11:59:59";
             break;
-         case h2:
+         case h2Server:
          case sqlite:
             expected = "10:59:59";
             break;
@@ -797,13 +804,13 @@ public class MySQLDataTypesNullTest {
    public void stringToTIME2() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setStringToTIME("105959");
-      if (database == GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Cannot parse \"TIME\" constant");
       }
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
       // CLARIFY
-      String expected = database == GeneralTestConfigurator.Database.mysql
+      String expected = database == Database.mysql
          ? "11:59:59"
          : "105959";
       assertEquals(expected, dataTypes1.getStringToTIME());
@@ -840,7 +847,10 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "1970-01-01 22:00:00.0";
             break;
-         case h2:
+         case h2Server:
+            expected = "1970-01-01 22:00:00.0";
+            break;
+         case h2InMemory:
             expected = "1970-01-01 21:59:59.999";
             break;
          case sqlite:
@@ -864,7 +874,10 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = "1970-01-01 22:00:00.000";
             break;
-         case h2:
+         case h2Server:
+            expected = "1970-01-01 22:00:00.000";
+            break;
+         case h2InMemory:
          case sqlite:
             expected = "1970-01-01 21:59:59.999";
             break;
@@ -891,9 +904,9 @@ public class MySQLDataTypesNullTest {
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
       String expected =
-         database == GeneralTestConfigurator.Database.mysql ? "1970-01-01 01:00:00.0"
-         : database == GeneralTestConfigurator.Database.h2 ? "1970-01-01 00:00:00.0"
-         : database == GeneralTestConfigurator.Database.sqlite ? "1970-01-01 21:59:59.999"
+         database == Database.mysql ? "1970-01-01 01:00:00.0"
+         : database == Database.h2Server ? "1970-01-01 00:00:00.0"
+         : database == Database.sqlite ? "1970-01-01 21:59:59.999"
          : "";
       assertEquals(expected, dataTypes1.getTimestampToDATE().toString());
    }
@@ -928,7 +941,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getStringToBINARY();
             break;
-         case h2:
+         case h2Server:
             expected = "\u00124";
             break;
          case sqlite:
@@ -953,7 +966,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getStringToVARBINARY();
             break;
-         case h2:
+         case h2Server:
             expected = "\u00124";
             break;
          case sqlite:
@@ -976,7 +989,7 @@ public class MySQLDataTypesNullTest {
       byte[] expected;
       switch (database) {
          case mysql:
-         case h2:
+         case h2Server:
          case sqlite:
             expected = dataTypes.getByteArrayToVARBINARY();
             break;
@@ -1000,7 +1013,7 @@ public class MySQLDataTypesNullTest {
    public void byteToBIT8() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setByteToBIT8((byte) 0b00001000);
-      if (database == GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Can not set java.lang.Byte field com.zaxxer.q2o.entities.DataTypesNullable.byteToBIT8 to java.lang.Boolean");
       }
       Q2Obj.insert(dataTypes);
@@ -1027,14 +1040,14 @@ public class MySQLDataTypesNullTest {
       dataTypes.setByteArrayToBIT64(new byte[]{
          (byte)1, (byte)2, (byte)3, (byte)4,
       });
-      if (database ==GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Data conversion error converting \"01020304\"");
       }
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
 
       byte[] expected = new byte[0];
-      if (database == GeneralTestConfigurator.Database.mysql) {
+      if (database == Database.mysql) {
          expected = new byte[]{
                (byte)0,
                (byte)0,
@@ -1046,7 +1059,7 @@ public class MySQLDataTypesNullTest {
                (byte)4
             };
       }
-      else if (database == GeneralTestConfigurator.Database.sqlite){
+      else if (database == Database.sqlite){
          expected = new byte[]{
             1, 2, 3, 4
          };
@@ -1067,7 +1080,7 @@ public class MySQLDataTypesNullTest {
    public void shortToBIT16() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setShortToBIT16(Short.MAX_VALUE);
-      if (database ==GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Can not set java.lang.Short field com.zaxxer.q2o.entities.DataTypesNullable.shortToBIT16 to java.lang.Boolean");
       }
       Q2Obj.insert(dataTypes);
@@ -1079,7 +1092,7 @@ public class MySQLDataTypesNullTest {
    public void intToBIT32() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setIntToBIT32(Integer.MAX_VALUE);
-      if (database ==GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Can not set java.lang.Integer field com.zaxxer.q2o.entities.DataTypesNullable.intToBIT32 to java.lang.Boolean");
       }
       Q2Obj.insert(dataTypes);
@@ -1091,7 +1104,7 @@ public class MySQLDataTypesNullTest {
    public void longToBIT64() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setLongToBIT64(Long.MAX_VALUE);
-      if (database ==GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Can not set java.lang.Long field com.zaxxer.q2o.entities.DataTypesNullable.longToBIT64 to java.lang.Boolean");
       }
       Q2Obj.insert(dataTypes);
@@ -1120,7 +1133,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getShortToTINYINT();
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -1143,7 +1156,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getIntToTINYINT();;
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -1166,7 +1179,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getLongToTINYINT();;
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -1189,7 +1202,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getByteToSMALLINT();
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -1221,7 +1234,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getIntToSMALLINT();
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -1244,7 +1257,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             expected = dataTypes.getLongToSMALLINT();
             break;
-         case h2:
+         case h2Server:
             expected = null;
             break;
          case sqlite:
@@ -1259,7 +1272,7 @@ public class MySQLDataTypesNullTest {
    public void bigintToBIGINT() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setBigintToBIGINT(BigInteger.valueOf(Long.MAX_VALUE));
-      if (database ==GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Data conversion error");
       }
       Q2Obj.insert(dataTypes);
@@ -1315,7 +1328,7 @@ public class MySQLDataTypesNullTest {
    public void longToINT_UNSIGNED() {
       DataTypesNullable dataTypes = new DataTypesNullable();
       dataTypes.setLongToINT_UNSIGNED(((long)Integer.MAX_VALUE * 2) + 1);
-      if (database ==GeneralTestConfigurator.Database.h2) {
+      if (database == Database.h2Server) {
          thrown.expectMessage("Numeric value out of range");
       }
       Q2Obj.insert(dataTypes);
@@ -1380,7 +1393,7 @@ public class MySQLDataTypesNullTest {
          case mysql:
             assertNotNull(dataTypes.getEnumToENUMString());
             break;
-         case h2:
+         case h2Server:
             break;
          case sqlite:
             break;

@@ -5,6 +5,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.sansorm.testutils.Database;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.sql.PreparedStatement;
@@ -30,7 +31,7 @@ public class QueryTest extends GeneralTestConfigurator {
 
       super.setUp();
 
-      if (database == Database.h2) {
+      if (database == Database.h2Server) {
          Q2Sql.executeUpdate(
             "CREATE TABLE target_class1 ("
                + "id INTEGER NOT NULL IDENTITY PRIMARY KEY, "
@@ -136,10 +137,19 @@ public class QueryTest extends GeneralTestConfigurator {
 
       assertThat(target.getString()).isEqualTo("Timestamp");
       assertThat(target.getTimestamp().getClass()).isEqualTo(Timestamp.class);
-      assertThat(target.getTimestamp().toString()).isEqualTo(
-         database == Database.mysql
-            || database == Database.sqlite ? "2019-04-14 07:11:21.0"
-                                           : "2019-04-14 07:11:21.0000002");
+      String expected = "";
+      switch (database) {
+         case mysql:
+         case sqlite:
+            expected = "2019-04-14 07:11:21.0";
+            break;
+         case h2Server:
+            expected = "2019-04-14 07:11:21.0";
+            break;
+         default:
+            expected = "2019-04-14 07:11:21.0000002";
+      }
+      assertThat(target.getTimestamp().toString()).isEqualTo(expected);
    }
 
    @Test

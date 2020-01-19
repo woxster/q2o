@@ -1,12 +1,10 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CompositeKey;
+import com.zaxxer.q2o.entities.FarRight1;
 import com.zaxxer.q2o.entities.Left;
 import org.junit.Test;
-import org.sansorm.testutils.DummyConnection;
-import org.sansorm.testutils.DummyParameterMetaData;
-import org.sansorm.testutils.DummyStatement;
-import org.sansorm.testutils.GeneralTestConfigurator;
+import org.sansorm.testutils.*;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -89,7 +87,7 @@ public class Q2ObjTest extends GeneralTestConfigurator {
    @Test
    public void byIdWithTarget() {
       try {
-         if (database == Database.h2) {
+         if (database == Database.h2Server) {
             Q2Sql.executeUpdate(
                "CREATE TABLE LEFT_TABLE ("
                   + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"
@@ -177,7 +175,7 @@ public class Q2ObjTest extends GeneralTestConfigurator {
    public void updateIncludeColumns() {
       try {
          switch (database) {
-            case h2:
+            case h2Server:
             Q2Sql.executeUpdate(
                "CREATE TABLE IncludeColumns ("
                   + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
@@ -227,7 +225,7 @@ public class Q2ObjTest extends GeneralTestConfigurator {
    public void updateIncludeColumnsOmitted() {
       try {
          switch (database) {
-            case h2:
+            case h2Server:
                Q2Sql.executeUpdate(
                   "CREATE TABLE IncludeColumns ("
                      + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
@@ -317,13 +315,13 @@ public class Q2ObjTest extends GeneralTestConfigurator {
    public void unknownFieldDelivered() throws SQLException {
       try {
          switch (database) {
-            case h2:
+            case h2Server:
                Q2Sql.executeUpdate(
                   "CREATE TABLE MyClass ("
                      + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
                      + ", note VARCHAR(128)"
                      + ", note2 VARCHAR(128)"
-                     + ", note3 VARCHAR(128)"
+                     + ", notExistingInEntity VARCHAR(128)"
                      + ")");
                break;
             case mysql:
@@ -332,7 +330,7 @@ public class Q2ObjTest extends GeneralTestConfigurator {
                      + " id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT"
                      + ", note VARCHAR(128)"
                      + ", note2 VARCHAR(128)"
-                     + ", note3 VARCHAR(128)"
+                     + ", notExistingInEntity VARCHAR(128)"
                      + ")");
                break;
             case sqlite:
@@ -341,13 +339,13 @@ public class Q2ObjTest extends GeneralTestConfigurator {
                      + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
                      + ", note VARCHAR(128)"
                      + ", note2 VARCHAR(128)"
-                     + ", note3 VARCHAR(128)"
+                     + ", notExistingInEntity VARCHAR(128)"
                      + ")");
                break;
          }
 
          Q2Sql.executeUpdate(
-            "insert into MyClass (note, note2, note3) values('inserted', 'inserted', 'inserted')");
+            "insert into MyClass (note, note2, notExistingInEntity) values('inserted', 'inserted', 'inserted')");
 
          MyClass obj = Q2Obj.fromSelect(MyClass.class, "select * from MyClass");
          obj = Q2Obj.fromClause(MyClass.class, "id = 1");
@@ -368,6 +366,33 @@ public class Q2ObjTest extends GeneralTestConfigurator {
       }
    }
 
+   @Test
+   public void setNull()
+   {
+      if (database == Database.h2Server) {
+
+         try {
+            TableCreatorH2.createTables();
+
+            FarRight1 obj = new FarRight1();
+            obj.setType("farright1");
+            Q2Obj.insert(obj);
+
+            FarRight1 farRight1 = Q2Obj.byId(FarRight1.class, 1);
+            assertEquals("farright1", farRight1.getType());
+
+            obj.setType(null);
+            Q2Obj.update(obj);
+
+            farRight1 = Q2Obj.byId(FarRight1.class, 1);
+            assertNull(farRight1.getType());
+         }
+         finally {
+            TableCreatorH2.dropTables();
+         }
+      }
+
+   }
 
    // ######### Utility methods ######################################################
 

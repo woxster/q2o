@@ -317,7 +317,7 @@ public class IntrospectedTest
 
    @Test
    public void getColumnNames() {
-      Introspected introspected = new Introspected(InsertObjectH2.class);
+      Introspected introspected = new Introspected(DelimitedFields.class);
       introspected.introspect();
       String[] columnNames = introspected.getColumnNames();
       // Preserve field order!!!
@@ -763,5 +763,25 @@ public class IntrospectedTest
       Field enumToENUMString = TestClass.class.getDeclaredField("enumToENUMString");
       FieldInfo info = new FieldInfo(enumToENUMString, TestClass.class);
       assertNull(info.getEnumConstant("null"));
+   }
+
+   @Test
+   public void threeColumnsJoin()
+   {
+      Introspected introspected = Introspected.getInstance(Left1.class);
+      AttributeInfo fcInfo = introspected.getFieldColumnInfo("RIGHT1_TABLE", "type");
+//      System.out.println(fcInfo);
+      assertNotNull(fcInfo);
+   }
+
+   @Test
+   public void joinFieldId()
+   {
+      Introspected introspected = Introspected.getInstance(Middle1.class);
+      AttributeInfo fcInfo = introspected.getFieldColumnInfo("MIDDLE1_TABLE", "rightId");
+      AttributeInfo[] updatableFcInfos = introspected.getUpdatableFcInfos();
+      // TODO Muss rightId liefern. Siehe RefreshTest.refreshObjectLeftJoinedTables
+//      System.out.println(introspected.oneToOneAnnotatedFcInfos.get(0).joinColumnAnnotation.name());
+      assertTrue(fcInfo.isUpdatable());
    }
 }

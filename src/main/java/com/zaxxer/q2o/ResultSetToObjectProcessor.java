@@ -1,9 +1,7 @@
 package com.zaxxer.q2o;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -150,14 +148,48 @@ class ResultSetToObjectProcessor<T> {
       if (OrmBase.isIgnoredColumn(ignoredColumns, columnName)) {
          return;
       }
+      String tableName = null;
+      AttributeInfo fcInfo = null;
+      tableName = Optional.ofNullable(metaData.getTableName(colIdx)).orElse("");
+//      if (tableName.isEmpty() || tableName.equalsIgnoreCase(introspected.getTableName())) {
+//         fcInfo = !tableName.isEmpty()
+//            ? introspected.getFieldColumnInfo(tableName, columnName)
+//            : introspected.getFieldColumnInfo(columnName);
+//      }
 
-      final Object columnValue = resultSet.getObject(colIdx);
-      String tableName = Optional.ofNullable(metaData.getTableName(colIdx)).orElse("");
+      if (!tableName.isEmpty()) {
+         fcInfo = introspected.getFieldColumnInfo(tableName, columnName);
+         if (fcInfo == null) {
+            // OneToOneTest.flattenedTableJoin()
+            fcInfo = introspected.getFieldColumnInfo(columnName);
+         }
+      }
+      else {
+         fcInfo = introspected.getFieldColumnInfo(columnName);
+      }
+
+      // TODO Im Fall von MySQL muss hier resultSet.getBlob(colIdx) gerufen werden, sonst wird nur der column name als String geliefert.
+      Object columnValue = null;
+      // fcInfo is null in case of a database field but no corresponding entity field.
+      if (fcInfo != null) {
+         if (!q2o.isMySqlMode() || !Blob.class.isAssignableFrom(fcInfo.getType())) {
+            if (!Clob.class.isAssignableFrom(fcInfo.getType())) {
+               columnValue = resultSet.getObject(colIdx);
+            }
+            else {
+               // Sybase: In case of the value is null resultSet.getObject(colIdx) returns the string "null".
+               columnValue = resultSet.getClob(colIdx);
+            }
+         }
+         else {
+            // MySQL: resultSet.getObject(colIdx) returns column name only.
+            columnValue = resultSet.getBlob(colIdx);
+         }
+      }
+
       // tableName is empty when aliases as in "SELECT (t.string_from_number + 1) as string_from_number " were used. See org.sansorm.QueryTest.testConverterLoad().
       if (tableName.isEmpty() || tableName.equalsIgnoreCase(introspected.getTableName())) {
-         final AttributeInfo fcInfo = !tableName.isEmpty()
-            ? introspected.getFieldColumnInfo(tableName, columnName)
-            : introspected.getFieldColumnInfo(columnName);
+
          Object parent = tableNameToEntitiesInCurrentRow.computeIfAbsent(introspected.getTableName().toUpperCase(), tbl -> {
             try {
                return introspected.getTableTarget(introspected.getTableName());

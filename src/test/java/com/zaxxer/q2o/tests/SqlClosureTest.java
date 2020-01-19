@@ -7,6 +7,7 @@ import com.zaxxer.q2o.SqlVarArgsFunction;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sansorm.testutils.Database;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
 import java.sql.*;
@@ -24,7 +25,7 @@ public class SqlClosureTest extends GeneralTestConfigurator {
    @Before
    public void setUp() throws Exception {
       super.setUp();
-      if (database == Database.h2) {
+      if (database == Database.h2Server) {
          Q2Sql.executeUpdate(
             "CREATE TABLE USERS ("
                + " id INTEGER NOT NULL IDENTITY PRIMARY KEY"

@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sansorm.DataSources;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -18,7 +19,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.sansorm.DataSources.getH2DataSource;
 
 @RunWith(Parameterized.class)
 public class SqlClosureTransactionsTest {
@@ -43,7 +43,7 @@ public class SqlClosureTransactionsTest {
 
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException {
-      dataSource = getH2DataSource(/*autoCommit=*/withAutoCommit);
+      dataSource = DataSources.getH2ServerDataSource(/*autoCommit=*/withAutoCommit);
       if (withUserTx) {
          dataSource = q2o.initializeTxSimple(dataSource);
       }
