@@ -13,6 +13,8 @@ import org.sansorm.DataSources;
 import org.sansorm.DataSourcesPrivate;
 import org.sansorm.testutils.Database;
 import org.sansorm.testutils.TxMode;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.*;
 import javax.sql.DataSource;
@@ -32,21 +34,23 @@ import static org.junit.Assert.assertEquals;
  * @since 11.01.20
  */
 @RunWith(Parameterized.class)
-public class LobTest {
+public class LobSpringTxTest {
 
    @Rule
    public ExpectedException thrown = ExpectedException.none();
+   private DataSourceTransactionManager txManager;
+   private TransactionTemplate txTmpl;
 
    // TODO Test MySQL with emulateLocators=false (default) too.
    @Parameterized.Parameters(name = "autocommit={0}, txMode={1} database={2}")
    public static Collection<Object[]> data() {
       Object[][] params = {
-//         {true, TxMode.txSimple, Database.h2Server}, {true, TxMode.txSimple, Database.mysql}
-         {true, TxMode.txSimple, Database.h2Server}, {true, TxMode.txSimple, Database.mysql}, {true, TxMode.txSimple, Database.sybase}
-//         {true, TxMode.txSimple, Database.mysql}
-//         {true, TxMode.txSimple, Database.sybase}
-//         {true, TxMode.txSimple, Database.h2Server}
-//         {true, TxMode.txSimple, Database.sqlite} // java.sql.Blob not supported.
+//         {true, TxMode.springTx, Database.h2Server}, {true, TxMode.springTx, Database.mysql}
+//         {true, TxMode.springTx, Database.h2Server}, {true, TxMode.springTx, Database.mysql}, {true, TxMode.springTx, Database.sybase}
+//         {true, TxMode.springTx, Database.mysql}
+         {true, TxMode.springTx, Database.sybase}
+//         {true, TxMode.springTx, Database.h2Server}
+//         {true, TxMode.springTx, Database.sqlite} // java.sql.Blob not supported.
 
       };
       return Arrays.asList(params);
@@ -65,6 +69,15 @@ public class LobTest {
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException, SQLException
    {
+      setDataSource();
+      initQ2O();
+      dropTable();
+      createTable();
+      createSpringEnv();
+   }
+
+   private void setDataSource() throws SQLException
+   {
       switch (database) {
          case h2Server:
             dataSource = DataSources.getH2ServerDataSource(/*autoCommit=*/withAutoCommit);
@@ -79,7 +92,10 @@ public class LobTest {
             dataSource = DataSourcesPrivate.getSybaseDataSource();
             break;
       }
+   }
 
+   private void initQ2O()
+   {
       if (txMode == TxMode.txSimple) {
          if (database == Database.mysql) {
             dataSource = q2o.initializeTxSimple(dataSource, true);
@@ -89,14 +105,20 @@ public class LobTest {
          }
       }
       else if (txMode == TxMode.springTx) {
-         q2o.initializeWithSpringTxSupport(dataSource);
+         if (database == Database.mysql) {
+            dataSource = q2o.initializeWithSpringTxSupport(dataSource, true);
+         }
+         else {
+            q2o.initializeWithSpringTxSupport(dataSource);
+         }
       }
       else if (txMode == TxMode.txNone) {
          q2o.initializeTxNone(dataSource);
       }
+   }
 
-      dropTable();
-
+   private void createTable() throws SQLException
+   {
       switch (database) {
          case h2Server:
          case sqlite:
@@ -121,6 +143,13 @@ public class LobTest {
             con.close();
             break;
       }
+   }
+
+   private void createSpringEnv()
+   {
+      txManager = new DataSourceTransactionManager(dataSource);
+      txTmpl = new TransactionTemplate();
+      txTmpl.setTransactionManager(txManager);
    }
 
    private void dropTable() throws SQLException
@@ -161,83 +190,92 @@ public class LobTest {
    public void readBlob() throws SQLException, IOException
    {
       insertImageAsBytes();
+      final long[] length = new long[1];
+      final List<MyLob>[] myLobs = new List[1];
 
-      TransactionHelper.beginOrJoinTransaction();
+      byte[] retrievedImg = txTmpl.execute(status -> {
+         byte[] img = new byte[0];
+         try {
+            myLobs[0] = Q2ObjList.fromRawClause(MyLob.class, "where ID=1");
+            // MySQL: no locator object but instead all data are already transfered over the net.
+            // H2: locator object.
+            length[0] = myLobs[0].get(0).myBlob.length();
+            img = myLobs[0].get(0).myBlob.getBytes(1, (int) length[0]);
+         }
+         catch (SQLException e) {
+            e.printStackTrace();
+         }
+         return img;
+      });
 
-      List<MyLob> myLobs = Q2ObjList.fromRawClause(MyLob.class, "where ID=1");
-      long length = myLobs.get(0).myBlob.length();
-      byte[] retrievedImg = myLobs.get(0).myBlob.getBytes(1, (int) length);
-
-      TransactionHelper.commit();
-
-      assertEquals(37032, length);
+      assertEquals(37032, length[0]);
       assertEquals(37032, retrievedImg.length);
       if (database == Database.mysql) {
-         assertEquals(BlobFromLocator.class, myLobs.get(0).myBlob.getClass());
+         assertEquals(BlobFromLocator.class, myLobs[0].get(0).myBlob.getClass());
       }
    }
 
    @Test
-   public void blob() throws SQLException, IOException
+   public void blob()
    {
-      int copiedBytes = 0;
-      try {
-         TransactionHelper.beginOrJoinTransaction();
+      final int[] copiedBytes = {0};
 
-         Connection con = dataSource.getConnection();
-         Blob blob = con.createBlob();
-         MyLob myLob = new MyLob();
-         myLob.myBlob = blob;
+      txTmpl.execute(status -> {
+         try (Connection con = dataSource.getConnection()){
 
-         if (database == Database.sybase) {
-            // To circumvent Bug: SQLException: JZ037: Value of offset/position/start should be in the range [1, len] where len is length of Large Object[LOB].
-            blob.setBytes(1, new byte[]{0});
+            // TODO Simplify with q2o method
+            Blob blob = con.createBlob();
+            MyLob myLob = new MyLob();
+            myLob.myBlob = blob;
+
+            if (database == Database.sybase) {
+               // To circumvent Bug: SQLException: JZ037: Value of offset/position/start should be in the range [1, len] where len is length of Large Object[LOB].
+               blob.setBytes(1, new byte[]{0});
+            }
+            // Must be executed before the insert statement is executed or data will not be stored.
+            // MySQL: Not a real Locator Object: Data are hold in-memory, what is not the aim.
+            OutputStream outputStream = blob.setBinaryStream(1);
+            File img = new File("src/test/resources/image.png");
+            FileInputStream imgInputStream = new FileInputStream(img);
+            copiedBytes[0] = IOUtils.copy(imgInputStream, outputStream);
+            outputStream.close();
+            imgInputStream.close();
+
+            Q2Obj.insert(myLob);
          }
-         // Must be executed before the insert statement is executed or data will not be stored.
-         // MySQL: Not a real Locator Object: Data are hold in-memory, what is not the aim.
-         OutputStream outputStream = blob.setBinaryStream(1);
-         File img = new File("src/test/resources/image.png");
-         FileInputStream imgInputStream = new FileInputStream(img);
-         copiedBytes = IOUtils.copy(imgInputStream, outputStream);
-         outputStream.close();
-         imgInputStream.close();
+         catch (SQLException | IOException e) {
+            e.printStackTrace();
+            status.setRollbackOnly();
+         }
+         return null;
+      });
 
-         Q2Obj.insert(myLob);
+      assertEquals(37032, copiedBytes[0]);
 
-         TransactionHelper.commit();
-      }
-      catch (Exception e) {
-         TransactionHelper.rollback();
-         throw e;
-      }
+      final long[] length = {0};
+      final byte[][] retrievedImg = {new byte[0]};
+      final MyLob[] myLobRetrieved = new MyLob[1];
 
-      assertEquals(37032, copiedBytes);
+      txTmpl.execute(status -> {
+         try {
+            myLobRetrieved[0] = Q2Obj.byId(MyLob.class, 1);
+            // MySQL with emulateLocators=false (default): no locator object but instead all data are already transfered over the net. With emulateLocators=true a real locator object.
+            // H2: locator object.
+            length[0] = myLobRetrieved[0].myBlob.length();
+            retrievedImg[0] = myLobRetrieved[0].myBlob.getBytes(1, (int) length[0]);
+         }
+         catch (SQLException e) {
+            e.printStackTrace();
+            status.setRollbackOnly();
+         }
+         return null;
+      });
 
-      long length = 0;
-      byte[] retrievedImg = new byte[0];
-      MyLob myLobRetrieved;
-      try {
-         TransactionHelper.beginOrJoinTransaction();
-
-         myLobRetrieved = Q2Obj.byId(MyLob.class, 1);
-         // MySQL with emulateLocators=false (default): no locator object but instead all data are already transfered over the net. With emulateLocators=true a real locator object.
-         // H2: locator object.
-         length = myLobRetrieved.myBlob.length();
-         retrievedImg = myLobRetrieved.myBlob.getBytes(1, (int) length);
-
-         TransactionHelper.commit();
-      }
-      catch (Exception e) {
-         TransactionHelper.rollback();
-         throw e;
-      }
-
-      assertEquals(37032, length);
-      assertEquals(37032, retrievedImg.length);
+      assertEquals(37032, length[0]);
+      assertEquals(37032, retrievedImg[0].length);
       if (database == Database.mysql) {
-         assertEquals(BlobFromLocator.class, myLobRetrieved.myBlob.getClass());
+         assertEquals(BlobFromLocator.class, myLobRetrieved[0].myBlob.getClass());
       }
-
    }
 
    @Test
@@ -246,7 +284,6 @@ public class LobTest {
       int rows = 0;
       PreparedStatement stmnt = null;
 
-      TransactionHelper.beginOrJoinTransaction();
       try (Connection con = dataSource.getConnection()) {
 
          Blob blob = con.createBlob();
@@ -270,13 +307,11 @@ public class LobTest {
          stmnt.setBlob(1, blob);
          rows = stmnt.executeUpdate();
 
-         TransactionHelper.commit();
       }
       catch (Exception e) {
          if (stmnt != null) {
             stmnt.close();
          }
-         TransactionHelper.rollback();
          throw e;
       }
 
@@ -284,7 +319,6 @@ public class LobTest {
 
       long length = 0;
 
-      TransactionHelper.beginOrJoinTransaction();
       PreparedStatement ps = null;
       Blob blobRetrieved;
       try (Connection con = dataSource.getConnection()) {
@@ -326,13 +360,11 @@ public class LobTest {
 
          length = blobRetrieved.length();
 
-         TransactionHelper.commit();
       }
       catch (Exception e) {
          if (ps != null) {
             ps.close();
          }
-         TransactionHelper.rollback();
          throw e;
       }
 

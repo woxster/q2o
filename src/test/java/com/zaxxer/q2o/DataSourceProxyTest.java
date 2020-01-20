@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 19.01.20
  */
-public class Q2ODataSourceTest {
+public class DataSourceProxyTest {
 
    private static DataSource dataSource;
    @BeforeClass
@@ -35,7 +35,7 @@ public class Q2ODataSourceTest {
    @Test
    public void wrap() throws SQLException
    {
-      DataSource q2oDataSource = Q2ODataSource.wrap(dataSource);
+      DataSource q2oDataSource = DataSourceProxy.wrap(dataSource);
       Connection con = q2oDataSource.getConnection();
 
       PreparedStatement ps = con.prepareStatement("select 1");

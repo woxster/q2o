@@ -48,6 +48,11 @@ class OrmReader extends OrmBase {
       });
    }
 
+   static void clearCache()
+   {
+      fromClauseStmtCache.clear();
+   }
+
    static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException {
       LOGGER.debug("{}", stmt);
       try (final PreparedStatement closeStmt = stmt) {

@@ -7,16 +7,16 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 
 /**
- * Defers closing of a connection's statements until closing the connection. A solution for MySQL to support reading Lobs not only until a statement is closed but until the end of a transaction.
+ * Defers closing of a connection's statements and result sets until closing the connection. A solution for MySQL to support reading Lobs not only until a statement is closed but until the end of a transaction.
  *
  * @author Holger Thurow (thurow.h@gmail.com)
  * @since 19.01.20
  */
-public class Q2ODataSource implements InvocationHandler {
+public class DataSourceProxy implements InvocationHandler {
 
    private final DataSource dataSource;
 
-   public Q2ODataSource(DataSource dataSource)
+   public DataSourceProxy(DataSource dataSource)
    {
       this.dataSource = dataSource;
    }
@@ -38,7 +38,7 @@ public class Q2ODataSource implements InvocationHandler {
 
    static DataSource wrap(final DataSource dataSource)
    {
-      Q2ODataSource handler = new Q2ODataSource(dataSource);
-      return (DataSource) Proxy.newProxyInstance(Q2ODataSource.class.getClassLoader(), new Class[] { DataSource.class }, handler);
+      DataSourceProxy handler = new DataSourceProxy(dataSource);
+      return (DataSource) Proxy.newProxyInstance(DataSourceProxy.class.getClassLoader(), new Class[] { DataSource.class }, handler);
    }
 }

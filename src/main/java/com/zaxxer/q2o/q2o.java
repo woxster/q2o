@@ -46,7 +46,7 @@ public final class q2o {
    public static DataSource initializeTxSimple(DataSource dataSource, boolean mySqlBlobSupport)
    {
       if (mySqlBlobSupport) {
-         dataSource = Q2ODataSource.wrap(dataSource);
+         dataSource = DataSourceProxy.wrap(dataSource);
       }
       dataSource = initializeTxSimple(dataSource);
       setMySqlMode(true);
@@ -79,6 +79,16 @@ public final class q2o {
       q2o.dataSource = dataSource;
    }
 
+   public static DataSource initializeWithSpringTxSupport(DataSource dataSource, boolean mySqlBlobSupport)
+   {
+      if (mySqlBlobSupport) {
+         dataSource = DataSourceProxy.wrap(dataSource);
+      }
+      initializeWithSpringTxSupport(dataSource);
+      setMySqlMode(true);
+      return dataSource;
+   }
+
    /**
     * To explicitly reset q2o to a fresh state if desired. E.g. if you want to call another initializeXXX method. This call is optional because all initializeXXX methods will call deinitialize() anyway.
     */
@@ -90,6 +100,9 @@ public final class q2o {
       SqlClosure.unsetDefaultExceptionTranslator();
       setMySqlMode(false);
       q2o.dataSource = null;
+      OrmBase.clearCache();
+      OrmReader.clearCache();
+      OrmWriter.clearCache();
    }
 
    static boolean isMySqlMode() {

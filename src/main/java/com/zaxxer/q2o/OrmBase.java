@@ -43,6 +43,11 @@ class OrmBase
       // protected constructor
    }
 
+   static void clearCache()
+   {
+      columnsCsvCache.clear();
+   }
+
    /*
 Callers:
    Q2Obj.byId(DataTypesNullable.class, dataTypes.getId())
@@ -100,7 +105,7 @@ Callers:
            if (!selectableField.isJoinFieldWithSecondTable()) {
               String name = selectableField.getFullyQualifiedDelimitedFieldName(tablePrefix);
               if (Blob.class.isAssignableFrom(selectableField.getType()) && q2o.isMySqlMode()) {
-                  // TODO delimited column names unterstützen
+                  // TODO MySQL Blob support: delimited column names unterstützen
                  name = "'" + selectableField.getColumnName() + "' " + selectableField.getColumnName();
               }
               sb.append(name).append(',');

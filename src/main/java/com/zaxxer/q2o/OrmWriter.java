@@ -56,6 +56,12 @@ class OrmWriter extends OrmBase
       });
    }
 
+   static void clearCache()
+   {
+      createStatementCache.clear();
+      updateStatementCache.clear();
+   }
+
    static <T> void insertListBatched(final Connection connection, final Iterable<T> iterable) throws SQLException
    {
       final Iterator<T> iterableIterator = iterable.iterator();
