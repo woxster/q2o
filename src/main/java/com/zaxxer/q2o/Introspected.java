@@ -307,7 +307,8 @@ final class Introspected {
          return joinedEntity.getFieldColumnInfo(tableName, columnName);
       }
       else if (cls == null) {
-         logger.warn("{} is not reachable from {}", tableName, getTableName());
+         // Not warn level so you can suppress the warnings emitted by flattened table joins. See com.zaxxer.q2o.OneToOneTest.flattenedTableJoin().
+         logger.debug("{} is not reachable from {}", tableName, getTableName());
          return null;
       }
       else {
