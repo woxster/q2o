@@ -431,8 +431,6 @@ public class OneToOneTest {
          throw e;
       }
       finally {
-         Q2Sql.executeUpdate("alter table if exists orders drop constraint if exists order_cust_fk");
-         Q2Sql.executeUpdate("alter table if exists order_items drop constraint if exists item_order_fk");
          Q2Sql.executeUpdate("DROP TABLE customers");
          Q2Sql.executeUpdate("DROP TABLE orders");
          Q2Sql.executeUpdate("DROP TABLE order_items");

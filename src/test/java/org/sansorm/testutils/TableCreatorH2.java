@@ -9,9 +9,6 @@ import com.zaxxer.q2o.Q2Sql;
 public class TableCreatorH2 {
    public static void dropTables()
    {
-      Q2Sql.executeUpdate("alter table if exists LEFT1_TABLE drop constraint if exists LEFT1_TABLE_cnst1");
-      Q2Sql.executeUpdate("alter table if exists MIDDLE1_TABLE drop constraint if exists MIDDLE1_TABLE_cnst1");
-      Q2Sql.executeUpdate("alter table if exists RIGHT1_TABLE drop constraint if exists RIGHT1_TABLE_cnst1");
       Q2Sql.executeUpdate("DROP TABLE IF EXISTS FAR_RIGHT1_TABLE");
       Q2Sql.executeUpdate("DROP TABLE IF EXISTS RIGHT1_TABLE");
       Q2Sql.executeUpdate("DROP TABLE IF EXISTS MIDDLE1_TABLE");
