@@ -782,6 +782,6 @@ public class IntrospectedTest
       AttributeInfo[] updatableFcInfos = introspected.getUpdatableFcInfos();
       // TODO Muss rightId liefern. Siehe RefreshTest.refreshObjectLeftJoinedTables
 //      System.out.println(introspected.oneToOneAnnotatedFcInfos.get(0).joinColumnAnnotation.name());
-      assertTrue(fcInfo.isUpdatable());
+      assertEquals(true, fcInfo.isUpdatable());
    }
 }

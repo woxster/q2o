@@ -149,7 +149,8 @@ public class QueryTest extends GeneralTestConfigurator {
          default:
             expected = "2019-04-14 07:11:21.0000002";
       }
-      assertThat(target.getTimestamp().toString()).isEqualTo(expected);
+      // h2Server produces irregularly .0000002 too. To match these cases startsWith is used.
+      assertThat(target.getTimestamp().toString()).startsWith(expected);
    }
 
    @Test

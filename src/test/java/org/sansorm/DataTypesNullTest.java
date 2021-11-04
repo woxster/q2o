@@ -5,6 +5,7 @@ import com.zaxxer.q2o.Q2Obj;
 import com.zaxxer.q2o.Q2Sql;
 import com.zaxxer.q2o.entities.DataTypesNullable;
 import com.zaxxer.q2o.q2o;
+import org.apache.commons.lang.time.DateUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
@@ -281,30 +282,13 @@ public class DataTypesNullTest {
 
       DataTypesNullable dataTypes = new DataTypesNullable();
 
-      dataTypes.setTimestampToDATETIME(Timestamp.valueOf("1970-01-01 00:00:00.999999999"));
+//      dataTypes.setTimestampToDATETIME(Timestamp.valueOf("1970-01-01 00:00:00.999999"));
+      dataTypes.setTimestampToDATETIME(Timestamp.from(new Date(999).toInstant()));
 
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
 
-      String expected;
-      switch (database) {
-         case mysql:
-            expected = "1970-01-01 00:00:01.0";
-            break;
-         case h2Server:
-            expected = "1970-01-01 00:00:01.0";
-            break;
-         case h2InMemory:
-            expected = "1970-01-01 00:00:00.999999999";
-            break;
-         case sqlite:
-            expected = "1970-01-01 00:00:00.999";
-            break;
-         default:
-            expected = "";
-      }
-
-      assertEquals(expected, dataTypes1.getTimestampToDATETIME().toString());
+      assertEquals(1000, DateUtils.round(dataTypes1.getTimestampToDATETIME(), Calendar.SECOND).getTime());
       assertEquals(dataTypes.getTimestampToDATETIME().getClass(), dataTypes1.getTimestampToDATETIME().getClass());
 
    }
@@ -501,16 +485,20 @@ public class DataTypesNullTest {
             expected = "1970-01-01 16:38:48.000";
             break;
          case h2InMemory:
-            expected = "1970-01-01 16:38:48.437";
+            // before DateUtils.round()
+//            expected = "1970-01-01 16:38:48.437";
+            expected = "1970-01-01 16:38:48.000";
             break;
          case sqlite:
-            expected = "2019-12-20 16:38:48.437";
+            // before DateUtils.round()
+//            expected = "2019-12-20 16:38:48.437";
+            expected = "2019-12-20 16:38:48.000";
             break;
          default:
             expected = "";
       }
 
-      assertEquals(expected, formatter.format(dataTypesRetrieved.getCalendarToTIME().getTime()));
+      assertEquals(expected, formatter.format(DateUtils.round(dataTypesRetrieved.getCalendarToTIME().getTime(), Calendar.SECOND)));
    }
 
    /**
@@ -842,30 +830,13 @@ public class DataTypesNullTest {
       dataTypes.setTimestampToTIME(Timestamp.valueOf("1970-1-1 21:59:59.999999999"));
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
-      String expected;
-      switch (database) {
-         case mysql:
-            expected = "1970-01-01 22:00:00.0";
-            break;
-         case h2Server:
-            expected = "1970-01-01 22:00:00.0";
-            break;
-         case h2InMemory:
-            expected = "1970-01-01 21:59:59.999";
-            break;
-         case sqlite:
-            expected = "1970-01-01 21:59:59.999";
-            break;
-         default:
-            expected = "";
-      }
-      assertEquals(expected, dataTypes1.getTimestampToTIME().toString());
+      assertEquals(75600000, DateUtils.round(dataTypes1.getTimestampToTIME(), Calendar.SECOND).getTime());
    }
 
    @Test
    public void utilDateToTIME() throws ParseException {
       DataTypesNullable dataTypes = new DataTypesNullable();
-      Date dateToStore = formatter.parse("1970-01-01 21:59:59.999");
+      Date dateToStore = formatter.parse("1999-01-01 21:59:59.999");
       dataTypes.setUtilDateToTIME(dateToStore);
       Q2Obj.insert(dataTypes);
       DataTypesNullable dataTypes1 = Q2Obj.byId(DataTypesNullable.class, dataTypes.getId());
@@ -879,12 +850,12 @@ public class DataTypesNullTest {
             break;
          case h2InMemory:
          case sqlite:
-            expected = "1970-01-01 21:59:59.999";
+            expected = "1999-01-01 22:00:00.000";
             break;
          default:
             expected = "";
       }
-      assertEquals(expected, formatter.format(dataTypes1.getUtilDateToTIME()));
+      assertEquals(expected, formatter.format(DateUtils.round(dataTypes1.getUtilDateToTIME(), Calendar.SECOND)));
    }
 
    /**
