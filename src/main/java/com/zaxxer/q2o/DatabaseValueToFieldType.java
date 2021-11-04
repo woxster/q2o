@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.jvm.hotspot.runtime.Bytes;
 
 import javax.persistence.AttributeConverter;
 import java.io.IOException;
@@ -184,35 +185,47 @@ class DatabaseValueToFieldType {
       return typeCorrectedValue;
    }
 
+   /**
+    * // SQLite TIMESTAMP and YEAR yields Integer. Also MySQL TINYINT.
+    */
    private Object convertInteger(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue, final Introspected introspected) {
       if (fieldType == Boolean.class || fieldType == boolean.class) {
          columnValue = (((Integer) columnValue) != 0);
       }
       else if (fieldType == Timestamp.class) {
-         // SQLite TIMESTAMP yields Integer.
          columnValue = new Timestamp((Integer) columnValue);
       }
       else if (fieldType == Time.class) {
-         // SQLite TIME yields Integer.
          columnValue = new Time((Integer) columnValue);
       }
       else if (fieldType == Date.class) {
          columnValue = new Date((Integer) columnValue);
       }
-      else if (fieldType == Byte.class || fieldType == byte.class) { // MySQL TINYINT
+      else if (fieldType == Byte.class || fieldType == byte.class) {
          columnValue = ((Integer) columnValue).byteValue();
       }
-      else if (fieldType == Short.class || fieldType == short.class) { // MySQL TINYINT
+      else if (fieldType == Short.class || fieldType == short.class) {
          columnValue = ((Integer) columnValue).shortValue();
       }
       else if (fieldType == Long.class || fieldType == long.class) {
          columnValue = ((Integer) columnValue).longValue();
       }
+      else if (fieldType == Float.class || fieldType == float.class) {
+         columnValue = ((Integer) columnValue).floatValue();
+      }
+      else if (fieldType == Double.class || fieldType == double.class) {
+         columnValue = ((Integer) columnValue).doubleValue();
+      }
+      else if (fieldType == BigInteger.class) {
+         columnValue = BigInteger.valueOf(((Integer) columnValue).longValue());
+      }
+      else if (fieldType == BigDecimal.class) {
+         columnValue = new BigDecimal(((Integer) columnValue));
+      }
       else if (fieldType.isEnum()) {
          columnValue = enumFromNumber(fieldType, (Integer) columnValue);
       }
       else if (fieldType == String.class) {
-         // SQLite YEAR yields Integer
          columnValue = Integer.toString((Integer) columnValue);
       }
       return columnValue;
@@ -242,25 +255,41 @@ class DatabaseValueToFieldType {
       return columnValue;
    }
 
+   /**
+    * MYSQL BIGINT. SQLite TIMESTAMP, DATE.
+    */
    private Object convertLong(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      if (fieldType == Integer.class || fieldType == int.class) {
+      if (fieldType == Byte.class || fieldType == byte.class) {
+         columnValue = ((Long) columnValue).byteValue();
+      }
+      else if (fieldType == Short.class || fieldType == short.class) {
+         columnValue = ((Long) columnValue).shortValue();
+      }
+      else if (fieldType == Integer.class || fieldType == int.class) {
          columnValue = ((Long) columnValue).intValue();
       }
-      else if (fieldType == BigInteger.class) { // MYSQL BIGINT
+      else if (fieldType == Float.class || fieldType == float.class) {
+         columnValue = ((Long) columnValue).floatValue();
+      }
+      else if (fieldType == Double.class || fieldType == double.class) {
+         columnValue = ((Long) columnValue).doubleValue();
+      }
+      else if (fieldType == BigInteger.class) {
          columnValue = BigInteger.valueOf((Long) columnValue);
+      }
+      else if (fieldType == BigDecimal.class) {
+         columnValue = BigDecimal.valueOf((Long) columnValue);
       }
       else if (fieldType == Date.class) {
          columnValue = new Date((Long) columnValue);
       }
       else if (fieldType == java.sql.Date.class) {
-         // SQLite DATE yields Long
          columnValue = new java.sql.Date((Long) columnValue);
       }
       else if (fieldType == Timestamp.class) {
          columnValue = new Timestamp((Long) columnValue);
       }
       else if (Calendar.class.isAssignableFrom(fieldType)) {
-         // SQLite TIMESTAMP yields Long
          Calendar cal = Calendar.getInstance();
          cal.setTimeInMillis((Long) columnValue);
          columnValue = cal;
@@ -269,28 +298,59 @@ class DatabaseValueToFieldType {
    }
 
    private Object convertDouble(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      if (fieldType == Integer.class || fieldType == int.class) {
+      if (fieldType == Byte.class || fieldType == byte.class) {
+         columnValue = ((Double) columnValue).byteValue();
+      }
+      else if (fieldType == Short.class || fieldType == short.class) {
+         columnValue = ((Double) columnValue).shortValue();
+      }
+      else if (fieldType == Integer.class || fieldType == int.class) {
          columnValue = ((Double) columnValue).intValue();
+      }
+      else if (fieldType == Long.class || fieldType == long.class) {
+         columnValue = ((Double) columnValue).longValue();
+      }
+      else if (fieldType == Float.class || fieldType == float.class) {
+         columnValue = ((Double) columnValue).floatValue();
+      }
+      else if (fieldType == BigDecimal.class) {
+         columnValue = new BigDecimal(((Double) columnValue));
       }
       return columnValue;
    }
 
    private Object convertBigInteger(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      if (fieldType == Integer.class || fieldType == int.class) {
+
+      if (fieldType == Byte.class || fieldType == byte.class) {
+         columnValue = ((BigInteger) columnValue).byteValue();
+      }
+      else if (fieldType == Short.class || fieldType == short.class) {
+         columnValue = ((BigInteger) columnValue).shortValue();
+      }
+      else if (fieldType == Integer.class || fieldType == int.class) {
          columnValue = ((BigInteger) columnValue).intValue();
       }
       else if (fieldType == Long.class || fieldType == long.class) {
          columnValue = ((BigInteger) columnValue).longValue();
       }
+      else if (fieldType == Float.class || fieldType == float.class) {
+         columnValue = ((BigInteger) columnValue).floatValue();
+      }
       else if (fieldType == Double.class || fieldType == double.class) {
          columnValue = ((BigInteger) columnValue).doubleValue();
+      }
+      else if (fieldType == BigDecimal.class) {
+         columnValue = new BigDecimal(((BigInteger) columnValue));
       }
       return columnValue;
    }
 
    private Object convertBigDecimal(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      if (fieldType == BigInteger.class) {
-         columnValue = ((BigDecimal) columnValue).toBigInteger();
+      if (fieldType == Bytes.class || fieldType == byte.class) {
+         columnValue = ((BigDecimal) columnValue).byteValue();
+      }
+      else if (fieldType == Short.class || fieldType == short.class) {
+         columnValue = ((BigDecimal) columnValue).shortValue();
       }
       else if (fieldType == Integer.class || fieldType == int.class) {
          columnValue = ((BigDecimal) columnValue).intValue();
@@ -298,8 +358,14 @@ class DatabaseValueToFieldType {
       else if (fieldType == Long.class || fieldType == long.class) {
          columnValue = ((BigDecimal) columnValue).longValue();
       }
+      else if (fieldType == Float.class || fieldType == float.class) {
+         columnValue = ((BigDecimal) columnValue).floatValue();
+      }
       else if (fieldType == Double.class || fieldType == double.class) {
          columnValue = ((BigDecimal) columnValue).doubleValue();
+      }
+      else if (fieldType == BigInteger.class) {
+         columnValue = ((BigDecimal) columnValue).toBigInteger();
       }
       return columnValue;
    }
@@ -386,9 +452,19 @@ class DatabaseValueToFieldType {
       else if (fieldType == Long.class || fieldType == long.class) {
          columnValue = new BigInteger(v).longValue();
       }
+      else if (fieldType == Float.class || fieldType == float.class) {
+         columnValue = new BigInteger(v).floatValue();
+      }
+      else if (fieldType == Double.class || fieldType == double.class) {
+         columnValue = new BigInteger(v).doubleValue();
+      }
+      else if (fieldType == BigInteger.class) {
+         columnValue = new BigInteger(v);
+      }
       else if (Blob.class.isAssignableFrom(fieldType)) {
          // MySQL, H2 provides byte[] for BLOB
          try {
+            // TODO Wenn in Spring Context, muss DataSourceUtils.getConnection() gerufen werden. Sonst dead lock.
             Connection con = q2o.dataSource.getConnection();
             // createBlob: H2: SQLFeatureNotSupportedException
             Blob blob = con.createBlob();
