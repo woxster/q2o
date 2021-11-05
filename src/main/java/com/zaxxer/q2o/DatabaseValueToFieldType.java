@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.jvm.hotspot.runtime.Bytes;
 
 import javax.persistence.AttributeConverter;
 import java.io.IOException;
@@ -346,10 +345,12 @@ class DatabaseValueToFieldType {
    }
 
    private Object convertBigDecimal(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
-      if (fieldType == Bytes.class || fieldType == byte.class) {
-         columnValue = ((BigDecimal) columnValue).byteValue();
-      }
-      else if (fieldType == Short.class || fieldType == short.class) {
+      // Beim deploy: package sun.jvm.hotspot.runtime does not exist. Siehe https://stackoverflow.com/questions/42651694/maven-cant-find-sun-jvm-hotspot-when-compiling.
+//      if (fieldType == Bytes.class || fieldType == byte.class) {
+//         columnValue = ((BigDecimal) columnValue).byteValue();
+//      }
+//      else
+      if (fieldType == Short.class || fieldType == short.class) {
          columnValue = ((BigDecimal) columnValue).shortValue();
       }
       else if (fieldType == Integer.class || fieldType == int.class) {
