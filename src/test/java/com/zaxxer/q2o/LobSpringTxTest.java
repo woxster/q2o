@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -69,14 +70,14 @@ public class LobSpringTxTest {
    @Before // not @BeforeClass to have fresh table in each test, also sde
    public void setUp() throws IOException, SQLException
    {
-      setDataSource();
+      initDataSource();
       initQ2O();
       dropTable();
       createTable();
       createSpringEnv();
    }
 
-   private void setDataSource() throws SQLException
+   private void initDataSource() throws SQLException
    {
       switch (database) {
          case h2Server:
@@ -374,6 +375,62 @@ public class LobSpringTxTest {
       }
    }
 
+   // TODO Clobs testen
+
+   @Test
+   public void readClobAsStringRawJdbc() throws IOException, SQLException
+   {
+      PreparedStatement stmnt = null;
+      insertClobAsString();
+      Connection con = null;
+      try {
+         con = dataSource.getConnection();
+         assertTrue(con.getAutoCommit());
+         stmnt = con.prepareStatement("select MYCLOB from MYLOB where ID = 1");
+         ResultSet rs = stmnt.executeQuery();
+         rs.next();
+         String text = rs.getString(1);
+         assertEquals(422279, text.length());
+      }
+      catch (Exception e) {
+         if (stmnt != null) {
+            stmnt.close();
+         }
+         if (con != null) {
+            con.close();
+         }
+         throw e;
+      }
+   }
+
+   @Test
+   public void readClobAsStringRawJdbcInTx() throws IOException, SQLException
+   {
+      PreparedStatement stmnt = null;
+      insertClobAsString();
+      Connection con = null;
+      try {
+
+         con = dataSource.getConnection();
+         con.setAutoCommit(false);
+         stmnt = con.prepareStatement("select MYCLOB from MYLOB where ID = 1");
+         ResultSet rs = stmnt.executeQuery();
+         rs.next();
+         String text = rs.getString(1);
+         con.commit();
+
+         assertEquals(422279, text.length());
+      }
+      finally {
+         if (stmnt != null) {
+            stmnt.close();
+         }
+         if (con != null) {
+            con.close();
+         }
+      }
+   }
+
    private void insertImageAsBytes() throws SQLException, IOException
    {
       File img = new File("src/test/resources/image.png");
@@ -389,5 +446,23 @@ public class LobSpringTxTest {
       con.close();
 
       imgInputStream.close();
+   }
+
+   private void insertClobAsString() throws SQLException, IOException
+   {
+      File img = new File("src/test/resources/rfc2616.txt");
+      FileInputStream textInputStream = new FileInputStream(img);
+      String text = IOUtils.toString(textInputStream, "UTF8");
+      textInputStream.close();
+
+      Connection con = dataSource.getConnection();
+      PreparedStatement ps = con.prepareStatement("insert into MYLOB (MYCLOB) values (?)");
+      // SQLite: java.sql.SQLFeatureNotSupportedException
+//      ps.setBinaryStream(1, textInputStream);
+      ps.setString(1, text);
+      ps.executeUpdate();
+      ps.close();
+      con.close();
+
    }
 }
