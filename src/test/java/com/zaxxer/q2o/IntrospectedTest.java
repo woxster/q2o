@@ -3,6 +3,7 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.*;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.sansorm.TargetClass1;
 import org.sansorm.sqlite.TargetClassSQL;
@@ -774,15 +775,15 @@ public class IntrospectedTest
       assertNotNull(fcInfo);
    }
 
-   // TODO Gehört zu RefreshTest#refreshObjectLeftJoinedTables(), aber das Feld rightId wurde inzwischen entfernt, da die für dieses Feld erforderliche Annotation für Verwendung von Middle1 auch unter Hibernate nicht geeignet ist.
-//   @Test
-//   public void joinFieldId()
-//   {
-//      Introspected introspected = Introspected.getInstance(Middle1.class);
-//      AttributeInfo fcInfo = introspected.getFieldColumnInfo("MIDDLE1_TABLE", "rightId");
-//      AttributeInfo[] updatableFcInfos = introspected.getUpdatableFcInfos();
-//      // TODO Muss rightId liefern. Siehe RefreshTest.refreshObjectLeftJoinedTables
-////      System.out.println(introspected.oneToOneAnnotatedFcInfos.get(0).joinColumnAnnotation.name());
-//      assertEquals(true, fcInfo.isUpdatable());
-//   }
+   // TODO Gehört zu RefreshTest#refreshObjectLeftJoinedTables(), aber das Feld rightId wurde inzwischen entfernt, da die für dieses Feld erforderliche Annotation für Verwendung von Middle1 unter Hibernate nicht geeignet ist.
+   @Test @Ignore
+   public void joinFieldId()
+   {
+      Introspected introspected = Introspected.getInstance(Middle1.class);
+      AttributeInfo fcInfo = introspected.getFieldColumnInfo("MIDDLE1_TABLE", "rightId");
+      AttributeInfo[] updatableFcInfos = introspected.getUpdatableFcInfos();
+      // TODO Muss rightId liefern. Siehe RefreshTest.refreshObjectLeftJoinedTables
+//      System.out.println(introspected.oneToOneAnnotatedFcInfos.get(0).joinColumnAnnotation.name());
+      assertEquals(true, fcInfo.isUpdatable());
+   }
 }

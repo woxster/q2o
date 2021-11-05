@@ -1,7 +1,10 @@
 package com.zaxxer.q2o;
 
 import com.zaxxer.q2o.entities.CaseSensitiveDatabasesClass;
+import com.zaxxer.q2o.entities.Left1;
+import com.zaxxer.q2o.entities.Right1;
 import org.h2.jdbcx.JdbcDataSource;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.sansorm.DataSources;
 import org.sansorm.testutils.*;
@@ -297,61 +300,61 @@ public class RefreshTest {
 
    // TODO Set field of joined table to null after it was loaded and refresh the entity, to ensure it is updated.
 
-//   /**
-//    * Works on Left1, Middle1, Right1
-//    */
-//   @Test
-//   public void refreshObjectLeftJoinedTables() throws SQLException {
-//      JdbcDataSource ds = DataSources.getH2ServerDataSource();
-//      q2o.initializeTxNone(ds);
-//      try (Connection con = ds.getConnection()) {
-//         TableCreatorH2.createTables();
-//
-//         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (type) values('type: right')");
-//         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type, rightId) values('type: middle', 1)");
-//         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
-//
-//         // Load Left1
-//         Left1 left1 = Q2ObjList.fromSelect(
-//            Left1.class,
-//            "select * from LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE" +
-//               " where LEFT1_TABLE.middleId = MIDDLE1_TABLE.id" +
-//               " and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
-//               " and LEFT1_TABLE.id = 1").get(0);
-//         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=1, type='type: right', farRight1=null}}}", left1.toString());
-//
-//         // Delete Right entity
-//         Right1 rightToDelete = left1.getMiddle().getRight();
-//         left1.getMiddle().setRight(null);
-////         left1.getMiddle().setRightId(null);
-//         // Middle1.rightId must be annotated as updatable = false to make it work with Hibernate. So q2o does not set this field to null and an exeption is thrown with Q2Obj.delete(rightToDelete):
-//         // java.lang.RuntimeException: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: Referential integrity constraint violation: "MIDDLE1_TABLE_CNST1: PUBLIC.MIDDLE1_TABLE FOREIGN KEY(RIGHTID) REFERENCES PUBLIC.RIGHT1_TABLE(ID) (1)"; SQL statement:
-//         // Test with playground.AnnotationsCheckTest.join3Tables()
-//         // TODO Hier muss q2o auch die Referenz auf das Right1 löschen.
-//         Q2Obj.update(left1.getMiddle());
-//         Q2Obj.delete(rightToDelete);
-//         Q2Sql.executeUpdate("update MIDDLE1_TABLE set rightId = 0 where id = 1");
-//
-//         // Reload Left1 to ensure reference on Right has gone
-//         Left1 left2 = Q2ObjList.fromSelect(
-//            Left1.class,
-//            "select * from LEFT1_TABLE" +
-//               " left join MIDDLE1_TABLE on LEFT1_TABLE.id = MIDDLE1_TABLE.id" +
-//               " left join RIGHT1_TABLE on MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
-//               " where LEFT1_TABLE.id = 1").get(0);
-//         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left2.toString());
-//
-//         // Check refresh method
-//         Q2Obj.refresh(left1);
-//         System.out.println(left1);
-//
-//
-//      }
-//      finally {
-//         TableCreatorH2.dropTables();
-//      }
-//
-//   }
+   /**
+    * Works on Left1, Middle1, Right1
+    */
+   @Test @Ignore
+   public void refreshObjectLeftJoinedTables() throws SQLException {
+      JdbcDataSource ds = DataSources.getH2ServerDataSource();
+      q2o.initializeTxNone(ds);
+      try (Connection con = ds.getConnection()) {
+         TableCreatorH2.createTables();
+
+         Q2Sql.executeUpdate("insert into RIGHT1_TABLE (type) values('type: right')");
+         Q2Sql.executeUpdate("insert into MIDDLE1_TABLE (type, rightId) values('type: middle', 1)");
+         Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
+
+         // Load Left1
+         Left1 left1 = Q2ObjList.fromSelect(
+            Left1.class,
+            "select * from LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE" +
+               " where LEFT1_TABLE.middleId = MIDDLE1_TABLE.id" +
+               " and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
+               " and LEFT1_TABLE.id = 1").get(0);
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=1, type='type: right', farRight1=null}}}", left1.toString());
+
+         // Delete Right entity
+         Right1 rightToDelete = left1.getMiddle().getRight();
+         left1.getMiddle().setRight(null);
+//         left1.getMiddle().setRightId(null);
+         // Middle1.rightId must be annotated as updatable = false to make it work with Hibernate. So q2o does not set this field to null and an exeption is thrown with Q2Obj.delete(rightToDelete):
+         // java.lang.RuntimeException: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: Referential integrity constraint violation: "MIDDLE1_TABLE_CNST1: PUBLIC.MIDDLE1_TABLE FOREIGN KEY(RIGHTID) REFERENCES PUBLIC.RIGHT1_TABLE(ID) (1)"; SQL statement:
+         // Test with playground.AnnotationsCheckTest.join3Tables()
+         // TODO Hier muss q2o auch die Referenz auf das Right1 löschen.
+         Q2Obj.update(left1.getMiddle());
+         Q2Obj.delete(rightToDelete);
+         Q2Sql.executeUpdate("update MIDDLE1_TABLE set rightId = 0 where id = 1");
+
+         // Reload Left1 to ensure reference on Right has gone
+         Left1 left2 = Q2ObjList.fromSelect(
+            Left1.class,
+            "select * from LEFT1_TABLE" +
+               " left join MIDDLE1_TABLE on LEFT1_TABLE.id = MIDDLE1_TABLE.id" +
+               " left join RIGHT1_TABLE on MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
+               " where LEFT1_TABLE.id = 1").get(0);
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left2.toString());
+
+         // Check refresh method
+         Q2Obj.refresh(left1);
+         System.out.println(left1);
+
+
+      }
+      finally {
+         TableCreatorH2.dropTables();
+      }
+
+   }
 
 
    // ######### Utility methods ######################################################
