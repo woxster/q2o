@@ -12,7 +12,7 @@ public class Right1 {
    private int id;
    private String type;
    private FarRight1 farRight1;
-   private int farRightId;
+//   private int farRightId;
 
    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
    public int getId() {
@@ -37,24 +37,22 @@ public class Right1 {
       return "Right1{" +
          "id=" + id +
          ", type='" + type + '\'' +
-         ", farRightId=" + farRightId +
+//         ", farRightId=" + farRightId +
          ", farRight1=" + farRight1 +
          '}';
    }
 
-   // org.hibernate.MappingException: Repeated column in mapping for entity: com.zaxxer.q2o.entities.Right1 column: farRightId (should be mapped with insert="false" update="false")
-   //	at org.hibernate.mapping.PersistentClass.checkColumnDuplication(PersistentClass.java:862)
-   @Column(insertable = false, updatable = false)
-   public int getFarRightId() {
-      return farRightId;
-   }
+   // Siehe com.zaxxer.q2o.entities.Middle1.getRightId()
+//   public int getFarRightId() {
+//      return farRightId;
+//   }
 
-   public void setFarRightId(int farRightId) {
-      this.farRightId = farRightId;
-   }
+//   public void setFarRightId(int farRightId) {
+//      this.farRightId = farRightId;
+//   }
 
    @OneToOne
-   @JoinColumn(name = "farRightId")
+   @JoinColumn(name = "farRightId", referencedColumnName="id")
    public FarRight1 getFarRight1() {
       return farRight1;
    }

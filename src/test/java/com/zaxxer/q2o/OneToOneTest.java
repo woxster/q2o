@@ -254,7 +254,7 @@ public class OneToOneTest {
 
          assertNotNull(left.getMiddle());
          assertNotNull(left.getMiddle().getRight());
-         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left.toString());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=1, type='type: right', farRight1=null}}}", left.toString());
       }
       catch (Exception e) {
          e.printStackTrace();
@@ -278,7 +278,7 @@ public class OneToOneTest {
          Left1 left = Q2Obj.fromSelect(Left1.class, "SELECT * FROM RIGHT1_TABLE, LEFT1_TABLE, MIDDLE1_TABLE where LEFT1_TABLE.middleId = MIDDLE1_TABLE.id and MIDDLE1_TABLE.rightId = RIGHT1_TABLE.ID and LEFT1_TABLE.id = ?", 1);
 
          System.out.println(left);
-         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=0, farRight1=null}}}", left.toString());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=1, type='type: right', farRight1=null}}}", left.toString());
       }
       catch (Exception e) {
          e.printStackTrace();
@@ -307,7 +307,7 @@ public class OneToOneTest {
                " left join MIDDLE1_TABLE on LEFT1_TABLE.middleId = MIDDLE1_TABLE.id" +
                " left join RIGHT1_TABLE on MIDDLE1_TABLE.rightId = RIGHT1_TABLE.id" +
                " where LEFT1_TABLE.id = 1").get(0);
-         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=null, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left1.toString());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=0, type='null', farRight1=null}}}", left1.toString());
       }
       finally {
          TableCreatorH2.dropTables();
@@ -337,7 +337,7 @@ public class OneToOneTest {
                " and LEFT1_TABLE.id = ?"
             , 1);
 
-         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=1, right=Right1{id=1, type='type: right', farRightId=1, farRight1=FarRight1{id=1, type='type: far right'}}}}", left.toString());
+         assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=1, type='type: right', farRight1=FarRight1{id=1, type='type: far right'}}}}", left.toString());
 
 
          // The id fields must be selected at least
@@ -349,7 +349,7 @@ public class OneToOneTest {
             " LEFT1_TABLE.ID = MIDDLE1_TABLE.ID" +
             " AND MIDDLE1_TABLE.ID = 1");
 
-         assertEquals("Left1{id=1, type='null', middle=Middle1{id=1, type='null', rightId=null, right=null}}", left1.toString());
+         assertEquals("Left1{id=1, type='null', middle=Middle1{id=1, type='null', right=null}}", left1.toString());
 
 
       }

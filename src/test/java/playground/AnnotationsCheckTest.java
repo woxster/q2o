@@ -166,7 +166,7 @@ create table FAR_RIGHT1_TABLE
 
       entityTransaction.commit();
 
-      assertEquals("Left1{id=1, type='left1', middle=Middle1{id=1, type='Middle1', rightId=null, right=null}}", left1.toString());
+      assertEquals("Left1{id=1, type='left1', middle=Middle1{id=1, type='Middle1', right=null}}", left1.toString());
    }
 
 }
