@@ -3,7 +3,9 @@ package com.zaxxer.q2o;
 import com.zaxxer.q2o.entities.CompositeKey;
 import com.zaxxer.q2o.entities.FarRight1;
 import com.zaxxer.q2o.entities.Left;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.sansorm.testutils.*;
 
 import javax.persistence.Column;
@@ -21,6 +23,9 @@ import static org.junit.Assert.*;
  * @since 10.04.18
  */
 public class Q2ObjTest extends GeneralTestConfigurator {
+
+   @Rule
+   public ExpectedException thrown = ExpectedException.none();
 
    @Test
    public void updateObjectExludeColumns() throws SQLException {
@@ -260,11 +265,8 @@ public class Q2ObjTest extends GeneralTestConfigurator {
          obj.note = "note";
          obj.note2 = "note2";
 
+         thrown.expectMessage("Specify columns to include.");
          IncludeColumns note = Q2Obj.updateIncludeColumns(obj);
-
-         IncludeColumns obj2 = Q2Obj.fromClause(IncludeColumns.class, "id=1");
-         assertEquals("note2", obj2.note2);
-
       }
       finally {
          Q2Sql.executeUpdate("drop table IncludeColumns");

@@ -213,15 +213,14 @@ public final class Q2Obj {
     */
    public static <T> T updateIncludeColumns(Connection connection, T object, String... includedColumns) throws SQLException
    {
+      if (includedColumns.length == 0) {
+         throw new RuntimeException("Specify columns to include.");
+      }
       Introspected introspected = Introspected.getInstance(object.getClass());
       String[] updatableColumns = introspected.getUpdatableColumns();
-      HashSet<String> excludedCols = new HashSet<>();
-      for (int i = 0; i < updatableColumns.length; i++) {
-         for (int j = 0; j < includedColumns.length; j++) {
-            if (!updatableColumns[i].equalsIgnoreCase(includedColumns[j])) {
-               excludedCols.add(updatableColumns[i]);
-            }
-         }
+      HashSet<String> excludedCols = new HashSet<>(Arrays.asList(updatableColumns));
+      for (final String includedColumn : includedColumns) {
+         excludedCols.remove(includedColumn);
       }
       return OrmWriter.updateObject(connection, object, excludedCols);
    }
