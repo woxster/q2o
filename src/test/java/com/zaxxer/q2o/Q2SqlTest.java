@@ -4,9 +4,14 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.sansorm.testutils.GeneralTestConfigurator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Holger Thurow (thurow.h@gmail.com)
@@ -55,6 +60,71 @@ public class Q2SqlTest extends GeneralTestConfigurator {
       }
       finally {
          Q2Sql.executeUpdate("DROP TABLE MY_TABLE");
+      }
+   }
+
+
+
+   @Test
+   public void numbersOrStringsFromSql()
+   {
+      try {
+         switch (database) {
+            case h2Server:
+               Q2Sql.executeUpdate(
+                       "CREATE TABLE mytest ("
+                               + " id BIGINT NOT NULL IDENTITY PRIMARY KEY"
+                               + ", note VARCHAR(128)"
+                               + ")");
+               break;
+            case mysql:
+               Q2Sql.executeUpdate(
+                       "CREATE TABLE mytest ("
+                               + " id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT"
+                               + ", note VARCHAR(128)"
+                               + ")");
+               break;
+            case sqlite:
+               Q2Sql.executeUpdate(
+                       "CREATE TABLE mytest ("
+                               + " id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
+                               + ", note VARCHAR(128)"
+                               + ")");
+               break;
+         }
+
+         int count = Q2Sql.executeUpdate("insert into mytest (note) values('test')");
+         assertEquals(1, count);
+
+         List<Short> idsShort = Q2Sql.numbersOrStringsFromSql(Short.class, "select id from mytest");
+         assertEquals(Short.valueOf("1"), idsShort.get(0));
+
+         List<Integer> idsInt = Q2Sql.numbersOrStringsFromSql(Integer.class, "select id from mytest");
+         assertEquals(Integer.valueOf(1), idsInt.get(0));
+
+         List<Long> idsLong = Q2Sql.numbersOrStringsFromSql(Long.class, "select id from mytest");
+         assertEquals(Long.valueOf(1), idsLong.get(0));
+
+         List<Double> idsDouble = Q2Sql.numbersOrStringsFromSql(Double.class, "select id from mytest");
+         assertEquals(Double.valueOf(1), idsDouble.get(0));
+
+         List<Float> idsFloat = Q2Sql.numbersOrStringsFromSql(Float.class, "select id from mytest");
+         assertEquals(Float.valueOf(1), idsFloat.get(0));
+
+         List<BigInteger> idsBigInt = Q2Sql.numbersOrStringsFromSql(BigInteger.class, "select id from mytest");
+         assertEquals(BigInteger.valueOf(1), idsBigInt.get(0));
+
+         List<BigDecimal> idsBigDecimal = Q2Sql.numbersOrStringsFromSql(BigDecimal.class, "select id from mytest");
+         assertEquals(BigDecimal.valueOf(1), idsBigDecimal.get(0));
+
+         Integer idInt = Q2Sql.numberOrStringFromSql(Integer.class, "select id from mytest");
+         assertEquals(Integer.valueOf(1), idInt);
+
+         String note = Q2Sql.numberOrStringFromSql(String.class, "select note from mytest");
+         assertEquals("test", note);
+      }
+      finally {
+         Q2Sql.executeUpdate("drop table mytest");
       }
    }
 }

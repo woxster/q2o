@@ -1,8 +1,12 @@
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Note the differences between methods taking a connection, PreparedStatement or ResultSet and those that do not. See {@link Q2Obj}.
@@ -21,6 +25,25 @@ public class Q2Sql {
    public static Number numberFromSql(String sql, Object... args)
    {
       return SqlClosure.sqlExecute(connection -> numberFromSql(connection, sql, args));
+   }
+
+   /**
+    *
+    * @return the resulting number or {@code null}
+    */
+   @Nullable
+   public static <T> T numberOrStringFromSql(Class<T> requiredType, String sql, Object... args)
+   {
+      return SqlClosure.sqlExecute(connection -> {
+         List<T> numbers = numbersOrStringsFromSql(requiredType, sql, args);
+         return !numbers.isEmpty() ? numbers.get(0) : null;
+      });
+   }
+
+   @NotNull
+   public static <T> List<T> numbersOrStringsFromSql(Class<T> requiredType, String sql, Object... args)
+   {
+      return SqlClosure.sqlExecute(connection -> numbersOrStringsFromSql(connection, requiredType, sql, args));
    }
 
    /**
@@ -90,6 +113,11 @@ public class Q2Sql {
    public static Number numberFromSql(Connection connection, String sql, Object... args) throws SQLException
    {
       return OrmReader.numberFromSql(connection, sql, args);
+   }
+
+   public static <T> List<T> numbersOrStringsFromSql(Connection connection, Class<T> requiredType, String sql, Object... args) throws SQLException
+   {
+      return OrmReader.numbersOrStringsFromSql(connection, requiredType, sql, args);
    }
 
    /**

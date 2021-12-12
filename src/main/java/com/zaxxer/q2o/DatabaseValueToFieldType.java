@@ -115,21 +115,21 @@ class DatabaseValueToFieldType {
          if (fieldType != valueType) {
             // Fix-up column value for enums, integer as boolean, etc.
             if (Integer.class == valueType) {
-               typeCorrectedValue = convertInteger(columnTypeName, fieldType, value, introspected);
+               typeCorrectedValue = convertInteger(fieldType, value);
             }
             else if (Long.class == valueType) {
-               typeCorrectedValue = convertLong(columnTypeName, fieldType, value);
+               typeCorrectedValue = convertLong(fieldType, value);
             }
             else if (Double.class == valueType) {
-               typeCorrectedValue = convertDouble(columnTypeName, fieldType, value);
+               typeCorrectedValue = convertDouble(fieldType, value);
             }
             else if (BigInteger.class == valueType) {
-               typeCorrectedValue = convertBigInteger(columnTypeName, fieldType, value);
+               typeCorrectedValue = convertBigInteger(fieldType, value);
             }
             // With Sybase ASE it is SybBigDecimal
             // IMPROVE Is getColumnClassName() check more reliable?
             else if (BigDecimal.class.isAssignableFrom(valueType)) {
-               typeCorrectedValue = convertBigDecimal(columnTypeName, fieldType, value);
+               typeCorrectedValue = convertBigDecimal(fieldType, value);
             }
             // With Sybase ASE it is SybTimestamp
             else if (Timestamp.class.isAssignableFrom(valueType)) {
@@ -187,7 +187,7 @@ class DatabaseValueToFieldType {
    /**
     * // SQLite TIMESTAMP and YEAR yields Integer. Also MySQL TINYINT.
     */
-   private Object convertInteger(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue, final Introspected introspected) {
+   Object convertInteger(final Class<?> fieldType, @NotNull Object columnValue) {
       if (fieldType == Boolean.class || fieldType == boolean.class) {
          columnValue = (((Integer) columnValue) != 0);
       }
@@ -257,7 +257,7 @@ class DatabaseValueToFieldType {
    /**
     * MYSQL BIGINT. SQLite TIMESTAMP, DATE.
     */
-   private Object convertLong(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
+   Object convertLong(final Class<?> fieldType, @NotNull Object columnValue) {
       if (fieldType == Byte.class || fieldType == byte.class) {
          columnValue = ((Long) columnValue).byteValue();
       }
@@ -296,7 +296,7 @@ class DatabaseValueToFieldType {
       return columnValue;
    }
 
-   private Object convertDouble(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
+   Object convertDouble(final Class<?> fieldType, @NotNull Object columnValue) {
       if (fieldType == Byte.class || fieldType == byte.class) {
          columnValue = ((Double) columnValue).byteValue();
       }
@@ -318,7 +318,7 @@ class DatabaseValueToFieldType {
       return columnValue;
    }
 
-   private Object convertBigInteger(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
+   Object convertBigInteger(final Class<?> fieldType, @NotNull Object columnValue) {
 
       if (fieldType == Byte.class || fieldType == byte.class) {
          columnValue = ((BigInteger) columnValue).byteValue();
@@ -344,7 +344,7 @@ class DatabaseValueToFieldType {
       return columnValue;
    }
 
-   private Object convertBigDecimal(final String columnTypeName, final Class<?> fieldType, @NotNull Object columnValue) {
+   Object convertBigDecimal(final Class<?> fieldType, @NotNull Object columnValue) {
       // Beim deploy: package sun.jvm.hotspot.runtime does not exist. Siehe https://stackoverflow.com/questions/42651694/maven-cant-find-sun-jvm-hotspot-when-compiling.
 //      if (fieldType == Bytes.class || fieldType == byte.class) {
 //         columnValue = ((BigDecimal) columnValue).byteValue();

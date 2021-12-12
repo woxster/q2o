@@ -16,15 +16,19 @@
 
 package com.zaxxer.q2o;
 
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * OrmReader
@@ -169,6 +173,7 @@ class OrmReader extends OrmBase {
    static <T> List<T> listFromClause(final Connection connection, final Class<T> clazz, final String clause, final Object... args) throws SQLException
    {
       final String sql = generateSelectFromWhereClause(clazz, clause, true);
+      // TODO SQL hier loggen
       final PreparedStatement stmt = connection.prepareStatement(sql);
 
       return statementToList(stmt, clazz, args);
@@ -237,6 +242,100 @@ class OrmReader extends OrmBase {
             return null;
          }
       }
+   }
+
+   static <T> List<T> numbersOrStringsFromSql(final Connection connection, Class<T> requiredType, final String sql, final Object... args) throws SQLException
+   {
+      try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+         populateStatementParameters(stmt, args);
+         List<T> numbers = new ArrayList<>();
+         DatabaseValueToFieldType databaseValueToFieldType = new DatabaseValueToFieldType();
+         try (final ResultSet resultSet = stmt.executeQuery()) {
+            resultSet.next();
+            Object object = resultSet.getObject(1);
+            Function<Object, T> converter = getConverter(requiredType, databaseValueToFieldType, object);
+            if (converter != null) {
+               numbers.add(converter.apply(object));
+               while (resultSet.next()) {
+                  if (requiredType == Integer.class) {
+                     object = resultSet.getObject(1);
+                     if (object instanceof Long) {
+                        numbers.add(converter.apply(object));
+                     }
+                  }
+               }
+            }
+         }
+         return numbers;
+      }
+   }
+
+   // TODO Float und Short unterstützen
+   @Nullable
+   private static <T> Function<Object, T> getConverter(final Class<T> requiredType, final DatabaseValueToFieldType databaseValueToFieldType, final Object object)
+   {
+      Function<Object, T> converter = null;
+      if (object instanceof Integer) {
+         converter = new Function<Object, T>() {
+            @Override
+            public T apply(final Object o)
+            {
+               //noinspection unchecked
+               return (T) databaseValueToFieldType.convertInteger(requiredType, o);
+            }
+         };
+      }
+      else if (object instanceof Long) {
+         converter = new Function<Object, T>() {
+            @Override
+            public T apply(final Object o)
+            {
+               //noinspection unchecked
+               return (T) databaseValueToFieldType.convertLong(requiredType, o);
+            }
+         };
+      }
+      else if (object instanceof Double) {
+         converter = new Function<Object, T>() {
+            @Override
+            public T apply(final Object o)
+            {
+               //noinspection unchecked
+               return (T) databaseValueToFieldType.convertDouble(requiredType, o);
+            }
+         };
+      }
+      else if (object instanceof BigInteger) {
+         converter = new Function<Object, T>() {
+            @Override
+            public T apply(final Object o)
+            {
+               //noinspection unchecked
+               return (T) databaseValueToFieldType.convertBigInteger(requiredType, o);
+            }
+         };
+      }
+      else if (object instanceof BigDecimal) {
+         converter = new Function<Object, T>() {
+            @Override
+            public T apply(final Object o)
+            {
+               //noinspection unchecked
+               return (T) databaseValueToFieldType.convertBigDecimal(requiredType, o);
+            }
+         };
+      }
+      else if (object instanceof String) {
+         converter = new Function<Object, T>() {
+            @Override
+            public T apply(final Object o)
+            {
+               //noinspection unchecked
+               return (T) o;
+            }
+         };
+      }
+      return converter;
    }
 
    static <T> String generateSelectFromWhereClause(final Class<T> clazz, final String clause, final boolean addLackingWhere)
