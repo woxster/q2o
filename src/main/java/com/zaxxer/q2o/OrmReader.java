@@ -252,17 +252,13 @@ class OrmReader extends OrmBase {
          DatabaseValueToFieldType databaseValueToFieldType = new DatabaseValueToFieldType();
          try (final ResultSet resultSet = stmt.executeQuery()) {
             resultSet.next();
-            Object object = resultSet.getObject(1);
-            Function<Object, T> converter = getConverter(requiredType, databaseValueToFieldType, object);
+            Object value = resultSet.getObject(1);
+            Function<Object, T> converter = getConverter(requiredType, databaseValueToFieldType, value);
             if (converter != null) {
-               numbers.add(converter.apply(object));
+               numbers.add(converter.apply(value));
                while (resultSet.next()) {
-                  if (requiredType == Integer.class) {
-                     object = resultSet.getObject(1);
-                     if (object instanceof Long) {
-                        numbers.add(converter.apply(object));
-                     }
-                  }
+                  value = resultSet.getObject(1);
+                  numbers.add(converter.apply(value));
                }
             }
          }
@@ -272,67 +268,43 @@ class OrmReader extends OrmBase {
 
    // TODO Float und Short unterstützen
    @Nullable
-   private static <T> Function<Object, T> getConverter(final Class<T> requiredType, final DatabaseValueToFieldType databaseValueToFieldType, final Object object)
+   private static <T> Function<Object, T> getConverter(final Class<T> requiredType, final DatabaseValueToFieldType databaseValueToFieldType, final Object value)
    {
       Function<Object, T> converter = null;
-      if (object instanceof Integer) {
-         converter = new Function<Object, T>() {
-            @Override
-            public T apply(final Object o)
-            {
-               //noinspection unchecked
-               return (T) databaseValueToFieldType.convertInteger(requiredType, o);
-            }
+      if (value instanceof Integer) {
+         converter = o -> {
+            //noinspection unchecked
+            return (T) databaseValueToFieldType.convertInteger(requiredType, o);
          };
       }
-      else if (object instanceof Long) {
-         converter = new Function<Object, T>() {
-            @Override
-            public T apply(final Object o)
-            {
-               //noinspection unchecked
-               return (T) databaseValueToFieldType.convertLong(requiredType, o);
-            }
+      else if (value instanceof Long) {
+         converter = o -> {
+            //noinspection unchecked
+            return (T) databaseValueToFieldType.convertLong(requiredType, o);
          };
       }
-      else if (object instanceof Double) {
-         converter = new Function<Object, T>() {
-            @Override
-            public T apply(final Object o)
-            {
-               //noinspection unchecked
-               return (T) databaseValueToFieldType.convertDouble(requiredType, o);
-            }
+      else if (value instanceof Double) {
+         converter = o -> {
+            //noinspection unchecked
+            return (T) databaseValueToFieldType.convertDouble(requiredType, o);
          };
       }
-      else if (object instanceof BigInteger) {
-         converter = new Function<Object, T>() {
-            @Override
-            public T apply(final Object o)
-            {
-               //noinspection unchecked
-               return (T) databaseValueToFieldType.convertBigInteger(requiredType, o);
-            }
+      else if (value instanceof BigInteger) {
+         converter = o -> {
+            //noinspection unchecked
+            return (T) databaseValueToFieldType.convertBigInteger(requiredType, o);
          };
       }
-      else if (object instanceof BigDecimal) {
-         converter = new Function<Object, T>() {
-            @Override
-            public T apply(final Object o)
-            {
-               //noinspection unchecked
-               return (T) databaseValueToFieldType.convertBigDecimal(requiredType, o);
-            }
+      else if (value instanceof BigDecimal) {
+         converter = o -> {
+            //noinspection unchecked
+            return (T) databaseValueToFieldType.convertBigDecimal(requiredType, o);
          };
       }
-      else if (object instanceof String) {
-         converter = new Function<Object, T>() {
-            @Override
-            public T apply(final Object o)
-            {
-               //noinspection unchecked
-               return (T) o;
-            }
+      else if (value instanceof String) {
+         converter = o -> {
+            //noinspection unchecked
+            return (T) o;
          };
       }
       return converter;

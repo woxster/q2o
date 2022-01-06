@@ -315,6 +315,7 @@ public class RefreshTest {
          Q2Sql.executeUpdate("insert into LEFT1_TABLE (type, middleId) values('type: left', 1)");
 
          // Load Left1
+
          Left1 left1 = Q2ObjList.fromSelect(
             Left1.class,
             "select * from LEFT1_TABLE, MIDDLE1_TABLE, RIGHT1_TABLE" +
@@ -324,6 +325,7 @@ public class RefreshTest {
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', right=Right1{id=1, type='type: right', farRight1=null}}}", left1.toString());
 
          // Delete Right entity
+
          Right1 rightToDelete = left1.getMiddle().getRight();
          left1.getMiddle().setRight(null);
 //         left1.getMiddle().setRightId(null);
@@ -336,6 +338,7 @@ public class RefreshTest {
          Q2Sql.executeUpdate("update MIDDLE1_TABLE set rightId = 0 where id = 1");
 
          // Reload Left1 to ensure reference on Right has gone
+
          Left1 left2 = Q2ObjList.fromSelect(
             Left1.class,
             "select * from LEFT1_TABLE" +
@@ -345,6 +348,7 @@ public class RefreshTest {
          assertEquals("Left1{id=1, type='type: left', middle=Middle1{id=1, type='type: middle', rightId=0, right=Right1{id=0, type='null', farRightId=0, farRight1=null}}}", left2.toString());
 
          // Check refresh method
+
          Q2Obj.refresh(left1);
          System.out.println(left1);
 

@@ -93,29 +93,36 @@ public class Q2SqlTest extends GeneralTestConfigurator {
                break;
          }
 
-         int count = Q2Sql.executeUpdate("insert into mytest (note) values('test')");
-         assertEquals(1, count);
+         Q2Sql.executeUpdate("insert into mytest (note) values('test')");
+         Q2Sql.executeUpdate("insert into mytest (note) values('test')");
 
          List<Short> idsShort = Q2Sql.numbersOrStringsFromSql(Short.class, "select id from mytest");
          assertEquals(Short.valueOf("1"), idsShort.get(0));
+         assertEquals(Short.valueOf("2"), idsShort.get(1));
 
          List<Integer> idsInt = Q2Sql.numbersOrStringsFromSql(Integer.class, "select id from mytest");
          assertEquals(Integer.valueOf(1), idsInt.get(0));
+         assertEquals(Integer.valueOf(2), idsInt.get(1));
 
          List<Long> idsLong = Q2Sql.numbersOrStringsFromSql(Long.class, "select id from mytest");
          assertEquals(Long.valueOf(1), idsLong.get(0));
+         assertEquals(Long.valueOf(2), idsLong.get(1));
 
          List<Double> idsDouble = Q2Sql.numbersOrStringsFromSql(Double.class, "select id from mytest");
          assertEquals(Double.valueOf(1), idsDouble.get(0));
+         assertEquals(Double.valueOf(2), idsDouble.get(1));
 
          List<Float> idsFloat = Q2Sql.numbersOrStringsFromSql(Float.class, "select id from mytest");
          assertEquals(Float.valueOf(1), idsFloat.get(0));
+         assertEquals(Float.valueOf(2), idsFloat.get(1));
 
          List<BigInteger> idsBigInt = Q2Sql.numbersOrStringsFromSql(BigInteger.class, "select id from mytest");
          assertEquals(BigInteger.valueOf(1), idsBigInt.get(0));
+         assertEquals(BigInteger.valueOf(2), idsBigInt.get(1));
 
          List<BigDecimal> idsBigDecimal = Q2Sql.numbersOrStringsFromSql(BigDecimal.class, "select id from mytest");
          assertEquals(BigDecimal.valueOf(1), idsBigDecimal.get(0));
+         assertEquals(BigDecimal.valueOf(2), idsBigDecimal.get(1));
 
          Integer idInt = Q2Sql.numberOrStringFromSql(Integer.class, "select id from mytest");
          assertEquals(Integer.valueOf(1), idInt);
