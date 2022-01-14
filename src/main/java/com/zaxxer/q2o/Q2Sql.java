@@ -40,6 +40,9 @@ public class Q2Sql {
       });
    }
 
+   /**
+    * @return Empty list when nothing has been found.
+    */
    @NotNull
    public static <T> List<T> numbersOrStringsFromSql(Class<T> requiredType, String sql, Object... args)
    {

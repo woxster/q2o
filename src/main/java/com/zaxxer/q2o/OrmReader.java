@@ -251,14 +251,15 @@ class OrmReader extends OrmBase {
          List<T> numbers = new ArrayList<>();
          DatabaseValueToFieldType databaseValueToFieldType = new DatabaseValueToFieldType();
          try (final ResultSet resultSet = stmt.executeQuery()) {
-            resultSet.next();
-            Object value = resultSet.getObject(1);
-            Function<Object, T> converter = getConverter(requiredType, databaseValueToFieldType, value);
-            if (converter != null) {
-               numbers.add(converter.apply(value));
-               while (resultSet.next()) {
-                  value = resultSet.getObject(1);
+            if (resultSet.next()) {
+               Object value = resultSet.getObject(1);
+               Function<Object, T> converter = getConverter(requiredType, databaseValueToFieldType, value);
+               if (converter != null) {
                   numbers.add(converter.apply(value));
+                  while (resultSet.next()) {
+                     value = resultSet.getObject(1);
+                     numbers.add(converter.apply(value));
+                  }
                }
             }
          }
