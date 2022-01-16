@@ -3,7 +3,7 @@
 
    <groupId>com.github.h-thurow</groupId>
    <artifactId>q2o</artifactId>
-   <version>3.17-SNAPSHOT</version>
+   <version>3.17</version>
    <!--<packaging>bundle</packaging>-->
 
    <name>q2o</name>
@@ -201,7 +201,7 @@
                <excludes>
                   <exclude>AnnotationsCheckTest.java</exclude>
                </excludes>
-               <testFailureIgnore>true</testFailureIgnore>
+               <testFailureIgnore>false</testFailureIgnore>
             </configuration>
          </plugin>
          <plugin>
