@@ -129,7 +129,7 @@ Many of these methods can also work with lists of objects. [See Javadoc.](http:/
 
 ### Objects are not everything
 
-Often it is sufficient and more performant to query values or to update single values not objects. This is where [Q2Sql](https://javadoc.io/static/com.github.h-thurow/q2o/3.16/com/zaxxer/q2o/Q2Sql.html) class comes into play.
+Often it is more suitable and more performant to query values or to update single values not objects. This is where [Q2Sql](https://javadoc.io/static/com.github.h-thurow/q2o/3.16/com/zaxxer/q2o/Q2Sql.html) class comes into play.
 
 ### q2o and Spring
 
