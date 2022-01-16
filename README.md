@@ -127,6 +127,10 @@ There are much more useful methods like:
 
 Many of these methods can also work with lists of objects. [See Javadoc.](http://javadoc.io/page/com.github.h-thurow/q2o/latest/com/zaxxer/q2o/Q2ObjList.html)
 
+### Objects are not everything
+
+Often it is more suitable and more performant to query values or to update single values not objects. This is where [Q2Sql](https://javadoc.io/static/com.github.h-thurow/q2o/3.16/com/zaxxer/q2o/Q2Sql.html) class comes into play.
+
 ### q2o and Spring
 
 q2o is helpful even when you depend on Spring JDBC:
