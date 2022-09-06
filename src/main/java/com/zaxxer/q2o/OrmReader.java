@@ -59,8 +59,8 @@ class OrmReader extends OrmBase {
 
    static <T> List<T> statementToList(final PreparedStatement stmt, final Class<T> clazz, final Object... args) throws SQLException {
       LOGGER.debug("{}", stmt);
-      try (final PreparedStatement closeStmt = stmt) {
-         ResultSet rs = statementToResultSet(stmt, args);
+      try (final PreparedStatement closeStmt = stmt;
+           ResultSet rs = statementToResultSet(stmt, args)) {
          boolean next = rs.next();
          if (next) {
             return resultSetToList(rs, clazz);
